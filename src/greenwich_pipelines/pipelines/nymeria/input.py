@@ -34,14 +34,8 @@ def read_source(path):
     return result
 
 def endpoint_indices(spec,robot):
-    roles=('left_wrist','right_wrist','left_ankle','right_ankle')
-    explicit=robot.get('endpoints')
-    if explicit:return [spec.joint_names.index(explicit[r]) for r in roles]
-    def depth(i):
-        d=0
-        while spec.parents[i]>=0:i=int(spec.parents[i]);d+=1
-        return d
-    return [max((i for i,n in enumerate(spec.joint_names) if side in n.lower() and part in n.lower()),key=depth) for side,part in [('left','wrist'),('right','wrist'),('left','ankle'),('right','ankle')]]
+    from greenwich_pipelines.robot_semantics import resolve_endpoints
+    return resolve_endpoints(spec,robot.get('endpoints'))
 
 def windows(source,window_frames=900):
     count=len(source['position_yup_cm'])

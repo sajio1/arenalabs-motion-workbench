@@ -35,14 +35,8 @@ def fit(prime,body,reference,seed,contacts,fps):
     u=q0.clamp(fk.lower,fk.upper).detach().clone().requires_grad_()
     g=cast(reference['root_t']/100).clone().requires_grad_()
     r=cast(reference['rot6d'][:,root]).clone().requires_grad_()
-    shoulders=[]
-    for wrist in ids[:2]:
-        j=wrist;matches=[]
-        while body.spec.parents[j]>=0:
-            if 'shoulder' in body.spec.joint_names[j].lower():matches.append(j)
-            j=int(body.spec.parents[j])
-        if not matches:raise ValueError('Missing anatomical shoulder landmark')
-        shoulders.append(matches[-1])
+    from greenwich_pipelines.robot_semantics import shoulder_landmarks
+    shoulders=shoulder_landmarks(body.spec,ids[:2])
     sole,hull,valid=sole_surface(body,ids[2:]);sole=cast(sole);hull=cast(hull)
     valid=torch.as_tensor(valid,device=device);flags=cast(contacts)
     scales=cast([POLICY['hand_rotation_scale']]*2+[POLICY['foot_rotation_scale']]*2)

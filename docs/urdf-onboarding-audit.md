@@ -41,3 +41,32 @@ Evidence is retained locally under `runs/urdf-onboarding-audit/`: original/porta
 ## Acceptance for the next implementation
 
 For these three robots, an unedited valid vendor package should upload, resolve assets, create the descriptor and required floating root, and run both selected SOMA actions and both Nymeria excerpts without a robot-specific solver file or policy weights. Test fixed root/renamed links/nested packages and ambiguous TCP cases explicitly. A recognizable open-chain humanoid should be automatic; an ambiguous or mechanically underspecified URDF should receive a small, concrete frame/topology confirmation instead of a generic metadata dead end. Arbitrary URDFs do not mathematically guarantee sufficient task semantics or achievable poses.
+
+## Implemented repair and validation — 2026-10-04
+
+The blocking upload path is repaired for locomotion/localmanipulation. Safe parent-directory and nested package:// references are resolved within the extracted package; MuJoCo retains resolved mesh paths. A successful humanoid upload creates model.xml, descriptor.json and descriptor.npz, adds a geometry-derived floating base when omitted, resolves four endpoint links, infers fixed neutral wrist axes, and persists its pipeline row. The same upload appears in both humanoid pages. Names/IDs do not select solver weights or policies. Existing H2/G1 mechanical metadata and the SOMA 100+100 / Nymeria solver distinction are preserved.
+
+Wrist axes are inferred physical estimates, not certified TCP calibration. The inspection dialog exposes endpoint/frame metadata for correction. The API checks distinct links and finite nondegenerate axes, rejects edits while conversions are active, invalidates affected caches and persists revisions. Successfully ingested robots now have a ready state; resource/model failures have specific messages. Completed playback caches survive service restart and are keyed by source fingerprint, source window and physical descriptor/model identity.
+
+GR3 revealed another name dependency in the Nymeria refiner: a shoulder had to contain the literal word shoulder. Existing named shoulder behavior is preserved; otherwise the arm branch is found from the two wrist ancestry chains' common trunk. No GR3-specific branch was introduced.
+
+The earlier Tienkung Lite URDF contains only arm chains through the elbow and no wrist links. It remains unsupported for four-wrist/foot input rather than silently using elbows as wrists. The successful Tienkung test uses the locally available complete tiangong2dex_29.urdf (39 links, 38 joints including fixed links), with explicitly defined TCPs. These are different robot variants.
+
+### Actual conversions
+
+A3 T3D0, GR3 dummy-hand and complete Tienkung were uploaded from vendor ZIPs without editing their mesh paths. Each ran two SOMA clips (147-frame jog, 150-frame crouch) and two Nymeria clips (240-frame historical pan/preparation excerpts): 12 completed conversions at 30 Hz. The 500 current 15-second Nymeria library windows were not all converted by this test. Failed earlier GR3 attempts and immutable model priors remain preserved. All 12 playback caches were verified after service restart. Forty-nine Python tests and the TypeScript/Vite build pass.
+
+Independent MuJoCo endpoint probes were compared to the saved descriptor FK. Maximum discrepancy was below 0.001 mm for A3/Tienkung and below 0.574 mm for GR3. This validates motor/mesh binding, not target-tracking accuracy. Visual browser verification loaded the three uploaded robots together on both pages.
+
+| Nymeria clip | Robot | Max wrist position error, L/R mm | Max wrist orientation error, L/R degrees | 10 mm / 15 degrees |
+| --- | --- | --- | --- | --- |
+| pan | A3 | 3.62 / 5.35 | 30.11 / 19.24 | fail orientation |
+| preparation | A3 | 50.06 / 46.90 | 172.53 / 172.98 | fail both |
+| pan | GR3 | 3.31 / 3.67 | 34.46 / 30.28 | fail orientation |
+| preparation | GR3 | 5.44 / 9.85 | 47.96 / 154.23 | fail orientation |
+| pan | Tienkung complete | 3.66 / 4.42 | 44.31 / 33.01 | fail orientation |
+| preparation | Tienkung complete | 5.44 / 3.02 | 167.64 / 17.46 | fail orientation |
+
+These angular errors are also present in the saved physical FK, not just the renderer. The upload rejection is fixed, but strict wrist-pose quality is not achieved on these samples. No new automatic acceptance gates, per-robot weight changes or simulation claims were added. The next quality task is to distinguish inferred-frame calibration error, unreachable endpoint combinations and the existing soft optimizer's orientation/continuity tradeoffs; this audit does not claim those causes are resolved.
+
+Detailed private results are in runs/urdf-onboarding-audit/final-validation.json; screenshots are validation/screenshots/urdf-fixed-locomotion.jpg and urdf-fixed-nymeria.jpg.

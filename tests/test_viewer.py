@@ -96,3 +96,78 @@ def test_source_video_registry_and_range_seek(tmp_path):
         response=client.get(row['video']['url'],headers={'Range':'bytes=10-19'})
         assert response.status_code==206 and response.content==bytes(range(10,20))
         assert client.get('/api/source-video/missing').status_code==404
+
+
+def test_nested_parent_mesh_reference_and_compiler_paths(tmp_path):
+    import trimesh
+    stream=io.BytesIO()
+    xml=URDF.replace(b'<box size="0.2 0.2 0.2"/>',b'<mesh filename="../meshes/base.stl"/>')
+    with zipfile.ZipFile(stream,'w') as z:
+        z.writestr('package/urdf/model.urdf',xml)
+        z.writestr('package/meshes/base.stl',trimesh.creation.box().export(file_type='stl'))
+    path,_,report=unpack_robot(stream.getvalue(),'robot.zip',tmp_path/'uploaded')
+    assert not report['missing_meshes']
+    import mujoco as mj
+    assert mj.MjModel.from_xml_path(str(path)).ngeom==2
+
+
+def test_mesh_reference_cannot_escape_extracted_package(tmp_path):
+    bad=URDF.replace(b'<box size="0.2 0.2 0.2"/>',b'<mesh filename="../../secret.stl"/>')
+    with pytest.raises(ValueError,match='inside the robot package'):
+        unpack_robot(bad,'robot.urdf',tmp_path/'uploaded')
+
+
+def test_humanoid_upload_creates_shared_persisted_descriptor(tmp_path):
+    import xml.etree.ElementTree as ET
+    root=ET.Element('robot',name='generic')
+    for name in ['pelvis','wrist_l_link','wrist_r_link','ankle_l_link','ankle_r_link']:
+        link=ET.SubElement(root,'link',name=name)
+        inertial=ET.SubElement(link,'inertial');ET.SubElement(inertial,'mass',value='1');ET.SubElement(inertial,'inertia',ixx='.01',iyy='.01',izz='.01',ixy='0',ixz='0',iyz='0')
+        visual=ET.SubElement(link,'visual');ET.SubElement(ET.SubElement(visual,'geometry'),'box',size='.1 .05 .1')
+    for name,pos in [('wrist_l_link','0 .3 .1'),('wrist_r_link','0 -.3 .1'),('ankle_l_link','0 .1 -.5'),('ankle_r_link','0 -.1 -.5')]:
+        joint=ET.SubElement(root,'joint',name=name+'_joint',type='revolute');ET.SubElement(joint,'parent',link='pelvis');ET.SubElement(joint,'child',link=name);ET.SubElement(joint,'origin',xyz=pos);ET.SubElement(joint,'axis',xyz='0 1 0');ET.SubElement(joint,'limit',lower='-1',upper='1',effort='10',velocity='2')
+    config=tmp_path/'configs/viewer.local.json';config.parent.mkdir()
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',robots=[],clips=[])))
+    with TestClient(create_app(config)) as client:
+        row=client.post('/api/robots/localmanipulation',files={'file':('generic.urdf',ET.tostring(root),'application/xml')}).json()
+        assert row['conversion_ready'] and row['status']=='ready'
+        assert set(row['pages'])=={'locomotion','localmanipulation'}
+        assert len(row['report']['endpoints'])==4
+        assert row['report']['floating_root_added']
+        bad=dict(endpoints=row['report']['endpoints'],palm_frames={'left_wrist':{'distal':[1,0,0],'normal':[1,0,0]},'right_wrist':{'distal':[1,0,0],'normal':[0,1,0]}})
+        assert client.patch('/api/robots/'+row['id']+'/metadata',json=bad).status_code==400
+        valid=dict(endpoints=row['report']['endpoints'],palm_frames=row['report']['palm_frames'])
+        assert client.patch('/api/robots/'+row['id']+'/metadata',json=valid).status_code==200
+        folder=tmp_path/'store/uploaded'/row['id']
+        descriptor=json.loads((folder/'descriptor.json').read_text())
+        import mujoco as mj
+        model=mj.MjModel.from_xml_path(descriptor['xml'])
+        assert sum(model.jnt_type==mj.mjtJoint.mjJNT_FREE)==1
+        from alphamotion.engine.descriptor import build_from_mjcf
+        from greenwich_pipelines.pipelines.nymeria.input import endpoint_indices
+        spec,*_=build_from_mjcf(descriptor['xml'],descriptor['body'])
+        assert [spec.joint_names[i] for i in endpoint_indices(spec,descriptor)]==list(descriptor['endpoints'].values())
+    with TestClient(create_app(config)) as client:
+        assert client.get('/api/catalog/locomotion').json()['robots'][0]['conversion_ready']
+
+    from greenwich_pipelines.viewer.server import conversion_signature
+    saved=json.loads(config.read_text());source=tmp_path/'source.npz';source.write_bytes(b'unchanged source')
+    clip=dict(id='source',page='localmanipulation',source=str(source))
+    saved['clips']=[clip];config.write_text(json.dumps(saved))
+    registry=json.loads((tmp_path/'store/uploaded/registry.json').read_text());robot=registry[0]
+    output=tmp_path/'store/jobs/cached/playback.json';output.parent.mkdir(parents=True);output.write_text('{}')
+    cache=dict(clip_id='source',robot_id=robot['id'],signature=conversion_signature(clip,robot),url='/assets/jobs/cached/playback.json')
+    (tmp_path/'store/viewer-conversions.json').write_text(json.dumps({'entry':cache}))
+    with TestClient(create_app(config)) as client:
+        response=client.post('/api/convert',json=dict(clip_id='source',robot_id=robot['id'])).json()
+        assert response['cached'] and response['status']=='completed'
+    source.write_bytes(b'changed source')
+    with TestClient(create_app(config)) as client:
+        assert robot['id'] not in client.get('/api/catalog/localmanipulation').json()['clips'][0].get('cache',{})
+
+
+def test_shoulders_resolve_from_tree_without_shoulder_names():
+    from types import SimpleNamespace
+    from greenwich_pipelines.robot_semantics import shoulder_landmarks
+    spec=SimpleNamespace(parents=np.array([-1,0,1,2,3,1,5,6]),joint_names=['base','torso','left_upper_arm','left_forearm','left_end_effector','right_upper_arm','right_forearm','right_end_effector'])
+    assert shoulder_landmarks(spec,[4,7])==[2,5]

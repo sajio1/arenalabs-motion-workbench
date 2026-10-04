@@ -30,10 +30,15 @@ def unpack_robot(data,filename,folder):
     missing=[]
     for mesh in root.findall('.//mesh'):
         raw=mesh.get('filename','');relative=raw.removeprefix('package://').removeprefix('file://')
-        if Path(relative).is_absolute() or ':' in relative or '..' in PurePosixPath(relative.replace('\\','/')).parts:raise ValueError('Mesh references must stay inside the robot package')
+        relative=relative.replace('\\','/')
+        if Path(relative).is_absolute() or ':' in relative:raise ValueError('Mesh references must stay inside the robot package')
         choices=[urdf.parent/relative,folder/relative]
         # package://name/... often points to the root of this uploaded package.
-        if raw.startswith('package://') and '/' in relative:choices.append(folder/relative.split('/',1)[1])
+        if raw.startswith('package://') and '/' in relative:
+            package,tail=relative.split('/',1)
+            choices.extend([folder/tail,*[p/tail for p in folder.rglob(package) if p.is_dir()]])
+        choices=[p.resolve() for p in choices]
+        if not any(p.is_relative_to(folder.resolve()) for p in choices):raise ValueError('Mesh references must stay inside the robot package')
         found=next((p.resolve() for p in choices if p.is_file() and p.resolve().is_relative_to(folder.resolve())),None)
         if found:mesh.set('filename',str(found))
         else:missing.append(raw)
@@ -41,7 +46,8 @@ def unpack_robot(data,filename,folder):
     if mujoco is None:mujoco=ET.SubElement(root,'mujoco')
     compiler=mujoco.find('compiler')
     if compiler is None:compiler=ET.SubElement(mujoco,'compiler')
-    compiler.set('discardvisual','false');compiler.set('fusestatic','false')
+    compiler.attrib.pop('meshdir',None)
+    compiler.set('strippath','false');compiler.set('discardvisual','false');compiler.set('fusestatic','false')
     normalized=folder/'resolved.urdf';ET.ElementTree(root).write(normalized,encoding='utf-8',xml_declaration=True)
     report=dict(links=len(links),joints=len(joints),missing_meshes=missing,mimic_joints=[j.get('name') for j in joints if j.find('mimic') is not None],
         conversion_ready=False,status='needs_metadata',message='Preview only. Conversion requires semantic endpoints, palm/TCP frames and a mechanical descriptor; closed chains require explicit constraints.')

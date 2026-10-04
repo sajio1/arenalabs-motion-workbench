@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 
-def native_key_indices(spec):
+def native_key_indices(spec,robot=None):
     """Resolve native fixed wrist/TCP links when a model names the side as a suffix.
 
     This is an interface-name normalization only.  It does not change the
@@ -33,6 +33,9 @@ def native_key_indices(spec):
             matches.append((depth, index))
         if matches:
             indices[slot] = max(matches)[1]
+    if robot and robot.get('endpoints'):
+        from greenwich_pipelines.robot_semantics import resolve_endpoints
+        indices[2:6]=resolve_endpoints(spec,robot['endpoints'])
     return indices
 
 
@@ -104,7 +107,7 @@ def main():
         hd,_=ball_dof(len(names))
     targets=[]
     for robot in json.loads(a.robots.read_text(encoding='utf-8-sig')):
-        spec,dof,rest,*_=build_from_mjcf(robot['xml'],robot['body']);keys=native_key_indices(spec)
+        spec,dof,rest,*_=build_from_mjcf(robot['xml'],robot['body']);keys=native_key_indices(spec,robot)
         sole=build_foot_sole_model(robot['xml'],spec,rest,['left_foot','right_foot'],keys[4:6])
         support_surface=build_endpoint_surface_model(robot['xml'],spec,rest,
             ['left_foot','right_foot','left_hand','right_hand'],keys[4:6]+keys[2:4])
@@ -233,7 +236,7 @@ def main():
             from greenwich_motion_sdk.body_coordination import refine_coordination
             q,_,coordination=refine_coordination(
                 source_p,b['names'],q.detach(),rot.detach(),spec,dt,rs,
-                native_key_indices(spec)[2:4],native_key_indices(spec)[4:6],fps=a.fps,
+                native_key_indices(spec,robot)[2:4],native_key_indices(spec,robot)[4:6],fps=a.fps,
                 iterations=100,palm_frames=robot.get('palm_frames'),
                 optimize_trunk=False)
             rot,pos=c.fk_from_angles(q,spec,dt,rest=rs,root_R=rr)
@@ -298,7 +301,7 @@ def main():
                 brief['artifact']='motions/'+row['stem']+'.npz';ledger.append(brief)
                 (a.output/'results.json').write_text(json.dumps(ledger,indent=2));print(json.dumps(brief),flush=True)
                 continue
-            np.savez_compressed(folder/'motion.npz',**surface_payload,constraint_joint_indices=np.array(native_key_indices(spec)[2:4]),q=q.detach().cpu().numpy(),rot6d=final_rot6d,raw_rot6d=raw.detach().cpu().numpy(),decoder_position=dp.detach().cpu().numpy(),root_t=root_target,world_position_cm=world,joint_names=np.array(spec.joint_names),fps=a.fps,sole_surface_height_cm=heights,support_surface_height_cm=support_heights,support_surface_roles=np.asarray(support_surface.roles),source_root_cm=root,source_positions_cm=source_p,source_joint_names=np.array(b['names']),source_parents=b['parents'],source_contact_proxy=source_contact,source_support_proxy=source_support,model_contact=predicted,source_role_indices=np.array(source_roles),source_timestamps_s=clip.timestamps_s[take]-clip.timestamps_s[take[0]],source_foot_indices=np.array(footids),source_clearance_cm=source_clearance)
+            np.savez_compressed(folder/'motion.npz',**surface_payload,constraint_joint_indices=np.array(native_key_indices(spec,robot)[2:4]),q=q.detach().cpu().numpy(),rot6d=final_rot6d,raw_rot6d=raw.detach().cpu().numpy(),decoder_position=dp.detach().cpu().numpy(),root_t=root_target,world_position_cm=world,joint_names=np.array(spec.joint_names),fps=a.fps,sole_surface_height_cm=heights,support_surface_height_cm=support_heights,support_surface_roles=np.asarray(support_surface.roles),source_root_cm=root,source_positions_cm=source_p,source_joint_names=np.array(b['names']),source_parents=b['parents'],source_contact_proxy=source_contact,source_support_proxy=source_support,model_contact=predicted,source_role_indices=np.array(source_roles),source_timestamps_s=clip.timestamps_s[take]-clip.timestamps_s[take[0]],source_foot_indices=np.array(footids),source_clearance_cm=source_clearance)
             if a.skip_preview:
                 stats['timing_s']['render']=0.0
                 (folder/'report.json').write_text(json.dumps(stats,indent=2))
