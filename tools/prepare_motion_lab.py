@@ -3,7 +3,7 @@
 python tools/prepare_motion_lab.py --workspace C:/Users/Eric/Documents/Codex
 Local paths and exports are ignored by Git; source data is never modified.
 """
-import argparse,json,re
+import argparse,json,re,subprocess,sys
 from pathlib import Path
 import numpy as np
 from greenwich_pipelines.viewer.export import array_json,robot_model,motion_payload
@@ -119,6 +119,7 @@ def main():
     array_json(storage/'catalog-skipped.json',skipped)
     config=dict(schema='greenwich.viewer.v1',storage=str(storage),runtime=str(repo/'configs/runtime.local.json'),robots=rows,clips=clips)
     array_json(repo/'configs/viewer.local.json',config)
-    print('CATALOG',len(clips),'clips',len(rows),'robots',flush=True)
+    print('BOOTSTRAP',len(clips),'clips',len(rows),'robots',flush=True)
+    subprocess.run([sys.executable,str(repo/'tools/index_motion_library.py'),'--workspace',str(ws)],check=True)
 
 if __name__=='__main__':main()

@@ -56,3 +56,43 @@ def test_catalog_preserves_source_specific_nested_metadata(tmp_path):
         clip=client.get('/api/catalog/localmanipulation').json()['clips'][0]
         assert clip['metadata']==metadata
         assert 'source' not in clip
+
+def test_long_recording_playback_keeps_all_windows_and_boundaries():
+    from greenwich_pipelines.viewer.export import join_playback_segments
+    def segment(values):
+        return dict(fps=30,frames=len(values),geom_ids=[0],parents=[-1],unit='m',axis='y-up',positions=list(values),quaternions=list(values),skeleton=list(values),targets=list(values))
+    result=join_playback_segments([segment([0,1,2]),segment([3,4])])
+    assert result['frames']==5 and result['duration']==4/30
+    assert result['positions']==[0,1,2,3,4]
+    assert result['window_boundaries']==[0,3]
+    other=segment([3]);other['geom_ids']=[2]
+    with pytest.raises(ValueError):join_playback_segments([segment([0]),other])
+
+def test_source_window_preserves_endpoint_positions_rotations_and_contact(tmp_path):
+    from greenwich_pipelines.viewer.sources import prepare_source
+    frames=40;positions=np.arange(frames*4*3,dtype=np.float32).reshape(frames,4,3)
+    rotations=np.tile(np.eye(3,dtype=np.float32),(frames,4,1,1));contact=np.arange(frames*4).reshape(frames,4)%2==0
+    source=tmp_path/'sparse.npz';np.savez(source,position_yup_cm=positions,semantic_rotation_yup=rotations,foot_contacts=contact,fps=np.array(30.))
+    clip=dict(page='localmanipulation',source=str(source),source_window=dict(start_frame=5,end_frame=35))
+    output=prepare_source(clip,tmp_path)
+    with np.load(output) as d:
+        assert np.array_equal(d['position_yup_cm'],positions[5:35])
+        assert np.array_equal(d['semantic_rotation_yup'],rotations[5:35])
+        assert np.array_equal(d['foot_contacts'],contact[5:35])
+        assert np.allclose(np.diff(d['sample_timestamp_us']),1e6/30)
+        assert float(d['fps'])==30
+    clip['source_window']['end_frame']=45
+    with pytest.raises(ValueError):prepare_source(clip,tmp_path)
+
+
+def test_source_video_registry_and_range_seek(tmp_path):
+    config=tmp_path/'configs/viewer.local.json';config.parent.mkdir()
+    video=tmp_path/'source.mp4';video.write_bytes(bytes(range(100)))
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',robots=[],clips=[dict(id='known',page='manipulation',video=dict(path=str(video),start_seconds=2,sync_method='paired'))])))
+    with TestClient(create_app(config)) as client:
+        row=client.get('/api/catalog/manipulation').json()['clips'][0]
+        assert row['video']['url']=='/api/source-video/known'
+        assert 'path' not in row['video']
+        response=client.get(row['video']['url'],headers={'Range':'bytes=10-19'})
+        assert response.status_code==206 and response.content==bytes(range(10,20))
+        assert client.get('/api/source-video/missing').status_code==404

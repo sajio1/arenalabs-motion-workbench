@@ -80,3 +80,19 @@ def motion_payload(row,path,pipeline):
     return dict(schema='greenwich.playback.v1',fps=30,frames=T,duration=(T-1)/30,unit='m',axis='y-up',geom_ids=ids,
                 positions=positions.astype(np.float32).tolist(),quaternions=Rotation.from_matrix(rotations.reshape(-1,3,3)).as_quat().reshape(T,len(ids),4).astype(np.float32).tolist(),
                 skeleton=skeleton.astype(np.float32).tolist(),parents=parents,targets=targets.astype(np.float32).tolist(),quality_status='not_evaluated')
+
+
+def join_playback_segments(segments):
+    """Preserve independent window outputs in chronological playback order."""
+    iterator=iter(segments)
+    try:result=next(iterator)
+    except StopIteration:raise ValueError('No motion segments')
+    boundaries=[0];total=result['frames']
+    for segment in iterator:
+        for key in ('fps','geom_ids','parents','unit','axis'):
+            if result.get(key)!=segment.get(key):raise ValueError('Incompatible playback segment '+key)
+        boundaries.append(total)
+        for key in ('positions','quaternions','skeleton','targets'):result[key].extend(segment[key])
+        total+=segment['frames']
+    result.update(frames=total,duration=(total-1)/result['fps'],window_boundaries=boundaries)
+    return result

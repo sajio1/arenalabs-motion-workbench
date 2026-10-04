@@ -51,3 +51,38 @@ python -X utf8 -m greenwich_pipelines.viewer.server --config configs/viewer.loca
 ## 品牌与元数据
 
 界面统一英文，使用提供的 arenalab logo、papaya 橙 #FF8906 与炭黑底色。Metadata 接口支持任意 JSON 对象；面板动态渲染实际字段，嵌套对象、长列表可展开，缺失字段不显示。输入数据与机器人结果分开标示。新增源动作分类标注为 filename-derived；3 条未通过现有 FK/bind 检查的片段不加入动作库，原因保存在 .cache/motion-lab/catalog-skipped.json。没有为扩充目录放宽生产适配器检查。
+
+## Full local library and dense browser
+
+The sidebar now uses filename rows (29 px), no motion thumbnails or invented action names, and a desktop width of 411 px / 450 px (1.5 × previous). The scene headline and top playback control are removed. Playback remains on the bottom timeline. Orbit speed is 0.09 rad/s, twice the previous speed.
+
+`prepare_motion_lab.py` now invokes the full local index after bootstrapping robot assets and historical cached excerpts. To rescan without rebuilding assets:
+
+```powershell
+python -X utf8 tools/index_motion_library.py --workspace C:/Users/Eric/Documents/Codex --roots D:/MyDatasets
+```
+
+No sample-count or duration cap is applied to the recording index. The current workspace contains 110 unique SOMA recordings, 10 Nymeria sequences and 594 EgoDex recordings, plus 9 explicitly marked cached excerpts. Indexing reads recording headers and stores original paths. It does not download the entire official remote datasets or validate/retarget every recording. New recording combinations convert on demand. Missing channels and unreadable files are reported in `.cache/motion-lab/library-index-report.json`; complete sources are preferred over shorter SOMA copies. SOMA families are filename-derived; EgoDex families use original task folders.
+
+Nymeria can produce multiple independent windows. The viewer now retains all window outputs in chronological order with explicit frame boundaries; it does not smooth or claim continuity across those boundaries. Long recordings may require substantial conversion and playback memory. Native source files remain unchanged.
+
+## Nymeria: 500 explicit source windows
+
+The current localmanipulation page indexes 500 distinct, non-overlapping excerpts from 10 local recordings, plus 4 historical cached excerpts. New excerpts contain 450 frames at 30 Hz (15 s half-open interval; last frame 14.9667 s). The selector prioritizes 17 existing curated excerpts with verified Ego-video synchronization, then fills the remaining count by deterministic round-robin sampling. Existing narration annotations describe roughly 30-second intervals, not atomic activity boundaries: generic 15-second windows cannot be certified as complete activities. Metadata states the boundary policy explicitly. Files remain unchanged, and no robot quality filter is applied.
+
+```powershell
+python -X utf8 tools/prepare_nymeria_windows.py --count 500 --seconds 15 --stride 15
+python -X utf8 tools/index_source_videos.py
+```
+
+Input windows are extracted on demand after the existing official Xsens clock correction. Positions, rotations and contact labels receive no additional spatial modification. Three actual input checks (indices 0, 249, 499) confirmed 450 finite endpoint frames and uniform 30 Hz timing; all 500 source ranges are unique and mutually non-overlapping. Robot trajectories are not precomputed for all 500 excerpts. SOMA corpus expansion and further EgoDex dataset expansion were stopped at the user's request.
+
+## Source Ego videos
+
+Both manipulation pages display three numbered source-video tiles, one per scene slot. Clips start together on the shared relative timeline, regardless of their original recording offsets. Each video follows its own clip mapping. Short clips stop at their final frame together with their robot; replacement changes only that slot's source binding. Click a tile to enlarge it; pause, frame steps, timeline seeks and speed remain shared. Videos remain muted. During conversion the new video does not play against the previous robot result.
+
+The current catalog has verified media bindings for 297 EgoDex entries (including both historical excerpts) and 17 Nymeria windows. Missing videos are explicitly marked unavailable. EgoDex copies/prefixes are matched against original camera and both wrist pose arrays, then checked against paired video frame counts and 30 Hz cadence. Nymeria uses existing verified RGB device-timestamp receipts plus Xsens timecode mappings and a per-output-frame video time lookup. No filename-only timestamp guess is accepted. This is not full video coverage of the 500 excerpts.
+
+Source media is served only by configured clip ID, with byte-range seeking. Original mp4v videos are not Chromium compatible: the server generates a local H.264 preview cache on first use, preserving cadence and timestamps, without overwriting originals. First load may take a few seconds. Repeated slots reuse that cache. Cache path and raw source paths are omitted from the public video descriptor.
+
+Validation: 45 Python tests pass, including metadata isolation, source-range extraction, export basis, multi-window joining and video byte-range serving. Frontend TypeScript/Vite build passes. Browser verification covered source-video playback, pause, next frame, enlargement, three slots with two different sources, and the short clip stopping at 4.9667 s while the long clips reach 14.9667 s. This verifies viewer binding and timing, not robot motion quality or physics.

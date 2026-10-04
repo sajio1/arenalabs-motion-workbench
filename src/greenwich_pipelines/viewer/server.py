@@ -1,13 +1,14 @@
 """Loopback-only Motion Lab service. Explicit catalog paths, no cloud work."""
-import argparse,json,os,subprocess,sys,threading,uuid
+import argparse,json,os,subprocess,sys,threading,uuid,hashlib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from fastapi import FastAPI,HTTPException,UploadFile,File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from .export import array_json,robot_model,motion_payload
+from .export import array_json,robot_model,motion_payload,join_playback_segments
 from .uploads import unpack_robot,MAX_BYTES
+from .sources import prepare_source
 
 PAGES={'locomotion':'fullbody','localmanipulation':'nymeria','manipulation':'gento'}
 
@@ -19,10 +20,36 @@ def create_app(config_path):
     config_path=Path(config_path).resolve();config=json.loads(config_path.read_text(encoding='utf-8'))
     root=config_path.parent.parent;storage=Path(config['storage']).resolve();storage.mkdir(parents=True,exist_ok=True)
     robots={r['id']:r for r in config['robots']};clips={c['id']:c for c in config['clips']}
-    jobs={};lock=threading.Lock();pool=ThreadPoolExecutor(max_workers=1);app=FastAPI(title='arenalab Motion Lab')
+    jobs={};lock=threading.Lock();video_lock=threading.Lock();pool=ThreadPoolExecutor(max_workers=1);app=FastAPI(title='arenalab Motion Lab')
     app.state.executor=pool
     def public_robot(row):return {k:v for k,v in row.items() if k in {'id','label','kind','pages','model_url','neutral_url','status','report','conversion_ready'}}
-    def public_clip(row):return {k:v for k,v in row.items() if k in {'id','page','title','family','description','frames','fps','duration','source_name','source_format','preview','cache','version','metadata'}}
+    def public_clip(row):
+        result={k:v for k,v in row.items() if k in {'id','page','title','family','description','frames','fps','duration','source_name','source_format','preview','cache','version','metadata'}}
+        if row.get('video'):
+            result['video']={k:v for k,v in row['video'].items() if k not in {'path','browser_transcode'}}
+            result['video']['url']=f"/api/source-video/{row['id']}"
+        return result
+    @app.get('/api/source-video/{clip_id}')
+    def source_video(clip_id:str):
+        clip=clips.get(clip_id)
+        if not clip or not clip.get('video'):raise HTTPException(404,'Source video unavailable')
+        path=Path(clip['video']['path'])
+        if not path.is_file():raise HTTPException(404,'Source video unavailable')
+        if clip['video'].get('browser_transcode'):
+            # Source MP4s can contain mp4v, which Chromium cannot decode. Preserve
+            # frame cadence and timestamps; cache a browser-compatible H.264 copy.
+            import imageio_ffmpeg
+            key=hashlib.sha256(f'{path}:{path.stat().st_mtime_ns}:{path.stat().st_size}'.encode()).hexdigest()[:24]
+            destination=storage/'source-video'/f'{key}.mp4'
+            with video_lock:
+                if not destination.exists():
+                    destination.parent.mkdir(exist_ok=True)
+                    partial=destination.with_suffix('.partial.mp4')
+                    result=subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(),'-v','error','-y','-i',str(path),'-map','0:v:0','-an','-vf','scale=960:-2','-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-fps_mode','passthrough','-movflags','+faststart',str(partial)],capture_output=True)
+                    if result.returncode:raise HTTPException(500,'Source video encoding failed')
+                    partial.replace(destination)
+            path=destination
+        return FileResponse(path,media_type='video/mp4')
     @app.middleware('http')
     async def local_only(request,call_next):
         host=request.headers.get('host','').split(':')[0]
@@ -39,7 +66,7 @@ def create_app(config_path):
         try:
             job['status']='running';folder=storage/'jobs'/jobid;folder.mkdir(parents=True)
             roster=folder/'robots.json';array_json(roster,[robot['pipeline_row']])
-            spec=dict(schema='greenwich.job.v1',id='viewer_'+jobid,pipeline=PAGES[clip['page']],source=clip['source'],robots=str(roster),runtime=config['runtime'],output=str(folder/'output'),fps=30)
+            spec=dict(schema='greenwich.job.v1',id='viewer_'+jobid,pipeline=PAGES[clip['page']],source=str(prepare_source(clip,folder)),robots=str(roster),runtime=config['runtime'],output=str(folder/'output'),fps=30)
             if 'max_seconds' in clip:spec['max_seconds']=clip['max_seconds']
             array_json(folder/'job.json',spec)
             with (folder/'run.log').open('w',encoding='utf-8') as log:
@@ -47,8 +74,8 @@ def create_app(config_path):
             if result.returncode:raise RuntimeError('Conversion failed. Logs and intermediate results are retained in the local job directory.')
             report=json.loads((folder/'output/result.json').read_text(encoding='utf-8'))
             motions=[a for a in report['artifacts'] if a['kind']=='motion']
-            if len(motions)!=1:raise ValueError('Viewer clip must contain one motion segment')
-            payload=motion_payload(robot['pipeline_row'],folder/'output'/motions[0]['path'],PAGES[clip['page']])
+            motions.sort(key=lambda a:a.get('clip',''))
+            payload=join_playback_segments(motion_payload(robot['pipeline_row'],folder/'output'/a['path'],PAGES[clip['page']]) for a in motions)
             payload.update(clip_id=clip['id'],robot_id=robot['id'],version='Current pipeline · Motion quality not evaluated')
             export=folder/'playback.json';array_json(export,payload);url=f'/assets/jobs/{jobid}/playback.json'
             with lock:clip.setdefault('cache',{})[robot['id']]=url;job.update(status='completed',url=url)

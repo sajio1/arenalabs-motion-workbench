@@ -32,7 +32,7 @@ export class Stage {
     });
     new ResizeObserver(()=>this.resize()).observe(host);this.resize();
   }
-  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.setViewOffset(w,h,w>760?-145:-95,0,w,h);this.camera.updateProjectionMatrix();}
+  resize(){const w=this.host.clientWidth,h=this.host.clientHeight;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.zoom=w>1300?1:.8;this.camera.setViewOffset(w,h,w>1600?-237:w>760?-218:-95,0,w,h);this.camera.updateProjectionMatrix();}
   async asset(robot:Robot){
     if(!robot.model_url||!robot.neutral_url)throw new Error('这个模型缺少可预览的网格资源');
     if(!this.cache.has(robot.id))this.cache.set(robot.id,Promise.all([this.loader.loadAsync(robot.model_url),fetch(robot.neutral_url).then(r=>r.json())]).then(([g,n])=>({model:g.scene,neutral:n})));
@@ -68,7 +68,7 @@ export class Stage {
     v.model.traverse(o=>{if(o instanceof THREE.Mesh)(o.material as THREE.MeshStandardMaterial).wireframe=this.wireframe;});});}
   reset(){this.camera.position.set(1.3,2.8,9.8);this.controls.target.set(0,.85,0);this.controls.update();}
   frame(time:number){const now=performance.now();const dt=Math.min((now-this.last)/1000,.1);this.last=now;
-    if(this.autoRotate){const relative=this.camera.position.clone().sub(this.controls.target);relative.applyAxisAngle(new THREE.Vector3(0,1,0),dt*.045);this.camera.position.copy(relative.add(this.controls.target));}
+    if(this.autoRotate){const relative=this.camera.position.clone().sub(this.controls.target);relative.applyAxisAngle(new THREE.Vector3(0,1,0),dt*.09);this.camera.position.copy(relative.add(this.controls.target));}
     this.controls.update();this.instances.forEach((_,i)=>this.pose(i,time));this.renderer.render(this.scene,this.camera);
   }
   screenAnchor(i:number){const v=this.anchors[i].clone().add(new THREE.Vector3(0,.17,0)).project(this.camera);return{x:(v.x+1)/2*this.host.clientWidth,y:(1-v.y)/2*this.host.clientHeight};}

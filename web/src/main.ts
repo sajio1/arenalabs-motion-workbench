@@ -19,14 +19,12 @@ app.innerHTML=`<div id="viewport"></div>
  <aside class="sidebar"><div class="section-title">MOTION LIBRARY<span id="catalog-count" class="count">—</span></div>
  <label class="searchbox">${icon('search')}<input id="search" placeholder="Search motions, families…" aria-label="Search motions"/></label><div id="catalog" class="catalog"></div>
  <div class="drag-hint">${icon('mouse-pointer-2')}Drag a motion into a scene slot</div><section id="metadata" class="metadata"></section></aside>
- <div class="top-tools"><button id="pause" aria-label="Play or pause">${icon('pause')}<span>Pause</span><kbd>Space</kbd></button><span class="divider"></span>
- <button id="orbit" class="on" aria-pressed="true" aria-label="Auto orbit">${icon('orbit')}<span>Orbit</span><kbd>O</kbd></button><button id="reset" aria-label="Reset view and time">${icon('rotate-ccw')}<span>Reset</span><kbd>R</kbd></button></div>
+ <div class="top-tools"><button id="orbit" class="on" aria-pressed="true" aria-label="Auto orbit">${icon('orbit')}<span>Orbit</span><kbd>O</kbd></button><button id="reset" aria-label="Reset view and time">${icon('rotate-ccw')}<span>Reset</span><kbd>R</kbd></button></div>
  <section class="display-panel"><div class="small-title">DISPLAY</div>${[['mesh','Robot mesh',true],['skeleton','Skeleton',false],['targets','Input traces',false],['wireframe','Wireframe',false]].map(([key,label,checked])=>`<div class="switch-row"><span>${label}</span><button class="switch" role="switch" aria-label="${label}" aria-checked="${checked}" data-display="${key}"></button></div>`).join('')}</section>
- <div class="scene-heading"><div class="eyebrow"><span class="page-index">${info.index}</span>ARENALAB / ${page.toUpperCase()}</div><h1>${info.title}</h1><p>${info.source}</p></div>
- <div id="slots" class="slot-overlay"></div>
+ <div id="slots" class="slot-overlay"></div><section id="source-videos" class="source-videos" hidden></section>
  <div class="robot-area"><div id="robot-context" class="robot-context"></div><button id="robot-toggle" class="robot-button" aria-expanded="false" aria-label="Choose robot"></button><div id="robot-tray" class="robot-tray" hidden></div><div id="robot-inspect" class="robot-inspect"></div></div>
  <div class="transport"><button id="play" class="play" aria-label="Play or pause">${icon('pause')}</button><button id="prev" class="step" aria-label="Previous frame">${icon('skip-back')}</button><span id="time" class="time">0.00 / 0.00</span><input id="timeline" class="timeline" type="range" min="0" max="1" step="0.0333333333333333" value="0" aria-label="Playback time"/><button id="next" class="step" aria-label="Next frame">${icon('skip-forward')}</button><span class="divider"></span><select id="speed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></div>
- <div id="frame-label" class="frame-label">30 HZ · SHARED TIMELINE · PHYSICAL SCALE</div><div class="footer">ANY MOTION. YOUR ROBOT.</div><div class="notice"><span class="dot"></span>LOCAL WORKSPACE · Motion quality not evaluated</div>
+ <div id="frame-label" class="frame-label">30 HZ · SHARED TIMELINE · PHYSICAL SCALE</div><div class="notice"><span class="dot"></span>LOCAL WORKSPACE · Motion quality not evaluated</div>
  <div id="toast" class="toast" hidden role="status"></div><div id="modal-root"></div><div id="boot" class="loading-screen">Loading your motion workspace…</div>`;
 const el=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 function refreshIcons(){createIcons({icons});}
@@ -57,7 +55,7 @@ function chooseRobot(id:string){const robot=catalog.robots.find(r=>r.id===id)!;i
 }
 function renderCatalog(){const matches=visibleClips(catalog.clips,el<HTMLInputElement>('search').value) as Clip[];el('catalog-count').textContent=String(matches.length).padStart(2,'0');
  const groups=new Map<string,Clip[]>();matches.forEach(c=>groups.set(c.family,[...(groups.get(c.family)||[]),c]));
- el('catalog').innerHTML=Array.from(groups).map(([family,clips])=>`<details class="family" open><summary>${icon('chevron-down')}${esc(family)}<span class="number">${clips.length}</span></summary>${clips.map(c=>`<button class="clip ${selectedClip?.id===c.id?'selected':''}" draggable="false" data-clip="${c.id}" aria-label="Motion ${esc(c.title)}"><span class="clip-thumb">${icon(info.icon)}</span><span><strong>${esc(c.title)}</strong><small>${c.duration.toFixed(2)} s &nbsp;·&nbsp; ${c.fps} Hz</small></span>${icon('grip-vertical','grip')}</button>`).join('')}</details>`).join('')||'<div class="empty-list">No matching motions</div>';
+ el('catalog').innerHTML=Array.from(groups).map(([family,clips])=>`<details class="family" open><summary>${icon('chevron-down')}${esc(family)}<span class="number">${clips.length}</span></summary>${clips.map(c=>`<button class="clip ${selectedClip?.id===c.id?'selected':''}" draggable="false" data-clip="${c.id}" title="${esc(c.title)}" aria-label="Motion ${esc(c.title)}"><span><strong>${esc(c.title)}</strong><small>${c.duration.toFixed(2)} s &nbsp;·&nbsp; ${c.fps} Hz</small></span>${icon('grip-vertical','grip')}</button>`).join('')}</details>`).join('')||'<div class="empty-list">No matching motions</div>';
  document.querySelectorAll<HTMLButtonElement>('[data-clip]').forEach(b=>{
    b.onclick=()=>{if(suppressClick)return;selectedClip=catalog.clips.find(c=>c.id===b.dataset.clip);renderMetadata();renderCatalog();};
    b.ondblclick=()=>{const clip=catalog.clips.find(c=>c.id===b.dataset.clip)!;const index=selected??slots.findIndex(s=>!s.clip);if(index<0){toast('All three slots are occupied. Select a slot to replace.');return;}void assign(index,clip,selected===null?defaultRobot:slots[index].robot);};
@@ -97,7 +95,27 @@ function renderSlots(){
    node.ondragleave=()=>node.classList.remove('drag-over');node.ondrop=e=>{e.preventDefault();node.classList.remove('drag-over');const id=e.dataTransfer?.getData('application/x-greenwich-clip');const clip=catalog.clips.find(c=>c.id===id);dragging=false;if(clip)void assign(i,clip,slots[i].clip?slots[i].robot:defaultRobot);else renderSlots();};
  });
  document.querySelectorAll<HTMLButtonElement>('[data-remove]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=Number(b.dataset.remove);slots[i].token++;slots[i].clip=undefined;slots[i].payload=undefined;slots[i].status='empty';slots[i].message=undefined;stage.remove(i);selected=null;updateDuration();renderSlots();renderRobot();renderMetadata();persist();});
- refreshIcons();positionLabels();
+ refreshIcons();positionLabels();renderVideos();
+}
+function renderVideos(){
+ const strip=el('source-videos');strip.hidden=page==='locomotion';if(strip.hidden)return;
+ const key=slots.map(s=>s.clip?.id||'').join('|');if(strip.dataset.key===key)return;strip.dataset.key=key;
+ strip.innerHTML=slots.map(s=>`<button class="source-video-tile" data-video-slot="${s.index}" aria-label="Enlarge source video for slot ${s.index+1}"><header><b>0${s.index+1}</b><span>${esc(s.clip?.title||'Empty slot')}</span><small>EGO</small></header>${s.clip?.video?`<video muted playsinline preload="metadata" src="${esc(s.clip.video.url)}" data-source-slot="${s.index}"></video>`:`<div class="video-missing">${s.clip?'Source video unavailable':'Drop a motion to compare'}</div>`}</button>`).join('');
+ strip.querySelectorAll<HTMLButtonElement>('[data-video-slot]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.videoSlot),s=slots[i];if(!s.clip?.video){toast('No verified source video for this clip');return;}selectSlot(i);modal(`<div class="modal-head"><h2>Slot 0${i+1} · Source Ego</h2><button id="modal-close" aria-label="Close">${icon('x')}</button></div><video class="source-video-large" muted playsinline preload="metadata" src="${esc(s.clip.video.url)}" data-source-slot="${i}"></video><p class="helper">${esc(s.clip.video.sync_method)} · Shared timeline</p>`);});
+ strip.querySelectorAll('video').forEach(v=>v.addEventListener('error',()=>{v.replaceWith(Object.assign(document.createElement('div'),{className:'video-missing',textContent:'Source video could not be loaded'}));}));
+}
+function syncVideos(){
+ document.querySelectorAll<HTMLVideoElement>('video[data-source-slot]').forEach(v=>{
+   const slot=slots[Number(v.dataset.sourceSlot)],clip=slot?.clip,descriptor=clip?.video;
+   if(!clip||!descriptor||!slot.payload||slot.status!=='ready'){v.pause();return;}
+   const local=Math.min(time,slot.payload.duration,clip.duration),frame=Math.min(Math.floor(local*30),clip.frames-1);
+   const target=descriptor.frame_times?.[frame]??descriptor.start_seconds+local;
+   const bounded=Number.isFinite(v.duration)?Math.min(target,Math.max(0,v.duration-1/30)):target;
+   if(v.readyState>=1&&!v.seeking&&Math.abs(v.currentTime-bounded)>(playing?.08:.012))v.currentTime=bounded;
+   v.playbackRate=speed;
+   const run=playing&&time<Math.min(slot.payload.duration,clip.duration);
+   if(run&&v.paused)void v.play().catch(()=>{});else if(!run&&!v.paused)v.pause();
+ });
 }
 function positionLabels(){document.querySelectorAll<HTMLElement>('[data-slot]').forEach(n=>{const i=Number(n.dataset.slot);const p=stage.screenAnchor(i);n.style.left=`${p.x}px`;n.style.top=`${Math.min(p.y+16,innerHeight-180)}px`;});}
 function selectSlot(i:number){selected=i;selectedClip=slots[i].clip||selectedClip;renderSlots();renderRobot();renderMetadata();renderCatalog();}
@@ -118,7 +136,7 @@ async function assign(i:number,clip:Clip,robot:Robot){
  }catch(error){if(token!==slot.token)return;slot.status='failed';slot.message=(error as Error).message;if(previous.payload){slot.clip=previous.clip;slot.robot=previous.robot;slot.payload=previous.payload;slot.message+=' · Previous motion retained';}renderSlots();renderRobot();renderMetadata();toast(slot.message||'Loading failed');}
 }
 function syncOrbit(){el('orbit').classList.toggle('on',stage.autoRotate);el('orbit').setAttribute('aria-pressed',String(stage.autoRotate));}
-function syncPlay(){el('pause').innerHTML=`${icon(playing?'pause':'play')}<span>${playing?'Pause':'Play'}</span><kbd>Space</kbd>`;el('play').innerHTML=icon(playing?'pause':'play');refreshIcons();}
+function syncPlay(){el('pause')&&(el('pause').innerHTML=`${icon(playing?'pause':'play')}<span>${playing?'Pause':'Play'}</span><kbd>Space</kbd>`);el('play').innerHTML=icon(playing?'pause':'play');refreshIcons();}
 function togglePlay(){playing=!playing;syncPlay();}
 function step(direction:number){playing=false;time=Math.max(0,Math.min(duration,time+direction/30));stage.autoRotate=false;syncPlay();syncOrbit();}
 function modal(content:string){el('modal-root').innerHTML=`<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true">${content}</section></div>`;refreshIcons();el('modal-close')?.addEventListener('click',()=>el('modal-root').innerHTML='');document.querySelector('.modal-backdrop')?.addEventListener('click',e=>{if(e.target===e.currentTarget)el('modal-root').innerHTML='';});}
@@ -135,7 +153,7 @@ async function uploadRobot(file:File){const result=el('upload-result');result.te
  }catch(error){result.textContent=(error as Error).message;}}
 el('pipeline-toggle').onclick=()=>{const menu=el('pipeline-menu');menu.hidden=!menu.hidden;el('pipeline-toggle').setAttribute('aria-expanded',String(!menu.hidden));};
 el('robot-toggle').onclick=()=>{robotTrayOpen=!robotTrayOpen;renderRobot();};
-el('search').addEventListener('input',()=>renderCatalog());el('pause').onclick=togglePlay;el('play').onclick=togglePlay;el('prev').onclick=()=>step(-1);el('next').onclick=()=>step(1);
+el('search').addEventListener('input',()=>renderCatalog());el('play').onclick=togglePlay;el('prev').onclick=()=>step(-1);el('next').onclick=()=>step(1);
 el('orbit').onclick=()=>{stage.autoRotate=!stage.autoRotate;syncOrbit();};el('reset').onclick=()=>{stage.reset();time=0;persist();};
 el<HTMLInputElement>('timeline').oninput=e=>{time=Number((e.target as HTMLInputElement).value);playing=false;stage.autoRotate=false;syncPlay();syncOrbit();};
 el<HTMLSelectElement>('speed').onchange=e=>speed=Number((e.target as HTMLSelectElement).value);
@@ -144,7 +162,7 @@ document.addEventListener('keydown',e=>{if((e.target as HTMLElement)?.matches('i
 el('viewport').addEventListener('click',e=>{const hit=stage.pick(e.clientX,e.clientY);if(hit!==null){selectSlot(hit);return;}selected=null;if(catalog){renderRobot();renderSlots();renderMetadata();}});
 document.addEventListener('dragover',e=>{if(e.dataTransfer?.types.includes('application/x-greenwich-clip')){e.preventDefault();dragging=true;}});
 function animate(){requestAnimationFrame(animate);const now=performance.now();const dt=Math.min((now-last)/1000,.1);last=now;if(playing&&duration>0){time+=dt*speed;if(time>duration)time=0;}
- stage.frame(time);positionLabels();el('time').textContent=`${time.toFixed(2)} / ${duration.toFixed(2)}`;el<HTMLInputElement>('timeline').value=String(time);el('frame-label').textContent=`FRAME ${Math.floor(time*30).toString().padStart(3,'0')} · 30 HZ · SHARED TIMELINE · PHYSICAL SCALE`;
+ stage.frame(time);positionLabels();syncVideos();el('time').textContent=`${time.toFixed(2)} / ${duration.toFixed(2)}`;el<HTMLInputElement>('timeline').value=String(time);el('frame-label').textContent=`FRAME ${Math.floor(time*30).toString().padStart(3,'0')} · 30 HZ · SHARED TIMELINE · PHYSICAL SCALE`;
 }
 async function boot(){try{catalog=await request(`/api/catalog/${page}`);defaultRobot=catalog.robots.find(r=>r.id==='g1')||catalog.robots[0];if(!defaultRobot)throw new Error('No robot configured for this pipeline');
  slots=Array.from({length:3},(_,index)=>({index,robot:defaultRobot,status:'empty',token:0}));
