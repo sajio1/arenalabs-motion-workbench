@@ -44,6 +44,6 @@ def unpack_robot(data,filename,folder):
     compiler.set('discardvisual','false');compiler.set('fusestatic','false')
     normalized=folder/'resolved.urdf';ET.ElementTree(root).write(normalized,encoding='utf-8',xml_declaration=True)
     report=dict(links=len(links),joints=len(joints),missing_meshes=missing,mimic_joints=[j.get('name') for j in joints if j.find('mimic') is not None],
-        conversion_ready=False,status='needs_metadata',message='模型预览不代表可以转换。还需要语义端点、掌框架/TCP 和机械描述器；闭链需显式约束。')
-    if missing:report.update(status='missing_assets',message='缺少 mesh，请上传包含 URDF 和网格的 ZIP。')
+        conversion_ready=False,status='needs_metadata',message='Preview only. Conversion requires semantic endpoints, palm/TCP frames and a mechanical descriptor; closed chains require explicit constraints.')
+    if missing:report.update(status='missing_assets',message='Meshes missing. Upload a ZIP containing the URDF and meshes.')
     return normalized,root.get('name','Uploaded robot'),report

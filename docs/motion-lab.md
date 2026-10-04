@@ -1,4 +1,4 @@
-# Motion Lab
+# arenalab Motion Lab
 
 本地 Three.js + FastAPI 网页，直接调用仓库内三条管线。没有修改模型、精修权重或生产轨迹。
 
@@ -40,10 +40,14 @@ python -X utf8 -m greenwich_pipelines.viewer.server --config configs/viewer.loca
 
 ## 本次验证
 
-- Python 全套 41 项通过；前端状态 3 项通过；TypeScript/Vite 生产构建通过。
+- Python 全套 42 项通过；前端状态 3 项通过；TypeScript/Vite 生产构建通过。
 - 浏览器实测三页面真实模型加载与播放，Nymeria 动作拖入、替换及逐卡槽换机器人；轮式拖入第三动作；SOMA 实际转换结果回放。
 - 实际 SOMA/G1 慢跑转换生成 147 帧、30 Hz，完成原 100+100 步管线。
 - 上传测试验证模型导出、注册表重载、ZIP 路径越界拒绝和本地绝对 mesh 引用拒绝。
 - 根坐标基回归用独立 MuJoCo FK 验证位置与朝向。
 
-这些验证证明界面与调用链工作，不代表动作质量通过。初始库包含 10 条抽样动作，其中 Nymeria、Gento 为标明版本的历史结果，行走样本仅 10 帧；所有结果均显示未做动作质量验收。未运行动力学仿真。
+这些验证证明界面与调用链工作，不代表动作质量通过。当前库包含 37 条真实动作（31 SOMA、4 Nymeria、2 EgoDex），新增 SOMA 为源动作，首次拖入尚无缓存的机器人组合会发起转换，其中 Nymeria、Gento 为标明版本的历史结果，行走样本仅 10 帧；所有结果均显示未做动作质量验收。未运行动力学仿真。
+
+## 品牌与元数据
+
+界面统一英文，使用提供的 arenalab logo、papaya 橙 #FF8906 与炭黑底色。Metadata 接口支持任意 JSON 对象；面板动态渲染实际字段，嵌套对象、长列表可展开，缺失字段不显示。输入数据与机器人结果分开标示。新增源动作分类标注为 filename-derived；3 条未通过现有 FK/bind 检查的片段不加入动作库，原因保存在 .cache/motion-lab/catalog-skipped.json。没有为扩充目录放宽生产适配器检查。

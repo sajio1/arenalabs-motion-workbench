@@ -47,3 +47,12 @@ def test_descriptor_root_basis_is_conjugated_in_native_playback(tmp_path):
     assert np.allclose(payload['positions'][0],data.geom_xpos[payload['geom_ids']]@C.T,atol=1e-7)
     actual=Rotation.from_quat(payload['quaternions'][0]).as_matrix()
     assert np.allclose(actual,C@data.geom_xmat[payload['geom_ids']].reshape(-1,3,3),atol=1e-7)
+
+def test_catalog_preserves_source_specific_nested_metadata(tmp_path):
+    config=tmp_path/'configs/viewer.local.json';config.parent.mkdir()
+    metadata={'Capture device':'Xsens','Contacts':{'heel':12},'Channels':['wrist','ankle']}
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',robots=[],clips=[dict(id='a',page='localmanipulation',metadata=metadata,source='private/path')])) )
+    with TestClient(create_app(config)) as client:
+        clip=client.get('/api/catalog/localmanipulation').json()['clips'][0]
+        assert clip['metadata']==metadata
+        assert 'source' not in clip
