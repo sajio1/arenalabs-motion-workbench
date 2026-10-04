@@ -50,7 +50,7 @@ validation/                 # 本次整合验证报告
 
 只有 30 Hz。两个 100 步只属于 fullbody。Nymeria 默认 900 帧独立窗口，不承诺窗口接缝连续。Gento 是固定底盘上身适配，不包含轮式行驶规划。手指地标只用于定义腕朝向，不生成手指动作。
 
-## 结果与未来 Viser
+## 结果与 Motion Lab
 
 每个任务有独立输出目录。`result.json` 是未来网页读取的统一索引：相对 artifact 路径、机器人、片段、帧数、坐标轴、单位、关节编码和哈希。原生 NPZ 保持原编码，不能把不同管线的 `q`/`qpos` 混读。
 
@@ -58,6 +58,6 @@ validation/                 # 本次整合验证报告
 
 默认 `accepted=null`、`quality_status=not_evaluated`。原求解器历史报告中的 `accepted=false` 不会被整合层改成通过。可选 `acceptance: "your_module:evaluate"` 接收最终 result.json，并返回 `{accepted: bool, ...}`。未启用严格 mean/P95 指标，也没有新增早停或总 loss 门槛。结构检查、有限值检查、Gento 独立 FK 一致性检查不代表运动质量认证。
 
-目前没有网页或新 viewer。接口先落在文件和 Python job 层，后续按指令接入 Viser。
+已加入本地 Motion Lab 网页：三个独立页面、共享三卡槽 3D 场景、动作拖入与替换、逐卡槽机器人选择、URDF/ZIP 上传检查。启动与边界见 [Motion Lab](docs/motion-lab.md)。
 
 阅读顺序：[架构](docs/architecture.md) → [输入输出契约](docs/contracts.md) → [迁移范围与限制](docs/migration.md) → [验证报告](validation/README.md)。

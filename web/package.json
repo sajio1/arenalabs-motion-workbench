@@ -1,0 +1,1 @@
+{"name":"greenwich-motion-lab","version":"0.1.0","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1","build":"tsc --noEmit && vite build --base=/web/","test":"node --test tests/*.test.mjs"},"dependencies":{"three":"^0.180.0","lucide":"^0.468.0"},"devDependencies":{"@types/three":"^0.180.0","typescript":"^5.9.0","vite":"^7.1.0"}}

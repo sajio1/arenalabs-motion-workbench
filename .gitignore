@@ -13,4 +13,5 @@ weights/
 *.safetensors
 *.pt
 .env
+web/node_modules/
 validation/local-*.json
