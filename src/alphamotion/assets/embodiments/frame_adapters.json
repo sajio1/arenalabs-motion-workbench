@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "adapters": {
+    "bones_seed_soma_body": {
+      "source": "BoneSeed SOMA body cache v1 (BVH-derived global frame)",
+      "target": "AlphaMotion model-canonical frame used by paired G1 data",
+      "matrix": [
+        [-0.0540047213435173, 0.0022691157646477222, -0.998538076877594],
+        [0.0014299375470727682, 0.999996542930603, 0.002195093547925353],
+        [0.9985396265983582, -0.0013093017041683197, -0.05400777980685234]
+      ],
+      "calibration_clip": "body_check_001__A548",
+      "calibration_frames": 942,
+      "calibration_split": "disjoint from the nine walk/run/jump evaluation clips",
+      "residual_deg_mean": 2.198475005112692,
+      "residual_deg_p95": 7.678605699438517,
+      "world_root_policy": "Use official paired G1 translation for paired evaluation; rotate a standalone SOMA root trajectory explicitly."
+    }
+  }
+}

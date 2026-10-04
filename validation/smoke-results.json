@@ -1,0 +1,91 @@
+{
+  "scope": "Real source excerpts; migration and numerical integrity only, no simulation/generalization/quality certification",
+  "checks": [
+    {
+      "run": "fullbody_smoke",
+      "state": "completed",
+      "pipeline": "fullbody",
+      "quality_status": "not_evaluated",
+      "fps": 30,
+      "motions": [
+        {
+          "robot": "g1",
+          "clip": "walk",
+          "frames": 10,
+          "coordinate_frame": "right-handed-y-up",
+          "position_unit": "cm",
+          "joint_encoding": "descriptor-angle-slots"
+        },
+        {
+          "robot": "h2",
+          "clip": "walk",
+          "frames": 10,
+          "coordinate_frame": "right-handed-y-up",
+          "position_unit": "cm",
+          "joint_encoding": "descriptor-angle-slots"
+        }
+      ],
+      "artifact_hashes_verified": true
+    },
+    {
+      "run": "nymeria_smoke_v2",
+      "state": "completed",
+      "pipeline": "nymeria",
+      "quality_status": "not_evaluated",
+      "fps": 30,
+      "motions": [
+        {
+          "robot": "unitree_g1_29dof",
+          "clip": "nymeria_smoke__f0000000",
+          "frames": 4,
+          "coordinate_frame": "right-handed-y-up",
+          "position_unit": "cm",
+          "joint_encoding": "descriptor-angle-slots"
+        }
+      ],
+      "artifact_hashes_verified": true,
+      "optimizer_iterations": 1200,
+      "iteration_limit_reached": true,
+      "wrist_position_max_mm": [
+        2.4920262725212905,
+        2.7198662074060556
+      ]
+    },
+    {
+      "run": "gento_smoke",
+      "state": "completed",
+      "pipeline": "gento",
+      "quality_status": "not_evaluated",
+      "fps": 30,
+      "motions": [
+        {
+          "robot": "skye",
+          "clip": "gento_smoke",
+          "frames": 6,
+          "coordinate_frame": "right-handed-z-up",
+          "position_unit": "m",
+          "joint_encoding": "mujoco-qpos-wxyz-free-root"
+        },
+        {
+          "robot": "luna",
+          "clip": "gento_smoke",
+          "frames": 6,
+          "coordinate_frame": "right-handed-z-up",
+          "position_unit": "m",
+          "joint_encoding": "mujoco-qpos-wxyz-free-root"
+        }
+      ],
+      "artifact_hashes_verified": true,
+      "independent_fk": [
+        {
+          "saved_qpos_tcp_max_disagreement_m": 0.0,
+          "base_max_change": 0.0
+        },
+        {
+          "saved_qpos_tcp_max_disagreement_m": 0.0,
+          "base_max_change": 0.0
+        }
+      ]
+    }
+  ]
+}

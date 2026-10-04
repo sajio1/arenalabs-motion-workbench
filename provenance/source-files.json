@@ -1,0 +1,1545 @@
+{
+  "schema": "greenwich.migration.v1",
+  "files": [
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\adapters.py",
+      "destination": "src/greenwich_motion_sdk/adapters.py",
+      "source_sha256": "d69c26597e4717b03bbdd2df5e593c94d8f8bb7b3134c9c1b9ed1df067c81091",
+      "destination_sha256": "d69c26597e4717b03bbdd2df5e593c94d8f8bb7b3134c9c1b9ed1df067c81091",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\body_coordination.py",
+      "destination": "src/greenwich_motion_sdk/body_coordination.py",
+      "source_sha256": "69d39f263dee61ee8040833fd2fc17f01bf698eaf122ef48984b6642106b2054",
+      "destination_sha256": "69d39f263dee61ee8040833fd2fc17f01bf698eaf122ef48984b6642106b2054",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\body_coordination_helpers.py",
+      "destination": "src/greenwich_motion_sdk/body_coordination_helpers.py",
+      "source_sha256": "fd9eeabf9ce591645b95cf0b8ae7788d86ec7dff1e7cc8ec3d03fcc6f613f58c",
+      "destination_sha256": "fd9eeabf9ce591645b95cf0b8ae7788d86ec7dff1e7cc8ec3d03fcc6f613f58c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\card_gallery.py",
+      "destination": "src/greenwich_motion_sdk/card_gallery.py",
+      "source_sha256": "a08e0a86dae934e45aa0700b1afda1d7cc061a8c49c1a87dc441d64a8ab38137",
+      "destination_sha256": "a08e0a86dae934e45aa0700b1afda1d7cc061a8c49c1a87dc441d64a8ab38137",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\compact.py",
+      "destination": "src/greenwich_motion_sdk/compact.py",
+      "source_sha256": "929186a6f94a89ecbe2e22f72c9baff43141404d38c73854d56761ec6e10c5bb",
+      "destination_sha256": "929186a6f94a89ecbe2e22f72c9baff43141404d38c73854d56761ec6e10c5bb",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\contact_labels.py",
+      "destination": "src/greenwich_motion_sdk/contact_labels.py",
+      "source_sha256": "59e80263c3f153864637b99619a3a2ad344efee64771c50e526282687797c08f",
+      "destination_sha256": "59e80263c3f153864637b99619a3a2ad344efee64771c50e526282687797c08f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\corpus_screen.py",
+      "destination": "src/greenwich_motion_sdk/corpus_screen.py",
+      "source_sha256": "41a3c3d8e038b47596723f34ffb71a80abacdb1e3009b77b7baff854a381a35a",
+      "destination_sha256": "41a3c3d8e038b47596723f34ffb71a80abacdb1e3009b77b7baff854a381a35a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\corpus_support.py",
+      "destination": "src/greenwich_motion_sdk/corpus_support.py",
+      "source_sha256": "889678fb3ab0fec52342b520a56b6bb623da206f86d310f2b0b8bb6a7d9e51b3",
+      "destination_sha256": "889678fb3ab0fec52342b520a56b6bb623da206f86d310f2b0b8bb6a7d9e51b3",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\dataset_metadata.py",
+      "destination": "src/greenwich_motion_sdk/dataset_metadata.py",
+      "source_sha256": "1252e2933d5274eea6120a8f562156b44eff964d4713da878da7f686786deb6e",
+      "destination_sha256": "1252e2933d5274eea6120a8f562156b44eff964d4713da878da7f686786deb6e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\evaluation.py",
+      "destination": "src/greenwich_motion_sdk/evaluation.py",
+      "source_sha256": "8f5863ca5eaab971f0c5f58021f877e63c208061b9b296bcb545fea51d042649",
+      "destination_sha256": "8f5863ca5eaab971f0c5f58021f877e63c208061b9b296bcb545fea51d042649",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\fixed_support.py",
+      "destination": "src/greenwich_motion_sdk/fixed_support.py",
+      "source_sha256": "62927b03105d9bf59230cf5d2363423784ab538f35c0a21d98628f5b1e754336",
+      "destination_sha256": "62927b03105d9bf59230cf5d2363423784ab538f35c0a21d98628f5b1e754336",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\kimodo_foot_skate.py",
+      "destination": "src/greenwich_motion_sdk/kimodo_foot_skate.py",
+      "source_sha256": "c37d43126fac37f815c329ce51d913dc7c4a285503712bccf06a0da370d68e38",
+      "destination_sha256": "c37d43126fac37f815c329ce51d913dc7c4a285503712bccf06a0da370d68e38",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\locomotion_audit.py",
+      "destination": "src/greenwich_motion_sdk/locomotion_audit.py",
+      "source_sha256": "6f48b3fe187fe78df86f1e1487eedb5cc9a576b70e38611d882723ee96f643cd",
+      "destination_sha256": "6f48b3fe187fe78df86f1e1487eedb5cc9a576b70e38611d882723ee96f643cd",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\motion.py",
+      "destination": "src/greenwich_motion_sdk/motion.py",
+      "source_sha256": "ccb84a297948fed49395ae3e579691709b8e8edb4c82bc93b6aeb97a60c7831b",
+      "destination_sha256": "ccb84a297948fed49395ae3e579691709b8e8edb4c82bc93b6aeb97a60c7831b",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\native_projection.py",
+      "destination": "src/greenwich_motion_sdk/native_projection.py",
+      "source_sha256": "c0220cbde208e5522d7a58e439325b54777e464cf80815d4c7604fedb7742172",
+      "destination_sha256": "c0220cbde208e5522d7a58e439325b54777e464cf80815d4c7604fedb7742172",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\physics_audit.py",
+      "destination": "src/greenwich_motion_sdk/physics_audit.py",
+      "source_sha256": "3ddc832178336a5de32ef7feeecca6ac84a8beaf2c62008ace7f47a9de70f450",
+      "destination_sha256": "3ddc832178336a5de32ef7feeecca6ac84a8beaf2c62008ace7f47a9de70f450",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\pipeline.py",
+      "destination": "src/greenwich_motion_sdk/pipeline.py",
+      "source_sha256": "695cbf8196bf3f6c08ad598d3ab19f4cdfdf8fe2e968330a13feb7910bc1cfd0",
+      "destination_sha256": "695cbf8196bf3f6c08ad598d3ab19f4cdfdf8fe2e968330a13feb7910bc1cfd0",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\preview_candidates.py",
+      "destination": "src/greenwich_motion_sdk/preview_candidates.py",
+      "source_sha256": "98ace15fdaea334750aa09cd550bdf514e1d208f0bd5b7f77d37739798c86cff",
+      "destination_sha256": "98ace15fdaea334750aa09cd550bdf514e1d208f0bd5b7f77d37739798c86cff",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\render_review.py",
+      "destination": "src/greenwich_motion_sdk/render_review.py",
+      "source_sha256": "f6b999ae782866cb75e58a67f2ca9aed605647ff1e9ed538e17ed909696f751c",
+      "destination_sha256": "f6b999ae782866cb75e58a67f2ca9aed605647ff1e9ed538e17ed909696f751c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\reports.py",
+      "destination": "src/greenwich_motion_sdk/reports.py",
+      "source_sha256": "e41a7cf1b998014dfad7e778e65edb58ef2eb8430b8f72fad3ff9274591e7ba4",
+      "destination_sha256": "e41a7cf1b998014dfad7e778e65edb58ef2eb8430b8f72fad3ff9274591e7ba4",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\review_sampling.py",
+      "destination": "src/greenwich_motion_sdk/review_sampling.py",
+      "source_sha256": "7d860b36956e305f42c68902ea98efb6bba2f993c3e1541638706c1569563f88",
+      "destination_sha256": "7d860b36956e305f42c68902ea98efb6bba2f993c3e1541638706c1569563f88",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\review_sources.py",
+      "destination": "src/greenwich_motion_sdk/review_sources.py",
+      "source_sha256": "ccdb1e283aa710bf8161b91ea2c78c7b9e46723a1ad935dd5f45d5b02e7c96c9",
+      "destination_sha256": "ccdb1e283aa710bf8161b91ea2c78c7b9e46723a1ad935dd5f45d5b02e7c96c9",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\sampling_statistics.py",
+      "destination": "src/greenwich_motion_sdk/sampling_statistics.py",
+      "source_sha256": "f105d48e0cb840b2c1920dcb5228930e4890f0d8563dd2b3f0da0ee54ae19bae",
+      "destination_sha256": "f105d48e0cb840b2c1920dcb5228930e4890f0d8563dd2b3f0da0ee54ae19bae",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\source_batch.py",
+      "destination": "src/greenwich_motion_sdk/source_batch.py",
+      "source_sha256": "f8fa841489e06bf078a9022429db028a2ba6d6607c266ac7845520497fd4fc31",
+      "destination_sha256": "f8fa841489e06bf078a9022429db028a2ba6d6607c266ac7845520497fd4fc31",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\source_package.py",
+      "destination": "src/greenwich_motion_sdk/source_package.py",
+      "source_sha256": "8a7d5a5e6108d31baa481af01cc96eb66d4727b5781eb9b495e40e3081e3ed6c",
+      "destination_sha256": "8a7d5a5e6108d31baa481af01cc96eb66d4727b5781eb9b495e40e3081e3ed6c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\support_geometry.py",
+      "destination": "src/greenwich_motion_sdk/support_geometry.py",
+      "source_sha256": "0c6d5a170dfeff4150c6f20a45a68dcf394ee1016380f422a53d370ea3f5abc0",
+      "destination_sha256": "0c6d5a170dfeff4150c6f20a45a68dcf394ee1016380f422a53d370ea3f5abc0",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\support_sweep.py",
+      "destination": "src/greenwich_motion_sdk/support_sweep.py",
+      "source_sha256": "ba39a4bbea59e2bef644ab457921f97904547acfa5aba4ea86726fb871f3e960",
+      "destination_sha256": "ba39a4bbea59e2bef644ab457921f97904547acfa5aba4ea86726fb871f3e960",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\surface_audit.py",
+      "destination": "src/greenwich_motion_sdk/surface_audit.py",
+      "source_sha256": "5a21d2a46e7c0f9c75eaa806139c93048d9c2fd2ef1a398e43c9fb1a8d72bc9c",
+      "destination_sha256": "5a21d2a46e7c0f9c75eaa806139c93048d9c2fd2ef1a398e43c9fb1a8d72bc9c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\surface_contacts.py",
+      "destination": "src/greenwich_motion_sdk/surface_contacts.py",
+      "source_sha256": "90daa2b74f9f4ac97fbd78490f3f9f16b40ea35803bd5f397b2349cc47f579eb",
+      "destination_sha256": "90daa2b74f9f4ac97fbd78490f3f9f16b40ea35803bd5f397b2349cc47f579eb",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\_bvh.py",
+      "destination": "src/greenwich_motion_sdk/_bvh.py",
+      "source_sha256": "06034fc8e5470f0a0d2354f83f76a66e961e3ecbbf9211d120fd9a44c1809c30",
+      "destination_sha256": "06034fc8e5470f0a0d2354f83f76a66e961e3ecbbf9211d120fd9a44c1809c30",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\_smpl_bind.py",
+      "destination": "src/greenwich_motion_sdk/_smpl_bind.py",
+      "source_sha256": "37f1234230059460a2f36c199def725cc7104517f84216f44f0c1eab1731e57f",
+      "destination_sha256": "37f1234230059460a2f36c199def725cc7104517f84216f44f0c1eab1731e57f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_motion_sdk\\__init__.py",
+      "destination": "src/greenwich_motion_sdk/__init__.py",
+      "source_sha256": "e823ef3a15779c8c7ea148d25ce6bdf0e88ed4dd8b6019e037e43b6393026603",
+      "destination_sha256": "e823ef3a15779c8c7ea148d25ce6bdf0e88ed4dd8b6019e037e43b6393026603",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_umi_proof\\interactive_viewer.py",
+      "destination": "src/greenwich_umi_proof/interactive_viewer.py",
+      "source_sha256": "6247a5704c9425f319681b73e3e7e168ce96fa829bbd09f75ca363b6038b97f1",
+      "destination_sha256": "6247a5704c9425f319681b73e3e7e168ce96fa829bbd09f75ca363b6038b97f1",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_umi_proof\\native_visual_fk.py",
+      "destination": "src/greenwich_umi_proof/native_visual_fk.py",
+      "source_sha256": "4225cf193f8a4eb40214149aaeb820bcec4212c52a005172bcd194c01a614b45",
+      "destination_sha256": "4225cf193f8a4eb40214149aaeb820bcec4212c52a005172bcd194c01a614b45",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_umi_proof\\sole_geometry.py",
+      "destination": "src/greenwich_umi_proof/sole_geometry.py",
+      "source_sha256": "199a8adc92e5875d858bb69393e7f518b5ccbdee86e89eb885e1c08d29c8141f",
+      "destination_sha256": "199a8adc92e5875d858bb69393e7f518b5ccbdee86e89eb885e1c08d29c8141f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\src\\greenwich_umi_proof\\__init__.py",
+      "destination": "src/greenwich_umi_proof/__init__.py",
+      "source_sha256": "78909c8a15513d0c1b9808c910d6f2e82cd81514f5c2716a4a6aaafd276192de",
+      "destination_sha256": "78909c8a15513d0c1b9808c910d6f2e82cd81514f5c2716a4a6aaafd276192de",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\greenwich-soma-batch-30000\\work\\greenwich-next-release\\src\\greenwich_motion_sdk\\contact_phases.py",
+      "destination": "src/greenwich_motion_sdk/contact_phases.py",
+      "source_sha256": "540005c7108b083064aa569586a87a8096423107a906a575df753b0d2a643615",
+      "destination_sha256": "540005c7108b083064aa569586a87a8096423107a906a575df753b0d2a643615",
+      "migration": "missing optional support helper included from next-release snapshot"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\constraints.py",
+      "destination": "src/alphamotion/engine/constraints.py",
+      "source_sha256": "d654591232d0f34edec6d2b02455da712c6a6ef9a728f279ed09a4062abcfc1a",
+      "destination_sha256": "d654591232d0f34edec6d2b02455da712c6a6ef9a728f279ed09a4062abcfc1a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\descriptor.py",
+      "destination": "src/alphamotion/engine/descriptor.py",
+      "source_sha256": "45019874fcd2b538a604c2aa1aec2e4704e25fb78eceff44ddda8a11a05dc22f",
+      "destination_sha256": "45019874fcd2b538a604c2aa1aec2e4704e25fb78eceff44ddda8a11a05dc22f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\equator.py",
+      "destination": "src/alphamotion/engine/equator.py",
+      "source_sha256": "fc25771d13cd179f98bc230a2c4522efd307d273fb2b7d69b87d50163c8f5a8b",
+      "destination_sha256": "fc25771d13cd179f98bc230a2c4522efd307d273fb2b7d69b87d50163c8f5a8b",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\greenwich.py",
+      "destination": "src/alphamotion/engine/greenwich.py",
+      "source_sha256": "0cb1602595fcefb8a810d5a8cc4a40fce9a417fd395d2c8fdc852beaa0ba406a",
+      "destination_sha256": "0cb1602595fcefb8a810d5a8cc4a40fce9a417fd395d2c8fdc852beaa0ba406a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\odometry.py",
+      "destination": "src/alphamotion/engine/odometry.py",
+      "source_sha256": "e3601ef59c127f8c812e278cc99746b7c065f5117caed31a5cbd70cef079ef37",
+      "destination_sha256": "e3601ef59c127f8c812e278cc99746b7c065f5117caed31a5cbd70cef079ef37",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\spatial.py",
+      "destination": "src/alphamotion/engine/spatial.py",
+      "source_sha256": "916dfe071a9a58a2a13c56448118c41c1e47690fb899630bc5f417f91441633d",
+      "destination_sha256": "916dfe071a9a58a2a13c56448118c41c1e47690fb899630bc5f417f91441633d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\timeline.py",
+      "destination": "src/alphamotion/engine/timeline.py",
+      "source_sha256": "15903b8cc049a5d1ad44156e7620e983ad0e9e1918ea23e48788a9a2536eccfe",
+      "destination_sha256": "15903b8cc049a5d1ad44156e7620e983ad0e9e1918ea23e48788a9a2536eccfe",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\trace.py",
+      "destination": "src/alphamotion/engine/trace.py",
+      "source_sha256": "9fc39ab7f690dc1423d1e888bc72e5fada8b7a0dc15c462878b1f48cc4c789e3",
+      "destination_sha256": "9fc39ab7f690dc1423d1e888bc72e5fada8b7a0dc15c462878b1f48cc4c789e3",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\__init__.py",
+      "destination": "src/alphamotion/engine/__init__.py",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "destination_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\nets\\blocks.py",
+      "destination": "src/alphamotion/engine/nets/blocks.py",
+      "source_sha256": "6b7a85f1f2cda4f01d5572a21828be9e411e1cfef38e9fc5ebeabedbed0cc7bc",
+      "destination_sha256": "6b7a85f1f2cda4f01d5572a21828be9e411e1cfef38e9fc5ebeabedbed0cc7bc",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\nets\\bridge.py",
+      "destination": "src/alphamotion/engine/nets/bridge.py",
+      "source_sha256": "b4619cf02453ca70a46ebfe4c731300a9924d9bc40dd68132ac10007719ef803",
+      "destination_sha256": "b4619cf02453ca70a46ebfe4c731300a9924d9bc40dd68132ac10007719ef803",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\nets\\codec.py",
+      "destination": "src/alphamotion/engine/nets/codec.py",
+      "source_sha256": "c890c957002d4050805fabae94633fc6fffe88cd9c7422353d5f479571825ba6",
+      "destination_sha256": "c890c957002d4050805fabae94633fc6fffe88cd9c7422353d5f479571825ba6",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\nets\\rotations.py",
+      "destination": "src/alphamotion/engine/nets/rotations.py",
+      "source_sha256": "7af291fc641e56c664a36bf598ab67c06d99d0c1931fee39591b932701eb95fc",
+      "destination_sha256": "7af291fc641e56c664a36bf598ab67c06d99d0c1931fee39591b932701eb95fc",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\engine\\nets\\__init__.py",
+      "destination": "src/alphamotion/engine/nets/__init__.py",
+      "source_sha256": "122fca9e500924ed5e31bc4d8c4bdc1eb245b77420cc6a14a2c102f726f97dab",
+      "destination_sha256": "122fca9e500924ed5e31bc4d8c4bdc1eb245b77420cc6a14a2c102f726f97dab",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\embodiment\\dof_features.py",
+      "destination": "src/alphamotion/embodiment/dof_features.py",
+      "source_sha256": "9c2653210b5290f7b281df48eae58f2aa79a00cd591feb8a1c89e5ddbbff416c",
+      "destination_sha256": "9c2653210b5290f7b281df48eae58f2aa79a00cd591feb8a1c89e5ddbbff416c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\embodiment\\frames.py",
+      "destination": "src/alphamotion/embodiment/frames.py",
+      "source_sha256": "5e3a928c26039e30edb57b2728254c38f31ae0bc8492c2aeabb2cdbfdc3f3a11",
+      "destination_sha256": "5e3a928c26039e30edb57b2728254c38f31ae0bc8492c2aeabb2cdbfdc3f3a11",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\embodiment\\mjcf_build.py",
+      "destination": "src/alphamotion/embodiment/mjcf_build.py",
+      "source_sha256": "b6430a177aad928b5034138dbc71b0af4ccb414abab0027c5ae021c467759e9b",
+      "destination_sha256": "b6430a177aad928b5034138dbc71b0af4ccb414abab0027c5ae021c467759e9b",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\embodiment\\registry.py",
+      "destination": "src/alphamotion/embodiment/registry.py",
+      "source_sha256": "e3fbd5e6a71c479a9001171ccb5225b94103638a6380bd5a75b1e5a21a1132f1",
+      "destination_sha256": "e3fbd5e6a71c479a9001171ccb5225b94103638a6380bd5a75b1e5a21a1132f1",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\embodiment\\semantics_map.py",
+      "destination": "src/alphamotion/embodiment/semantics_map.py",
+      "source_sha256": "7b87abc80db61c7a8e27ca7cde7a0ab5b873f4c68793c7b79fedf56cf182a7a6",
+      "destination_sha256": "7b87abc80db61c7a8e27ca7cde7a0ab5b873f4c68793c7b79fedf56cf182a7a6",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\embodiment\\urdf_ingest.py",
+      "destination": "src/alphamotion/embodiment/urdf_ingest.py",
+      "source_sha256": "24f22e19d31ec72f1e25cd558e3a84b77d2496d3af94431936909c213b507909",
+      "destination_sha256": "24f22e19d31ec72f1e25cd558e3a84b77d2496d3af94431936909c213b507909",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\embodiment\\__init__.py",
+      "destination": "src/alphamotion/embodiment/__init__.py",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "destination_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\__init__.py",
+      "destination": "src/alphamotion/__init__.py",
+      "source_sha256": "4066c0a12d2254dc76f8fc10cf6d7b832d33eb1f4efe35cb800d59f03f2aeb3a",
+      "destination_sha256": "4066c0a12d2254dc76f8fc10cf6d7b832d33eb1f4efe35cb800d59f03f2aeb3a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\paths.py",
+      "destination": "src/alphamotion/paths.py",
+      "source_sha256": "13c958b1910609956e18558d53291e2bee075369933553b4102effa9b1e594c9",
+      "destination_sha256": "13c958b1910609956e18558d53291e2bee075369933553b4102effa9b1e594c9",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\weights.py",
+      "destination": "src/alphamotion/weights.py",
+      "source_sha256": "b5f5c29bfd6745a2839673a1d6bb60dd2840e86bc47577f06c0e89366e611d34",
+      "destination_sha256": "b5f5c29bfd6745a2839673a1d6bb60dd2840e86bc47577f06c0e89366e611d34",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\viz\\kinematics.py",
+      "destination": "src/alphamotion/viz/kinematics.py",
+      "source_sha256": "fa76a637f12f561073f8e8b1c257cf40fa31a7019a75ff5024dba4419899252e",
+      "destination_sha256": "fa76a637f12f561073f8e8b1c257cf40fa31a7019a75ff5024dba4419899252e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\booster_k1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/booster_k1_dof.npz",
+      "source_sha256": "c96cafb1734ecc74750923928b9ff3875f203bbdd5f8177ef100bbd10483d24f",
+      "destination_sha256": "c96cafb1734ecc74750923928b9ff3875f203bbdd5f8177ef100bbd10483d24f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\booster_k1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/booster_k1_spec.npz",
+      "source_sha256": "7d220e30de932915cf7c495618433a5a4c849fe0750932ffa2186fe90ed6dae3",
+      "destination_sha256": "7d220e30de932915cf7c495618433a5a4c849fe0750932ffa2186fe90ed6dae3",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\booster_t1_29dof_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/booster_t1_29dof_dof.npz",
+      "source_sha256": "07da236fc8d3dc920452c9b3f81eea5d15dbe6f5f06404722ff32cc184d811c8",
+      "destination_sha256": "07da236fc8d3dc920452c9b3f81eea5d15dbe6f5f06404722ff32cc184d811c8",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\booster_t1_29dof_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/booster_t1_29dof_spec.npz",
+      "source_sha256": "35244ee79f769382e0cc89991c22ddeef18247adbf1c3291226bae1eaa04054e",
+      "destination_sha256": "35244ee79f769382e0cc89991c22ddeef18247adbf1c3291226bae1eaa04054e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\booster_t1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/booster_t1_dof.npz",
+      "source_sha256": "d448a8daaa6be3c7639bc42226b77f0a9389d1b40771a5909d3677ad9bedc73a",
+      "destination_sha256": "d448a8daaa6be3c7639bc42226b77f0a9389d1b40771a5909d3677ad9bedc73a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\booster_t1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/booster_t1_spec.npz",
+      "source_sha256": "28dff9b88b08fda4a61a8355a2effcc7e21392193fab1a20ed5df8d18cbb3b2e",
+      "destination_sha256": "28dff9b88b08fda4a61a8355a2effcc7e21392193fab1a20ed5df8d18cbb3b2e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\engineai_pm01_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/engineai_pm01_dof.npz",
+      "source_sha256": "8d2ab9e8e6e1fcec083df0859ed11c5b89086a2c400662029b6a34f0b5abf7f5",
+      "destination_sha256": "8d2ab9e8e6e1fcec083df0859ed11c5b89086a2c400662029b6a34f0b5abf7f5",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\engineai_pm01_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/engineai_pm01_spec.npz",
+      "source_sha256": "178e796b00d31d4abb2eb97828fb2e81fd73972e3cc9606b96096e0070549b99",
+      "destination_sha256": "178e796b00d31d4abb2eb97828fb2e81fd73972e3cc9606b96096e0070549b99",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\fourier_gr3_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/fourier_gr3_dof.npz",
+      "source_sha256": "85870d8e31edd1a95dc236b46daf023ca7681469f01fbeb039421116808b1fd8",
+      "destination_sha256": "85870d8e31edd1a95dc236b46daf023ca7681469f01fbeb039421116808b1fd8",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\fourier_gr3_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/fourier_gr3_spec.npz",
+      "source_sha256": "43639b37889b82f336612688cfb39b9676e24f65dfaba4d093fca61c2b7e9a11",
+      "destination_sha256": "43639b37889b82f336612688cfb39b9676e24f65dfaba4d093fca61c2b7e9a11",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\fourier_n1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/fourier_n1_dof.npz",
+      "source_sha256": "2f110f4e012b3b33177215b983d495c93cce92fb65749eece9611ef9887b3abb",
+      "destination_sha256": "2f110f4e012b3b33177215b983d495c93cce92fb65749eece9611ef9887b3abb",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\fourier_n1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/fourier_n1_spec.npz",
+      "source_sha256": "41dd5e45077af49c221d1b05e3a4c7c643d5fee0a55c5e95568a888391e3518d",
+      "destination_sha256": "41dd5e45077af49c221d1b05e3a4c7c643d5fee0a55c5e95568a888391e3518d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\frame_adapters.json",
+      "destination": "src/alphamotion/assets/embodiments/frame_adapters.json",
+      "source_sha256": "bdcd67f45a759832e74dd67eab1efabc1f6ac2ca1e47277ac31c4dcbbca26822",
+      "destination_sha256": "bdcd67f45a759832e74dd67eab1efabc1f6ac2ca1e47277ac31c4dcbbca26822",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\hightorque_hi_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/hightorque_hi_dof.npz",
+      "source_sha256": "c42f1c96efa12d66370db0c34b9682d72cd3fb10381cb4b9f8b2a86f274f1fc0",
+      "destination_sha256": "c42f1c96efa12d66370db0c34b9682d72cd3fb10381cb4b9f8b2a86f274f1fc0",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\hightorque_hi_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/hightorque_hi_spec.npz",
+      "source_sha256": "d3e20463c2f5e575dc615561700e7eb1f1633fad15212dea36655acf14a4a262",
+      "destination_sha256": "d3e20463c2f5e575dc615561700e7eb1f1633fad15212dea36655acf14a4a262",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\human_smpl_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/human_smpl_dof.npz",
+      "source_sha256": "93a2730e6e5154dcdff658cdcac90f233188f1f3d407ac4cc07f8113cf1e7ce5",
+      "destination_sha256": "93a2730e6e5154dcdff658cdcac90f233188f1f3d407ac4cc07f8113cf1e7ce5",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\human_smpl_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/human_smpl_spec.npz",
+      "source_sha256": "ca2ee9385ee4a39f8c8ddff146c9bc4f18dcd5da97180839542829f75eb0cd59",
+      "destination_sha256": "ca2ee9385ee4a39f8c8ddff146c9bc4f18dcd5da97180839542829f75eb0cd59",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\kuavo_s45_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/kuavo_s45_dof.npz",
+      "source_sha256": "0bbceb950e75139a69f2d3217642d615b7fc216fab0602f6855c5d2e51d2bd5d",
+      "destination_sha256": "0bbceb950e75139a69f2d3217642d615b7fc216fab0602f6855c5d2e51d2bd5d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\kuavo_s45_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/kuavo_s45_spec.npz",
+      "source_sha256": "67710b95ba0ce9688e89d89e1fce58a9aa50d7a3b3aa0e76471c9926160150f1",
+      "destination_sha256": "67710b95ba0ce9688e89d89e1fce58a9aa50d7a3b3aa0e76471c9926160150f1",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\name_embeddings.pt",
+      "destination": "src/alphamotion/assets/embodiments/name_embeddings.pt",
+      "source_sha256": "cd8d10503e5112101b3aaec132df0adfc7ccde106a9cae8213fdf9ffbcac5c57",
+      "destination_sha256": "cd8d10503e5112101b3aaec132df0adfc7ccde106a9cae8213fdf9ffbcac5c57",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\pal_talos_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/pal_talos_dof.npz",
+      "source_sha256": "38a5825e439233feeb7fdc0b1e890ed568c02c41a76875e2e6a1e7e9c746b22c",
+      "destination_sha256": "38a5825e439233feeb7fdc0b1e890ed568c02c41a76875e2e6a1e7e9c746b22c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\pal_talos_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/pal_talos_spec.npz",
+      "source_sha256": "0f9db300afbe60e4db962737b818ab40ca6c220ca7f76250bd3674c3d6a10961",
+      "destination_sha256": "0f9db300afbe60e4db962737b818ab40ca6c220ca7f76250bd3674c3d6a10961",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\pnd_adam_lite_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/pnd_adam_lite_dof.npz",
+      "source_sha256": "0e8ebf1110e02d0fe26d5775b4a39089b4601f47b986210f1770e30a203d4dd2",
+      "destination_sha256": "0e8ebf1110e02d0fe26d5775b4a39089b4601f47b986210f1770e30a203d4dd2",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\pnd_adam_lite_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/pnd_adam_lite_spec.npz",
+      "source_sha256": "eab6c6d74fdbab1c67459f7b86a9f31cddf9b42c6fcba5de51c381d32a4bfb2b",
+      "destination_sha256": "eab6c6d74fdbab1c67459f7b86a9f31cddf9b42c6fcba5de51c381d32a4bfb2b",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\tienkung_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/tienkung_dof.npz",
+      "source_sha256": "c76027b586b9d77601e916bea5459f534557006a2d25bbf5f9274436b501fa50",
+      "destination_sha256": "c76027b586b9d77601e916bea5459f534557006a2d25bbf5f9274436b501fa50",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\tienkung_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/tienkung_spec.npz",
+      "source_sha256": "70bf56d6b2f360b3439c62b2ae0d2a98143978f9e26e12bfe8c1939b28b6e32a",
+      "destination_sha256": "70bf56d6b2f360b3439c62b2ae0d2a98143978f9e26e12bfe8c1939b28b6e32a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_g1_23dof_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_g1_23dof_dof.npz",
+      "source_sha256": "3b2fc5d3b2b6d7bfbed9c155ca0295c8a5e6259b6641de9a6844444779b7b1a7",
+      "destination_sha256": "3b2fc5d3b2b6d7bfbed9c155ca0295c8a5e6259b6641de9a6844444779b7b1a7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_g1_23dof_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_g1_23dof_spec.npz",
+      "source_sha256": "aadebf0cb5c3bb474a6f2db6773daf9f74eb6e177928374ed5fcd0f30cc8a987",
+      "destination_sha256": "aadebf0cb5c3bb474a6f2db6773daf9f74eb6e177928374ed5fcd0f30cc8a987",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_g1_29dof_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_g1_29dof_dof.npz",
+      "source_sha256": "3b2fc5d3b2b6d7bfbed9c155ca0295c8a5e6259b6641de9a6844444779b7b1a7",
+      "destination_sha256": "3b2fc5d3b2b6d7bfbed9c155ca0295c8a5e6259b6641de9a6844444779b7b1a7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_g1_29dof_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_g1_29dof_spec.npz",
+      "source_sha256": "9852a3e69e001c4538d28ac30d1bf317408f2918d265c4bd0574d06e2bdf1b9d",
+      "destination_sha256": "9852a3e69e001c4538d28ac30d1bf317408f2918d265c4bd0574d06e2bdf1b9d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_h1_2_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_h1_2_dof.npz",
+      "source_sha256": "287fdbca7d433dc47fec3ea551bd19689cb5d580275a10cc7ccdff2a949a3c29",
+      "destination_sha256": "287fdbca7d433dc47fec3ea551bd19689cb5d580275a10cc7ccdff2a949a3c29",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_h1_2_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_h1_2_spec.npz",
+      "source_sha256": "7f2143da612fd9f1ea48dd19517951e0d9b9f78a080f9db4112f39279bd8bd82",
+      "destination_sha256": "7f2143da612fd9f1ea48dd19517951e0d9b9f78a080f9db4112f39279bd8bd82",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_h1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_h1_dof.npz",
+      "source_sha256": "5fbd6fa64fcc2d4db7a505ff3e58c2e3dd0fb809419e94ffa378de653513cf3a",
+      "destination_sha256": "5fbd6fa64fcc2d4db7a505ff3e58c2e3dd0fb809419e94ffa378de653513cf3a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_h1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_h1_spec.npz",
+      "source_sha256": "94583053405f6830f6e8aefd64fad58e79758978fb781731ecac647e9441282b",
+      "destination_sha256": "94583053405f6830f6e8aefd64fad58e79758978fb781731ecac647e9441282b",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_h2_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_h2_dof.npz",
+      "source_sha256": "a7f2d2410e423bec1c38ab8779b4027a9dd90b75b22d4c4316a4fdcdbaac90f7",
+      "destination_sha256": "a7f2d2410e423bec1c38ab8779b4027a9dd90b75b22d4c4316a4fdcdbaac90f7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_h2_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_h2_spec.npz",
+      "source_sha256": "285635fd02c07cb305e0d3e5746303326e2106f606c2ee53a1ce0b004d3902f8",
+      "destination_sha256": "285635fd02c07cb305e0d3e5746303326e2106f606c2ee53a1ce0b004d3902f8",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_r1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_r1_dof.npz",
+      "source_sha256": "7eddcaf6830f61a1c146fc9014b81b10a3118fa3e59a5c0cd8c51077f50162f7",
+      "destination_sha256": "7eddcaf6830f61a1c146fc9014b81b10a3118fa3e59a5c0cd8c51077f50162f7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments\\unitree_r1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments/unitree_r1_spec.npz",
+      "source_sha256": "9751de0a5e8455aa7bdbc4ba1fa6d66d5b90c1e6e72246d599c97d54d520f898",
+      "destination_sha256": "9751de0a5e8455aa7bdbc4ba1fa6d66d5b90c1e6e72246d599c97d54d520f898",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\booster_k1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/booster_k1_dof.npz",
+      "source_sha256": "c96cafb1734ecc74750923928b9ff3875f203bbdd5f8177ef100bbd10483d24f",
+      "destination_sha256": "c96cafb1734ecc74750923928b9ff3875f203bbdd5f8177ef100bbd10483d24f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\booster_k1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/booster_k1_spec.npz",
+      "source_sha256": "24218ad7224996a852e716b9cc3296b71772c5606cbbfd7a6c209dfd8dd6b12c",
+      "destination_sha256": "24218ad7224996a852e716b9cc3296b71772c5606cbbfd7a6c209dfd8dd6b12c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\booster_t1_29dof_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/booster_t1_29dof_dof.npz",
+      "source_sha256": "07da236fc8d3dc920452c9b3f81eea5d15dbe6f5f06404722ff32cc184d811c8",
+      "destination_sha256": "07da236fc8d3dc920452c9b3f81eea5d15dbe6f5f06404722ff32cc184d811c8",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\booster_t1_29dof_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/booster_t1_29dof_spec.npz",
+      "source_sha256": "8f3719f9f81571b98cf53c5f52cfb3c098235164a71c4359bd802d61e86e6f51",
+      "destination_sha256": "8f3719f9f81571b98cf53c5f52cfb3c098235164a71c4359bd802d61e86e6f51",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\booster_t1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/booster_t1_dof.npz",
+      "source_sha256": "d448a8daaa6be3c7639bc42226b77f0a9389d1b40771a5909d3677ad9bedc73a",
+      "destination_sha256": "d448a8daaa6be3c7639bc42226b77f0a9389d1b40771a5909d3677ad9bedc73a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\booster_t1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/booster_t1_spec.npz",
+      "source_sha256": "239472183ef2e9a02ab58355da5d79fb187c6aa8b9c83f0a6ace5edb5c8e695e",
+      "destination_sha256": "239472183ef2e9a02ab58355da5d79fb187c6aa8b9c83f0a6ace5edb5c8e695e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\fourier_gr3_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/fourier_gr3_dof.npz",
+      "source_sha256": "85870d8e31edd1a95dc236b46daf023ca7681469f01fbeb039421116808b1fd8",
+      "destination_sha256": "85870d8e31edd1a95dc236b46daf023ca7681469f01fbeb039421116808b1fd8",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\fourier_gr3_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/fourier_gr3_spec.npz",
+      "source_sha256": "1aa66ef1c03c807f753610a4dc583bcfa4a4470d9016d526a99514476ed54e6c",
+      "destination_sha256": "1aa66ef1c03c807f753610a4dc583bcfa4a4470d9016d526a99514476ed54e6c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\fourier_n1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/fourier_n1_dof.npz",
+      "source_sha256": "2f110f4e012b3b33177215b983d495c93cce92fb65749eece9611ef9887b3abb",
+      "destination_sha256": "2f110f4e012b3b33177215b983d495c93cce92fb65749eece9611ef9887b3abb",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\fourier_n1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/fourier_n1_spec.npz",
+      "source_sha256": "8234f03e686c7feea542b0ac69bb96a7c4899e37fd3bed59ee3e52433c9666f6",
+      "destination_sha256": "8234f03e686c7feea542b0ac69bb96a7c4899e37fd3bed59ee3e52433c9666f6",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\hightorque_hi_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/hightorque_hi_dof.npz",
+      "source_sha256": "c42f1c96efa12d66370db0c34b9682d72cd3fb10381cb4b9f8b2a86f274f1fc0",
+      "destination_sha256": "c42f1c96efa12d66370db0c34b9682d72cd3fb10381cb4b9f8b2a86f274f1fc0",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\hightorque_hi_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/hightorque_hi_spec.npz",
+      "source_sha256": "f5b7eb4b538cf91aac3dd2ddb52efb7fb671ec793a10a9683c8b60c0af3d7eed",
+      "destination_sha256": "f5b7eb4b538cf91aac3dd2ddb52efb7fb671ec793a10a9683c8b60c0af3d7eed",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\human_smpl_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/human_smpl_dof.npz",
+      "source_sha256": "93a2730e6e5154dcdff658cdcac90f233188f1f3d407ac4cc07f8113cf1e7ce5",
+      "destination_sha256": "93a2730e6e5154dcdff658cdcac90f233188f1f3d407ac4cc07f8113cf1e7ce5",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\human_smpl_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/human_smpl_spec.npz",
+      "source_sha256": "e8ba20509dd98e24b2972ed1618746bfcb594ce409780ac6b4dfde48f228b128",
+      "destination_sha256": "e8ba20509dd98e24b2972ed1618746bfcb594ce409780ac6b4dfde48f228b128",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\kuavo_s45_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/kuavo_s45_dof.npz",
+      "source_sha256": "0bbceb950e75139a69f2d3217642d615b7fc216fab0602f6855c5d2e51d2bd5d",
+      "destination_sha256": "0bbceb950e75139a69f2d3217642d615b7fc216fab0602f6855c5d2e51d2bd5d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\kuavo_s45_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/kuavo_s45_spec.npz",
+      "source_sha256": "85fcf8161c14b8a246737933e09fe24cce22c805e4819d6f0895446b564a3035",
+      "destination_sha256": "85fcf8161c14b8a246737933e09fe24cce22c805e4819d6f0895446b564a3035",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\name_embeddings_siglip.pt",
+      "destination": "src/alphamotion/assets/embodiments_v2/name_embeddings_siglip.pt",
+      "source_sha256": "1e2f1555856a2a72ace19b47882a3016f28d629be4b813f7d988ae61da43454d",
+      "destination_sha256": "1e2f1555856a2a72ace19b47882a3016f28d629be4b813f7d988ae61da43454d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\pnd_adam_lite_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/pnd_adam_lite_dof.npz",
+      "source_sha256": "0e8ebf1110e02d0fe26d5775b4a39089b4601f47b986210f1770e30a203d4dd2",
+      "destination_sha256": "0e8ebf1110e02d0fe26d5775b4a39089b4601f47b986210f1770e30a203d4dd2",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\pnd_adam_lite_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/pnd_adam_lite_spec.npz",
+      "source_sha256": "4779fc633d7fac17c9ab7a3afc499b99fe7f37979bc3e0dc0cd20ccff475924b",
+      "destination_sha256": "4779fc633d7fac17c9ab7a3afc499b99fe7f37979bc3e0dc0cd20ccff475924b",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\tienkung_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/tienkung_dof.npz",
+      "source_sha256": "c76027b586b9d77601e916bea5459f534557006a2d25bbf5f9274436b501fa50",
+      "destination_sha256": "c76027b586b9d77601e916bea5459f534557006a2d25bbf5f9274436b501fa50",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\tienkung_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/tienkung_spec.npz",
+      "source_sha256": "c51220a5e9de3065bd07b2b426f20ae0547ad70d7c1f0aa6a176be7327345fcf",
+      "destination_sha256": "c51220a5e9de3065bd07b2b426f20ae0547ad70d7c1f0aa6a176be7327345fcf",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_g1_23dof_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_g1_23dof_dof.npz",
+      "source_sha256": "3b2fc5d3b2b6d7bfbed9c155ca0295c8a5e6259b6641de9a6844444779b7b1a7",
+      "destination_sha256": "3b2fc5d3b2b6d7bfbed9c155ca0295c8a5e6259b6641de9a6844444779b7b1a7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_g1_23dof_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_g1_23dof_spec.npz",
+      "source_sha256": "d531cfe47ee5c648220768a0368f0ff142e36f04ed9e7caac42782207f99c3be",
+      "destination_sha256": "d531cfe47ee5c648220768a0368f0ff142e36f04ed9e7caac42782207f99c3be",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_g1_29dof_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_g1_29dof_dof.npz",
+      "source_sha256": "3b2fc5d3b2b6d7bfbed9c155ca0295c8a5e6259b6641de9a6844444779b7b1a7",
+      "destination_sha256": "3b2fc5d3b2b6d7bfbed9c155ca0295c8a5e6259b6641de9a6844444779b7b1a7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_g1_29dof_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_g1_29dof_spec.npz",
+      "source_sha256": "f40f7ec71faa70e5f260e781e97c315e247635846c2455fa5eee54cb5d60005d",
+      "destination_sha256": "f40f7ec71faa70e5f260e781e97c315e247635846c2455fa5eee54cb5d60005d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_h1_2_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_h1_2_dof.npz",
+      "source_sha256": "287fdbca7d433dc47fec3ea551bd19689cb5d580275a10cc7ccdff2a949a3c29",
+      "destination_sha256": "287fdbca7d433dc47fec3ea551bd19689cb5d580275a10cc7ccdff2a949a3c29",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_h1_2_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_h1_2_spec.npz",
+      "source_sha256": "0b7ab02dc3872ab03b2412f2d8d0211f18f95a1a3b5bb62e730f0414cffb3c8d",
+      "destination_sha256": "0b7ab02dc3872ab03b2412f2d8d0211f18f95a1a3b5bb62e730f0414cffb3c8d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_h1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_h1_dof.npz",
+      "source_sha256": "5fbd6fa64fcc2d4db7a505ff3e58c2e3dd0fb809419e94ffa378de653513cf3a",
+      "destination_sha256": "5fbd6fa64fcc2d4db7a505ff3e58c2e3dd0fb809419e94ffa378de653513cf3a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_h1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_h1_spec.npz",
+      "source_sha256": "5bcbc57bb7455c1991f6a930e609842358a83cd7d2de901d289fb2264aebf14c",
+      "destination_sha256": "5bcbc57bb7455c1991f6a930e609842358a83cd7d2de901d289fb2264aebf14c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_h2_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_h2_dof.npz",
+      "source_sha256": "a7f2d2410e423bec1c38ab8779b4027a9dd90b75b22d4c4316a4fdcdbaac90f7",
+      "destination_sha256": "a7f2d2410e423bec1c38ab8779b4027a9dd90b75b22d4c4316a4fdcdbaac90f7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_h2_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_h2_spec.npz",
+      "source_sha256": "b4f38ea06bd5267312514acde521d47c05965053f00eba6a5f5317929ce40a44",
+      "destination_sha256": "b4f38ea06bd5267312514acde521d47c05965053f00eba6a5f5317929ce40a44",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_r1_dof.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_r1_dof.npz",
+      "source_sha256": "7eddcaf6830f61a1c146fc9014b81b10a3118fa3e59a5c0cd8c51077f50162f7",
+      "destination_sha256": "7eddcaf6830f61a1c146fc9014b81b10a3118fa3e59a5c0cd8c51077f50162f7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\embodiments_v2\\unitree_r1_spec.npz",
+      "destination": "src/alphamotion/assets/embodiments_v2/unitree_r1_spec.npz",
+      "source_sha256": "138ddfac6ab2de0582508980226cdd75e0fef55c76dfef71a7934ac6bec80296",
+      "destination_sha256": "138ddfac6ab2de0582508980226cdd75e0fef55c76dfef71a7934ac6bec80296",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-09\\hf-lloydlei-greenwich-public-22-release\\src\\alphamotion\\assets\\frontend\\index.html",
+      "destination": "src/alphamotion/assets/frontend/index.html",
+      "source_sha256": "1293461abb19eb49c32f5cdb1e8300e0bc4630ad3a70512a8a50a3d296b53183",
+      "destination_sha256": "1293461abb19eb49c32f5cdb1e8300e0bc4630ad3a70512a8a50a3d296b53183",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\toolkits\\greenwich-soma-multibody\\scripts\\run_soma_locomotion.py",
+      "destination": "src/greenwich_pipelines/pipelines/fullbody/backend.py",
+      "source_sha256": "af71a2bfec22177b61e74388fa5404be939d3fe0a029f17114a35027bcd1f6af",
+      "destination_sha256": "998a64b00317ff7ef59e91b6d948d450e3a1c1c2566569d7e80b17ea6f3bf1cb",
+      "migration": "package imports and runtime paths; solver unchanged; save raw prior before refinement"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\toolkits\\greenwich-soma-multibody\\scripts\\soma_contact_refine.py",
+      "destination": "src/greenwich_pipelines/pipelines/fullbody/contact_refine.py",
+      "source_sha256": "8fe35c324a87568c0e53c0e60a3d5a100c7902a7490dc033747b6e5e37ac4b88",
+      "destination_sha256": "8fe35c324a87568c0e53c0e60a3d5a100c7902a7490dc033747b6e5e37ac4b88",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\runtime\\scripts\\render_hiw500_transfer_showcase.py",
+      "destination": "src/greenwich_pipelines/pipelines/fullbody/render_helpers.py",
+      "source_sha256": "39b3c7365d0a6ea50ab7be45bf897051984cd528e107b667c753b6a6624fa685",
+      "destination_sha256": "39b3c7365d0a6ea50ab7be45bf897051984cd528e107b667c753b6a6624fa685",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\runtime\\scripts\\render_single_embodiment_humi_demo.py",
+      "destination": "src/greenwich_pipelines/pipelines/fullbody/camera.py",
+      "source_sha256": "ab460fae169e5d9fc4740aab83fe4be3d6ac99aab7aff66fd8e141da7991732f",
+      "destination_sha256": "ab460fae169e5d9fc4740aab83fe4be3d6ac99aab7aff66fd8e141da7991732f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-15\\realtime-voice-chat\\work\\github-sync\\alphamotion-motion-toolkit\\toolkits\\greenwich-soma-multibody\\config\\contact.default.json",
+      "destination": "configs/policies/fullbody.json",
+      "source_sha256": "106b653cd614e2991b3372da17fbfbe9cde28e0f89ecee00cae9febf06e31e3f",
+      "destination_sha256": "106b653cd614e2991b3372da17fbfbe9cde28e0f89ecee00cae9febf06e31e3f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\joint_latent_refine.py",
+      "destination": "src/greenwich_pipelines/pipelines/nymeria/physical_fk.py",
+      "source_sha256": "cb054aef59e1180c21d723efed105d83e485a813941660c9e73cf870b6691ed0",
+      "destination_sha256": "fc87fbc5bfef1d98510739596e61ea9300f4a208555bb50e240a3e845e3b411d",
+      "migration": "extract physical FK and inherited common policy; discard legacy latent solver"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\global_rotation_fk.py",
+      "destination": "src/greenwich_pipelines/pipelines/nymeria/global_rotation_fk.py",
+      "source_sha256": "16f8bebd1b1728b53f41fa4e9ca37868dd2bbdcc1ba7105113157e30aa630d49",
+      "destination_sha256": "16f8bebd1b1728b53f41fa4e9ca37868dd2bbdcc1ba7105113157e30aa630d49",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\embodiment_exact.py",
+      "destination": "src/greenwich_pipelines/pipelines/nymeria/embodiment_exact.py",
+      "source_sha256": "7a7fc21e0bda37b7430b8d3830f1e56a9a6df3556c90106525df1140dbe00ee9",
+      "destination_sha256": "7a7fc21e0bda37b7430b8d3830f1e56a9a6df3556c90106525df1140dbe00ee9",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\xsens_clock.py",
+      "destination": "src/greenwich_pipelines/pipelines/nymeria/xsens_clock.py",
+      "source_sha256": "29e104652801dff32b12b9f9e79bfec1c2adfeb2eabf1f0960bbaa1a3bbd87b7",
+      "destination_sha256": "29e104652801dff32b12b9f9e79bfec1c2adfeb2eabf1f0960bbaa1a3bbd87b7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\sole_geometry.py",
+      "destination": "src/greenwich_pipelines/pipelines/nymeria/sole_geometry.py",
+      "source_sha256": "2f322b9c2dd0e3ec051eff9cf81b4692d2a6d70cc1b1ce6149e6fbe9209af4f3",
+      "destination_sha256": "c181cf11080c4561a217079ec16bd372504472a464e9d221c686715212f7f04d",
+      "migration": "remove dependency on historical runner"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\joint_latent_v3_posture.py",
+      "destination": "src/greenwich_pipelines/pipelines/nymeria/posture.py",
+      "source_sha256": "5f2d844847035d4373e522c9fb4f5a5f68e1f0c29a9e1777cfb82c37f645ba51",
+      "destination_sha256": "d8d8f4c6b658693bc8cf5d9aa7cd32eaa86261ddc01d18611b72414511498be1",
+      "migration": "relative imports; objective unchanged"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\official\\nymeriaplus\\loaders\\xsens.py",
+      "destination": "src/greenwich_pipelines/pipelines/nymeria/official/nymeriaplus/loaders/xsens.py",
+      "source_sha256": "29324743f4f9314431f57d0e140afea7200fd7491507c6ad7401ac80ac8d3c0d",
+      "destination_sha256": "29324743f4f9314431f57d0e140afea7200fd7491507c6ad7401ac80ac8d3c0d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\official\\LICENSE",
+      "destination": "third_party/nymeriaplus/LICENSE",
+      "source_sha256": "f7dff359f5caaec0e6aa991cfaa9dc52224113ff8fd17d090aef1ec446bab2dd",
+      "destination_sha256": "f7dff359f5caaec0e6aa991cfaa9dc52224113ff8fd17d090aef1ec446bab2dd",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-08-28\\you\\outputs\\greenwich-umi-proof\\src\\greenwich_umi_proof\\palm_frames.py",
+      "destination": "src/greenwich_umi_proof/palm_frames.py",
+      "source_sha256": "e5f9b2c81e5abc05f6bbd36688e6497083c1a125b03cd0f0ef87498e75eeccd6",
+      "destination_sha256": "e5f9b2c81e5abc05f6bbd36688e6497083c1a125b03cd0f0ef87498e75eeccd6",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\nymeria\\orientation_frames.py",
+      "destination": "src/greenwich_pipelines/pipelines/nymeria/orientation.py",
+      "source_sha256": "49ae2f62e5dca5250ad0473e6f04704cfafffb0aac41f989eb706113415bd7ff",
+      "destination_sha256": "3db3066e59033c76b030754af0fe07858431e65d8e6b9274c4e1fed04cbd3238",
+      "migration": "explicit source arrays and physical palm metadata; no identity lookup"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\run_preview.py",
+      "destination": "src/greenwich_pipelines/pipelines/gento/source.py",
+      "source_sha256": "1379d400375b72eea5b628ec6c4dddc4d7b8d32863a202808170763728aed057",
+      "destination_sha256": "83c4d7eb331b45416109b6ad5279481a06876c345afea7060ee6d05f4eca41bd",
+      "migration": "extract source adapter, mechanical frame mapping and mixed-joint FK; remove legacy preview solve and hardcoded paths"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\head_reference.py",
+      "destination": "src/greenwich_pipelines/pipelines/gento/head_reference.py",
+      "source_sha256": "ddfde7d201015174381f1559a6a50994c5176b34458e88e07322d43ff059f07b",
+      "destination_sha256": "226ac61b656241ffc8cb83b912646460abc2299d7bfba8f59450265f8fbd2262",
+      "migration": "package imports"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\posture_geometry.py",
+      "destination": "src/greenwich_pipelines/pipelines/gento/posture_geometry.py",
+      "source_sha256": "4b2ee4913003de617158cb014987400a454db55503fd7551e63e92308bd06639",
+      "destination_sha256": "4712dfb3c565a4e88e60464b9b4833fc9842eeb8511bf4dadf31b447c5155441",
+      "migration": "package imports"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\wrist_alignment.py",
+      "destination": "src/greenwich_pipelines/pipelines/gento/wrist_alignment.py",
+      "source_sha256": "0769fa048dee142f36291fe6726c7eb7fd88814f5f36218e0731d7d8d1e296f3",
+      "destination_sha256": "e64b54dbd6e49868e5af9ebc9334790c65f7f7ab20287add86a44110e902c8e1",
+      "migration": "package imports"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\temporal_seed.py",
+      "destination": "src/greenwich_pipelines/pipelines/gento/temporal_seed.py",
+      "source_sha256": "60a10877c59dc5b3cc857ae7bc4b4db0d500f16a538509eb53a6603b15d943c5",
+      "destination_sha256": "84f53e8194ba5299e8cbd5a90c2eaa4cf6e8b810de9ccb728d414a7088425023",
+      "migration": "package imports"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\batch_five.py",
+      "destination": "src/greenwich_pipelines/pipelines/gento/preparation.py",
+      "source_sha256": "5d77120217b9236009461dc2debdba76d9158b21744ab92dc65d23164530562c",
+      "destination_sha256": "c2a548817cef1fe667e2663ac6ff10ee5503d7f40d2822071e2152baecb7871b",
+      "migration": "explicit source only, package imports, configurable checkpoint; conditioning unchanged"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\refine_arm_priority45.py",
+      "destination": "src/greenwich_pipelines/pipelines/gento/refiner.py",
+      "source_sha256": "551d5cf2859d93cd3f5da19b49875be2671ca9f0b3dfb09f6a491f3361ad5168",
+      "destination_sha256": "6908f730b916b108b4b3df0f9fdbdce918fad5296ff435f2bafd050637c505b0",
+      "migration": "production recipe only; require explicit raw prior and seed, no previous-chat baseline fallback"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\urdf\\Gento_Luna\\Gento_Luna_URDF.urdf",
+      "destination": "assets/robots/gento/vendor/marvin_description/urdf/Gento_Luna/Gento_Luna_URDF.urdf",
+      "source_sha256": "e23d77debdcd3125372d8348577d12d3cadbb89c6aed7e60aa54608e4cb90f0b",
+      "destination_sha256": "e23d77debdcd3125372d8348577d12d3cadbb89c6aed7e60aa54608e4cb90f0b",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\urdf\\Gento_Sky\\Gento_Sky.urdf",
+      "destination": "assets/robots/gento/vendor/marvin_description/urdf/Gento_Sky/Gento_Sky.urdf",
+      "source_sha256": "5a3207932330c1b60f9175dda23a90386d881401bbfd3b97ba975068b27f20d0",
+      "destination_sha256": "5a3207932330c1b60f9175dda23a90386d881401bbfd3b97ba975068b27f20d0",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\mjcf\\Gento_Luna\\Gento_Luna.xml",
+      "destination": "assets/robots/gento/vendor/marvin_description/mjcf/Gento_Luna/Gento_Luna.xml",
+      "source_sha256": "8392c86f4d403bc09637d6bac38c283ca020d0cd248e7b5bf512f6aae55433fc",
+      "destination_sha256": "8392c86f4d403bc09637d6bac38c283ca020d0cd248e7b5bf512f6aae55433fc",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\mjcf\\Gento_Sky\\Gento_Sky.xml",
+      "destination": "assets/robots/gento/vendor/marvin_description/mjcf/Gento_Sky/Gento_Sky.xml",
+      "source_sha256": "fc71fbf755b3f8ce1069b3ba4eeb5545c943fed460885ac14ebae61946adfb80",
+      "destination_sha256": "fc71fbf755b3f8ce1069b3ba4eeb5545c943fed460885ac14ebae61946adfb80",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_L1_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_L1_Link.STL",
+      "source_sha256": "574c3c9fc2eb2b8a88bdd1538874064bce19f2056a01f98a76c50941444d509d",
+      "destination_sha256": "574c3c9fc2eb2b8a88bdd1538874064bce19f2056a01f98a76c50941444d509d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_L2_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_L2_Link.STL",
+      "source_sha256": "dd4b131343427c66df3b5c902bdf9004acd9c9644eaaa41ffd3041aa4dff82c6",
+      "destination_sha256": "dd4b131343427c66df3b5c902bdf9004acd9c9644eaaa41ffd3041aa4dff82c6",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_L3_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_L3_Link.STL",
+      "source_sha256": "c6283bbf322eccebc2b4aaa60502735a27f2e7e808881b71166213591d88bab9",
+      "destination_sha256": "c6283bbf322eccebc2b4aaa60502735a27f2e7e808881b71166213591d88bab9",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_L4_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_L4_Link.STL",
+      "source_sha256": "8a03d423e0111a518e39a03b99163c17bb5ab2172bdb739b0a94c5ab3b0d078e",
+      "destination_sha256": "8a03d423e0111a518e39a03b99163c17bb5ab2172bdb739b0a94c5ab3b0d078e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_L5_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_L5_Link.STL",
+      "source_sha256": "007de5726db1e687ffd56517f07ab0a3dfd0ceded2e1e792f44720b9a3bd45c5",
+      "destination_sha256": "007de5726db1e687ffd56517f07ab0a3dfd0ceded2e1e792f44720b9a3bd45c5",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_L6_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_L6_Link.STL",
+      "source_sha256": "0f981df1cbab3e64f3da91884aec76c7d9083dab5d130acf9b92cc3c9003ea58",
+      "destination_sha256": "0f981df1cbab3e64f3da91884aec76c7d9083dab5d130acf9b92cc3c9003ea58",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_L7_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_L7_Link.STL",
+      "source_sha256": "aec10724e0719f6dcd0faeebdc7728f4f39c8bafa0900887621e7b9cf0a46cd7",
+      "destination_sha256": "aec10724e0719f6dcd0faeebdc7728f4f39c8bafa0900887621e7b9cf0a46cd7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_R1_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_R1_Link.STL",
+      "source_sha256": "412af8bed0cbd990a5146ac52708313573550513b5de21acd756a9f0c3ec70ab",
+      "destination_sha256": "412af8bed0cbd990a5146ac52708313573550513b5de21acd756a9f0c3ec70ab",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_R2_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_R2_Link.STL",
+      "source_sha256": "44e7fcc5e0e9dbdcaa301df6da3149d135ac8206d4d6b7d493f81b97484b2c7a",
+      "destination_sha256": "44e7fcc5e0e9dbdcaa301df6da3149d135ac8206d4d6b7d493f81b97484b2c7a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_R3_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_R3_Link.STL",
+      "source_sha256": "0ff2811c90355b418a7601b9e0ffb14f3b31683201c3df9d0c86b1067c8b1530",
+      "destination_sha256": "0ff2811c90355b418a7601b9e0ffb14f3b31683201c3df9d0c86b1067c8b1530",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_R4_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_R4_Link.STL",
+      "source_sha256": "ab24a5f220507b200ced7202732d9939d7d966ab23f9373bb7e202298f500712",
+      "destination_sha256": "ab24a5f220507b200ced7202732d9939d7d966ab23f9373bb7e202298f500712",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_R5_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_R5_Link.STL",
+      "source_sha256": "b084f3b305213716e349dfa880309eff6d90bf57d9b1b56452a8746e3e6e1b1e",
+      "destination_sha256": "b084f3b305213716e349dfa880309eff6d90bf57d9b1b56452a8746e3e6e1b1e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_R6_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_R6_Link.STL",
+      "source_sha256": "bd8f028b32430d6aed2c76c1987457cf1ac6b1285d7c58e6bc5c9d59d8bd8c39",
+      "destination_sha256": "bd8f028b32430d6aed2c76c1987457cf1ac6b1285d7c58e6bc5c9d59d8bd8c39",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Arm_R7_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Arm_R7_Link.STL",
+      "source_sha256": "2bd9abb0d5e886a93ac276bfaa781a4c1d30b9939f9c570601e434dc8d5aedcf",
+      "destination_sha256": "2bd9abb0d5e886a93ac276bfaa781a4c1d30b9939f9c570601e434dc8d5aedcf",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Head_J1_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Head_J1_Link.STL",
+      "source_sha256": "ab6223b6925c3e6e40b774c571502eb22daa23bd283b8afb444c26fef6adafc7",
+      "destination_sha256": "ab6223b6925c3e6e40b774c571502eb22daa23bd283b8afb444c26fef6adafc7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Head_J2_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Head_J2_Link.STL",
+      "source_sha256": "fa255f99574b6f7b7e920cd728dbf7081d2b1d74e64a7a4e12fd64ab7699109e",
+      "destination_sha256": "fa255f99574b6f7b7e920cd728dbf7081d2b1d74e64a7a4e12fd64ab7699109e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Leg_J1_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Leg_J1_Link.STL",
+      "source_sha256": "d1fcc3d776957305ecd6e2745cf91657ccaaf9d2998a434bb9fda0b5fa18552d",
+      "destination_sha256": "d1fcc3d776957305ecd6e2745cf91657ccaaf9d2998a434bb9fda0b5fa18552d",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Leg_J2_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Leg_J2_Link.STL",
+      "source_sha256": "5971b7c956ff06ef93685b11707a219afadb4c13dfb575af470eed1b28e5cea2",
+      "destination_sha256": "5971b7c956ff06ef93685b11707a219afadb4c13dfb575af470eed1b28e5cea2",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Leg_J3_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Leg_J3_Link.STL",
+      "source_sha256": "25914336d282224b84d8b1ab4ce2f04d0f15e499a81a14a17051c8b219e063f2",
+      "destination_sha256": "25914336d282224b84d8b1ab4ce2f04d0f15e499a81a14a17051c8b219e063f2",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Leg_J4_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Leg_J4_Link.STL",
+      "source_sha256": "8898bbeffe7c4e439ff982e7974016406bafd4d6faf768dfe03cf25e556edbf6",
+      "destination_sha256": "8898bbeffe7c4e439ff982e7974016406bafd4d6faf768dfe03cf25e556edbf6",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Leg_J5_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Leg_J5_Link.STL",
+      "source_sha256": "6adb91d160a7e9b3adb06da3a7736e41c657a170b7ecd6e372d6358316ca4742",
+      "destination_sha256": "6adb91d160a7e9b3adb06da3a7736e41c657a170b7ecd6e372d6358316ca4742",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Leg_J6_Link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Leg_J6_Link.STL",
+      "source_sha256": "4b19d074d7d6882e10b734f58c65944220cd69492a9dce2b606da6f5dd59e550",
+      "destination_sha256": "4b19d074d7d6882e10b734f58c65944220cd69492a9dce2b606da6f5dd59e550",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Luna\\Underpan_Base_link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Luna/Underpan_Base_link.STL",
+      "source_sha256": "84d2631140d39315b5c370a242571f9994eb5902e6a0701f19b26c1fbd6bbb04",
+      "destination_sha256": "84d2631140d39315b5c370a242571f9994eb5902e6a0701f19b26c1fbd6bbb04",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\head_Link_1.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/head_Link_1.STL",
+      "source_sha256": "82f68c3f7e52b5529b2fa1641d32f0b6a59a4d659b255e621671c0b2a1b2324f",
+      "destination_sha256": "82f68c3f7e52b5529b2fa1641d32f0b6a59a4d659b255e621671c0b2a1b2324f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\head_Link_2.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/head_Link_2.STL",
+      "source_sha256": "319cc76535afc292ffed2aaa665498d43fbe0e1e75bc4528c165349fd075fb23",
+      "destination_sha256": "319cc76535afc292ffed2aaa665498d43fbe0e1e75bc4528c165349fd075fb23",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\left_back_wheel_Link_1.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/left_back_wheel_Link_1.STL",
+      "source_sha256": "75e91fde94e306b8ac069ab5dfe26d7f5bc1de7f32cbfdbfa88dfede25fddf29",
+      "destination_sha256": "75e91fde94e306b8ac069ab5dfe26d7f5bc1de7f32cbfdbfa88dfede25fddf29",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\left_back_wheel_Link_2.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/left_back_wheel_Link_2.STL",
+      "source_sha256": "03c033971816e02a536400c149092c0730bb5eec3b3a8603de56a81f0dd495b6",
+      "destination_sha256": "03c033971816e02a536400c149092c0730bb5eec3b3a8603de56a81f0dd495b6",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\left_front_wheel_Link_1.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/left_front_wheel_Link_1.STL",
+      "source_sha256": "64619238e69d056e17e3e095dd27ce5473068fcfcd889ac3c3839a8c9531fc3e",
+      "destination_sha256": "64619238e69d056e17e3e095dd27ce5473068fcfcd889ac3c3839a8c9531fc3e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\left_front_wheel_Link_2.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/left_front_wheel_Link_2.STL",
+      "source_sha256": "9b7c302d23c2f9e921a9a8c2842c83166d7e8a0ac4e59f5ef1809d3d342a46cd",
+      "destination_sha256": "9b7c302d23c2f9e921a9a8c2842c83166d7e8a0ac4e59f5ef1809d3d342a46cd",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\right_back_wheel_Link_1.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/right_back_wheel_Link_1.STL",
+      "source_sha256": "b553071f0e5c1a9eae2d7e0b93a688a88d458223119391fd47685db65e8a85bc",
+      "destination_sha256": "b553071f0e5c1a9eae2d7e0b93a688a88d458223119391fd47685db65e8a85bc",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\right_back_wheel_Link_2.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/right_back_wheel_Link_2.STL",
+      "source_sha256": "48b25ccf228c7c3d99d2889d97bd90032358611aaf6c3457b331debd9be3289e",
+      "destination_sha256": "48b25ccf228c7c3d99d2889d97bd90032358611aaf6c3457b331debd9be3289e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\right_front_wheel_Link_1.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/right_front_wheel_Link_1.STL",
+      "source_sha256": "8c31d4cd38308e0f888c942fc0f275d031a037b300109e6bd61ecf0c12d28b37",
+      "destination_sha256": "8c31d4cd38308e0f888c942fc0f275d031a037b300109e6bd61ecf0c12d28b37",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\right_front_wheel_Link_2.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/right_front_wheel_Link_2.STL",
+      "source_sha256": "e7c39c369c102907627e00d1d0bf6fa54bdf48a5dfc0f48f6d915d23ac1d0eb4",
+      "destination_sha256": "e7c39c369c102907627e00d1d0bf6fa54bdf48a5dfc0f48f6d915d23ac1d0eb4",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\Underpan_Base_link.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/Underpan_Base_link.STL",
+      "source_sha256": "e8895eb8bd9c0ee2184fce272c1500d3e142c0fab2027e2707b2fa9a35fec02a",
+      "destination_sha256": "e8895eb8bd9c0ee2184fce272c1500d3e142c0fab2027e2707b2fa9a35fec02a",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\waist_Link_1_prismatic.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/waist_Link_1_prismatic.STL",
+      "source_sha256": "acd1aef303b19cb4e883128972fe4889d9e7daae48c8d0a39ea658b2f2d44209",
+      "destination_sha256": "acd1aef303b19cb4e883128972fe4889d9e7daae48c8d0a39ea658b2f2d44209",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\waist_Link_2.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/waist_Link_2.STL",
+      "source_sha256": "b726cebb6700f6b4fe17f0444250385dd2859816a13d304a0c4496da89c20d73",
+      "destination_sha256": "b726cebb6700f6b4fe17f0444250385dd2859816a13d304a0c4496da89c20d73",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\Gento_Sky\\waist_Link_3.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/Gento_Sky/waist_Link_3.STL",
+      "source_sha256": "a07e745fc959b4d3303a72f37c7d67aabd48d403f6a0624e5c7a5c27df3262fe",
+      "destination_sha256": "a07e745fc959b4d3303a72f37c7d67aabd48d403f6a0624e5c7a5c27df3262fe",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Base_L.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Base_L.STL",
+      "source_sha256": "f22c309ed8cacd2fc776e2f72a2fc5618d9da84315267377edd3205e91ebbcb5",
+      "destination_sha256": "f22c309ed8cacd2fc776e2f72a2fc5618d9da84315267377edd3205e91ebbcb5",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Base_R.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Base_R.STL",
+      "source_sha256": "f22c309ed8cacd2fc776e2f72a2fc5618d9da84315267377edd3205e91ebbcb5",
+      "destination_sha256": "f22c309ed8cacd2fc776e2f72a2fc5618d9da84315267377edd3205e91ebbcb5",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link1_L.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link1_L.STL",
+      "source_sha256": "d00097eec49600a4111ee5a124d6636f50ea09a7a1dc8486d98f4370dde7a932",
+      "destination_sha256": "d00097eec49600a4111ee5a124d6636f50ea09a7a1dc8486d98f4370dde7a932",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link1_R.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link1_R.STL",
+      "source_sha256": "fdb1075fe0b41e5c2cb7c2fe13c9d2e62ff4dd6eb540ea841b8603db28369dd0",
+      "destination_sha256": "fdb1075fe0b41e5c2cb7c2fe13c9d2e62ff4dd6eb540ea841b8603db28369dd0",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link2_L.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link2_L.STL",
+      "source_sha256": "4776a6a2086ddc61b1643aff93386e545baccef2751db29d863fe027a76f325e",
+      "destination_sha256": "4776a6a2086ddc61b1643aff93386e545baccef2751db29d863fe027a76f325e",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link2_R.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link2_R.STL",
+      "source_sha256": "53eb9fc69c939d2ebd4f32c1df341c1c42bc3d9d0911db0c9fcee70aa2701b34",
+      "destination_sha256": "53eb9fc69c939d2ebd4f32c1df341c1c42bc3d9d0911db0c9fcee70aa2701b34",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link3_L.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link3_L.STL",
+      "source_sha256": "d58f1039bd3eb2ccc1a1959b89d2de7ae714344ad8cb8b78ef97b92dcd317d26",
+      "destination_sha256": "d58f1039bd3eb2ccc1a1959b89d2de7ae714344ad8cb8b78ef97b92dcd317d26",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link3_R.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link3_R.STL",
+      "source_sha256": "122456d8fc3e81694f352fc1f29d0bc19066f7f3d7572857a1be1e7c030dec9c",
+      "destination_sha256": "122456d8fc3e81694f352fc1f29d0bc19066f7f3d7572857a1be1e7c030dec9c",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link4_L.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link4_L.STL",
+      "source_sha256": "77f18566339f38acac1785fae517b05ff1e5247b95404ce26536d215bbed9cd7",
+      "destination_sha256": "77f18566339f38acac1785fae517b05ff1e5247b95404ce26536d215bbed9cd7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link4_R.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link4_R.STL",
+      "source_sha256": "77f18566339f38acac1785fae517b05ff1e5247b95404ce26536d215bbed9cd7",
+      "destination_sha256": "77f18566339f38acac1785fae517b05ff1e5247b95404ce26536d215bbed9cd7",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link5_L.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link5_L.STL",
+      "source_sha256": "573f15ee62b0a9b2d62aceeb756800fd86969a685535e91416b73d51f1c57613",
+      "destination_sha256": "573f15ee62b0a9b2d62aceeb756800fd86969a685535e91416b73d51f1c57613",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link5_R.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link5_R.STL",
+      "source_sha256": "2de51a340695c89b2fd58b1171dfacc4d85aa4e6cd50879e021a2d0bde8599a8",
+      "destination_sha256": "2de51a340695c89b2fd58b1171dfacc4d85aa4e6cd50879e021a2d0bde8599a8",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link6_L.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link6_L.STL",
+      "source_sha256": "b6b7570d8ebf1d2acb01baf8941b892f5a5f72aaa05503ab8340da8a2a7b2c13",
+      "destination_sha256": "b6b7570d8ebf1d2acb01baf8941b892f5a5f72aaa05503ab8340da8a2a7b2c13",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link6_R.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link6_R.STL",
+      "source_sha256": "49722d14b9ac34a84a41c95f49bd0b2a8859d4a05f66b247822bf36b0a703cd5",
+      "destination_sha256": "49722d14b9ac34a84a41c95f49bd0b2a8859d4a05f66b247822bf36b0a703cd5",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link7_L.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link7_L.STL",
+      "source_sha256": "126cc7d41c37049ce34d2636bfe2d460c21e3429ed080877d1c5e983109ef798",
+      "destination_sha256": "126cc7d41c37049ce34d2636bfe2d460c21e3429ed080877d1c5e983109ef798",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\vendor\\marvin_description\\meshes\\m6\\Link7_R.STL",
+      "destination": "assets/robots/gento/vendor/marvin_description/meshes/m6/Link7_R.STL",
+      "source_sha256": "6eb75b059ff383e90a153be840bcce84b23d8f8afd074b1bc9dfec1b18c2351f",
+      "destination_sha256": "6eb75b059ff383e90a153be840bcce84b23d8f8afd074b1bc9dfec1b18c2351f",
+      "migration": "copied"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\models\\skye\\model.xml",
+      "destination": "assets/robots/gento/skye/model.xml",
+      "source_sha256": "844430e013ade84aa29aaf4162aed8ddb88b2c1d53dc020c28a8604b42426f6a",
+      "destination_sha256": "70f1e94041b00d5d3f5e660d2bc438f78f72e3f40fba0f5f4930af40782341c0",
+      "migration": "mesh paths relative to model, geometry unchanged"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\models\\skye\\metadata.json",
+      "destination": "assets/robots/gento/skye/metadata.json",
+      "source_sha256": "31a3d86c52709853cd6141e518edd731d5ba83149eee8bb32189fdfb4bab4450",
+      "destination_sha256": "0d14ce32cf3251fdc2ca66f38cda99625106b399d528da22c2fa92c59ba3652d",
+      "migration": "physical metadata paths relative to metadata file"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\models\\luna\\model.xml",
+      "destination": "assets/robots/gento/luna/model.xml",
+      "source_sha256": "ab15a3eeef114dddde8b874dcfd67530f03c899b3f2587f2df488f2b79e7f252",
+      "destination_sha256": "1ea480fec84cb249acc6c5c7ed8eeeb9b72c640395a69ab3adf8d5b6d129f171",
+      "migration": "mesh paths relative to model, geometry unchanged"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\gento\\models\\luna\\metadata.json",
+      "destination": "assets/robots/gento/luna/metadata.json",
+      "source_sha256": "a6dd3b0d54718ae1a831500bbb764a108c8c6534d1cebf46bd2dee87d86f7d0e",
+      "destination_sha256": "e254b8cf22d328557da37599f56d12eb0ef37555a45db7c23affe47e3e2194f2",
+      "migration": "physical metadata paths relative to metadata file"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\genmo_export_smpl_canonical.py",
+      "destination": "tools/input/genmo_export_smpl_canonical.py",
+      "source_sha256": "569b26e2be432482452bc661cff249764b48edf425e112ad34f46856fe41ab9d",
+      "destination_sha256": "569b26e2be432482452bc661cff249764b48edf425e112ad34f46856fe41ab9d",
+      "migration": "Optional GEM output bridge; external GEM/body model dependency explicit, not imported by production runner"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\genmo_export_soma_canonical.py",
+      "destination": "tools/input/genmo_export_soma_canonical.py",
+      "source_sha256": "c84228212d62fbb9e6c4bd62e8654e4b75a0c4f8e7166a8dc17baec66bf02590",
+      "destination_sha256": "c84228212d62fbb9e6c4bd62e8654e4b75a0c4f8e7166a8dc17baec66bf02590",
+      "migration": "Optional GEM output bridge; external GEM/body model dependency explicit, not imported by production runner"
+    },
+    {
+      "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-24\\ni-b\\work\\genmo_export_foot_surface.py",
+      "destination": "tools/input/genmo_export_foot_surface.py",
+      "source_sha256": "8ac0a372fee290c52080b49dbdfbda16120356bec88acd1f52aa4a33371343d3",
+      "destination_sha256": "8ac0a372fee290c52080b49dbdfbda16120356bec88acd1f52aa4a33371343d3",
+      "migration": "Optional GEM output bridge; external GEM/body model dependency explicit, not imported by production runner"
+    }
+  ]
+}

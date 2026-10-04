@@ -1,0 +1,6 @@
+{
+  "schema": "greenwich.job.v1", "id": "fullbody_demo", "pipeline": "fullbody",
+  "source": "sources.json", "robots": "../../configs/robots.humanoid.example.json",
+  "runtime": "../../configs/runtime.example.json", "output": "../../runs/fullbody_demo",
+  "fps": 30, "acceptance": null
+}

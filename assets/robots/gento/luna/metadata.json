@@ -1,0 +1,304 @@
+{
+  "urdf": "Gento_Luna/Gento_Luna_URDF.urdf",
+  "wrists": [
+    "Arm_L7_Link",
+    "Arm_R7_Link"
+  ],
+  "torso": "Leg_J6_Link",
+  "model": "model.xml",
+  "source": "../vendor/marvin_description/urdf/Gento_Luna/Gento_Luna_URDF.urdf",
+  "ground_offset": 0.05995366803021854,
+  "joints": [
+    {
+      "name": "base_to_tracking_base_link",
+      "type": "fixed",
+      "limits": {}
+    },
+    {
+      "name": "Leg_J1_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-0.191986218",
+        "upper": "0.191986218",
+        "effort": "217",
+        "velocity": "3.560471674"
+      }
+    },
+    {
+      "name": "Leg_J2_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-1.570796327",
+        "upper": "1.570796327",
+        "effort": "217",
+        "velocity": "3.560471674"
+      }
+    },
+    {
+      "name": "Leg_J3_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-2.443460953",
+        "upper": "1.047197551",
+        "effort": "217",
+        "velocity": "3.560471674"
+      }
+    },
+    {
+      "name": "Leg_J4_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-0.959931089",
+        "upper": "1.919862177",
+        "effort": "108",
+        "velocity": "3.560471674"
+      }
+    },
+    {
+      "name": "Leg_J5_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-0.523598776",
+        "upper": "0.523598776",
+        "effort": "108",
+        "velocity": "5.235987756"
+      }
+    },
+    {
+      "name": "Leg_J6_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-2.967059728",
+        "upper": "2.967059728",
+        "effort": "108",
+        "velocity": "5.235987756"
+      }
+    },
+    {
+      "name": "Head_J1_joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-0.523595776",
+        "upper": "0.523595776",
+        "effort": "18",
+        "velocity": "3.665191429"
+      }
+    },
+    {
+      "name": "Head_J2_joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-1.570796327",
+        "upper": "1.570796327",
+        "effort": "18",
+        "velocity": "3.665191429"
+      }
+    },
+    {
+      "name": "Arm_L1_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-3.0194",
+        "upper": "3.0194",
+        "effort": "35",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_L2_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-2.0595",
+        "upper": "2.0595",
+        "effort": "35",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_L3_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-3.0194",
+        "upper": "3.0194",
+        "effort": "18",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_L4_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-2.5307",
+        "upper": "0.7854",
+        "effort": "18",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_L5_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-3.0194",
+        "upper": "3.0194",
+        "effort": "5.5",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_L6_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-1.0472",
+        "upper": "1.0472",
+        "effort": "5.5",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_L7_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-1.5708",
+        "upper": "1.5708",
+        "effort": "5.5",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_R1_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-3.0194",
+        "upper": "3.0194",
+        "effort": "35",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_R2_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-2.0595",
+        "upper": "2.0595",
+        "effort": "35",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_R3_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-3.0194",
+        "upper": "3.0194",
+        "effort": "18",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_R4_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-2.5307",
+        "upper": "0.7854",
+        "effort": "18",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_R5_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-3.0194",
+        "upper": "3.0194",
+        "effort": "5.5",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_R6_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-1.0472",
+        "upper": "1.0472",
+        "effort": "5.5",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Arm_R7_Joint",
+      "type": "revolute",
+      "limits": {
+        "lower": "-1.5708",
+        "upper": "1.5708",
+        "effort": "5.5",
+        "velocity": "3.1416"
+      }
+    }
+  ],
+  "end_effector_frames": [
+    {
+      "link": "Arm_L7_Link",
+      "origin_m": [
+        -1.9760136062141331e-10,
+        -0.0869999975239764,
+        -1.2504002746410725e-09
+      ],
+      "rotation": [
+        [
+          0.0,
+          2.2692796226557684e-05,
+          -0.9999999997425185
+        ],
+        [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.9999999997425185,
+          2.2692796226557684e-05
+        ]
+      ],
+      "mounting_normal_local": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "definition": "Inspected native CAD: circular distal mounting plane at -Y; revolute axis +Z passes through fork caps. X distal, Z palmar; neutral palm normal from projected gravity.",
+      "evidence": "work/gento/flange_native_geometry.png; vendor URDF visual mesh"
+    },
+    {
+      "link": "Arm_R7_Link",
+      "origin_m": [
+        4.805953898734394e-11,
+        -0.08699999745043623,
+        -1.166216064690806e-10
+      ],
+      "rotation": [
+        [
+          0.0,
+          7.34643742001422e-06,
+          0.9999999999730149
+        ],
+        [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          -0.9999999999730149,
+          7.34643742001422e-06
+        ]
+      ],
+      "mounting_normal_local": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "definition": "Inspected native CAD: circular distal mounting plane at -Y; revolute axis +Z passes through fork caps. X distal, Z palmar; neutral palm normal from projected gravity.",
+      "evidence": "work/gento/flange_native_geometry.png; vendor URDF visual mesh"
+    }
+  ]
+}

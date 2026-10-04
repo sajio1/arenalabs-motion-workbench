@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Greenwich conversion job",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema","id","pipeline","source","robots","runtime","output"],
+  "properties": {
+    "schema": {"const": "greenwich.job.v1"},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+    "pipeline": {"enum": ["fullbody","nymeria","gento"]},
+    "source": {"type": "string"}, "robots": {"type": "string"},
+    "runtime": {"type": "string"}, "output": {"type": "string"},
+    "fps": {"const": 30, "default": 30},
+    "window_frames": {"type": "integer", "minimum": 3},
+    "max_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "acceptance": {"type": ["string","null"]}
+  },
+  "allOf": [
+    {"if": {"required": ["window_frames"]}, "then": {"properties": {"pipeline": {"const": "nymeria"}}}},
+    {"if": {"required": ["max_seconds"]}, "then": {"properties": {"pipeline": {"const": "fullbody"}}}}
+  ]
+}

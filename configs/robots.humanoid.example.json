@@ -1,0 +1,12 @@
+[
+  {
+    "name": "my_robot",
+    "body": "my_robot",
+    "xml": "../assets/local/my_robot/model.xml",
+    "endpoints": {"left_wrist": "left_wrist_link", "right_wrist": "right_wrist_link", "left_ankle": "left_ankle_link", "right_ankle": "right_ankle_link"},
+    "palm_frames": {
+      "left_wrist": {"distal": [1,0,0], "normal": [0,-1,0]},
+      "right_wrist": {"distal": [1,0,0], "normal": [0,1,0]}
+    }
+  }
+]

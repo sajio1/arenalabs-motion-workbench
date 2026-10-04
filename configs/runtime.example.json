@@ -1,0 +1,6 @@
+{
+  "weights": "../weights/prime",
+  "hf_home": "../weights/huggingface",
+  "cache": "../.cache",
+  "device": "cuda"
+}

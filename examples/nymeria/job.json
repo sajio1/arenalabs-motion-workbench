@@ -1,0 +1,6 @@
+{
+  "schema": "greenwich.job.v1", "id": "nymeria_demo", "pipeline": "nymeria",
+  "source": "../../data/xdata.npz", "robots": "../../configs/robots.humanoid.example.json",
+  "runtime": "../../configs/runtime.example.json", "output": "../../runs/nymeria_demo",
+  "fps": 30, "window_frames": 900, "acceptance": null
+}

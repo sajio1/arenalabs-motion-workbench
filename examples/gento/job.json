@@ -1,0 +1,6 @@
+{
+  "schema": "greenwich.job.v1", "id": "gento_demo", "pipeline": "gento",
+  "source": "../../data/egodex.hdf5", "robots": "../../configs/robots.gento.json",
+  "runtime": "../../configs/runtime.example.json", "output": "../../runs/gento_demo",
+  "fps": 30, "acceptance": null
+}

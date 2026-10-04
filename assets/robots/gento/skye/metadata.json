@@ -1,0 +1,369 @@
+{
+  "urdf": "Gento_Sky/Gento_Sky.urdf",
+  "wrists": [
+    "Link7_L",
+    "Link7_R"
+  ],
+  "torso": "waist_Link_3",
+  "model": "model.xml",
+  "source": "../vendor/marvin_description/urdf/Gento_Sky/Gento_Sky.urdf",
+  "ground_offset": 8.10004393003716e-08,
+  "joints": [
+    {
+      "name": "Joint1_L",
+      "type": "revolute",
+      "limits": {
+        "effort": "108",
+        "lower": "-3.1067",
+        "upper": "3.1067",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint2_L",
+      "type": "revolute",
+      "limits": {
+        "effort": "108",
+        "lower": "-2.0944",
+        "upper": "2.0944",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint3_L",
+      "type": "revolute",
+      "limits": {
+        "effort": "66",
+        "lower": "-3.1067",
+        "upper": "3.1067",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint4_L",
+      "type": "revolute",
+      "limits": {
+        "effort": "66",
+        "lower": "-2.5307",
+        "upper": "1.0472",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint5_L",
+      "type": "revolute",
+      "limits": {
+        "effort": "18",
+        "lower": "-3.1067",
+        "upper": "3.1067",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint6_L",
+      "type": "revolute",
+      "limits": {
+        "effort": "18",
+        "lower": "-1.0472",
+        "upper": "1.0472",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint7_L",
+      "type": "revolute",
+      "limits": {
+        "effort": "18",
+        "lower": "-1.5708",
+        "upper": "1.5708",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "joint_flange_L",
+      "type": "fixed",
+      "limits": {}
+    },
+    {
+      "name": "Joint1_R",
+      "type": "revolute",
+      "limits": {
+        "effort": "108",
+        "lower": "-3.1067",
+        "upper": "3.1067",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint2_R",
+      "type": "revolute",
+      "limits": {
+        "effort": "108",
+        "lower": "-2.0944",
+        "upper": "2.0944",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint3_R",
+      "type": "revolute",
+      "limits": {
+        "effort": "66",
+        "lower": "-3.1067",
+        "upper": "3.1067",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint4_R",
+      "type": "revolute",
+      "limits": {
+        "effort": "66",
+        "lower": "-2.5307",
+        "upper": "1.0472",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint5_R",
+      "type": "revolute",
+      "limits": {
+        "effort": "18",
+        "lower": "-3.1067",
+        "upper": "3.1067",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint6_R",
+      "type": "revolute",
+      "limits": {
+        "effort": "18",
+        "lower": "-1.0472",
+        "upper": "1.0472",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "Joint7_R",
+      "type": "revolute",
+      "limits": {
+        "effort": "18",
+        "lower": "-1.5708",
+        "upper": "1.5708",
+        "velocity": "3.1416"
+      }
+    },
+    {
+      "name": "joint_flange_R",
+      "type": "fixed",
+      "limits": {}
+    },
+    {
+      "name": "left_front wheel_joint_1",
+      "type": "fixed",
+      "limits": {
+        "effort": "0",
+        "lower": "-2.97",
+        "upper": "2.97",
+        "velocity": "6.28"
+      }
+    },
+    {
+      "name": "left_front wheel_joint_2",
+      "type": "fixed",
+      "limits": {
+        "effort": "0",
+        "lower": "-2.97",
+        "upper": "2.97",
+        "velocity": "6.28"
+      }
+    },
+    {
+      "name": "right_front wheel_joint_1",
+      "type": "fixed",
+      "limits": {
+        "effort": "0",
+        "lower": "-2.97",
+        "upper": "2.97",
+        "velocity": "6.28"
+      }
+    },
+    {
+      "name": "right_front wheel_joint_2",
+      "type": "fixed",
+      "limits": {
+        "effort": "0",
+        "lower": "-2.97",
+        "upper": "2.97",
+        "velocity": "6.28"
+      }
+    },
+    {
+      "name": "left_back wheel_joint_1",
+      "type": "fixed",
+      "limits": {
+        "effort": "0",
+        "lower": "-2.97",
+        "upper": "2.97",
+        "velocity": "6.28"
+      }
+    },
+    {
+      "name": "left_back wheel_joint_2",
+      "type": "fixed",
+      "limits": {
+        "effort": "0",
+        "lower": "-2.97",
+        "upper": "2.97",
+        "velocity": "6.28"
+      }
+    },
+    {
+      "name": "right_back wheel_joint_1",
+      "type": "fixed",
+      "limits": {
+        "effort": "0",
+        "lower": "-2.97",
+        "upper": "2.97",
+        "velocity": "6.28"
+      }
+    },
+    {
+      "name": "right_back wheel_joint_2",
+      "type": "fixed",
+      "limits": {
+        "effort": "0",
+        "lower": "-2.97",
+        "upper": "2.97",
+        "velocity": "6.28"
+      }
+    },
+    {
+      "name": "waist_joint_1",
+      "type": "prismatic",
+      "limits": {
+        "effort": "0",
+        "lower": "0",
+        "upper": "0.86",
+        "velocity": "0.2"
+      }
+    },
+    {
+      "name": "waist_joint_2",
+      "type": "revolute",
+      "limits": {
+        "effort": "194",
+        "lower": "-1.5708",
+        "upper": "0",
+        "velocity": "3.14"
+      }
+    },
+    {
+      "name": "waist_joint_3",
+      "type": "revolute",
+      "limits": {
+        "effort": "194",
+        "lower": "-0.4363",
+        "upper": "0.4363",
+        "velocity": "3.14"
+      }
+    },
+    {
+      "name": "Head_J1_Joint",
+      "type": "revolute",
+      "limits": {
+        "effort": "22",
+        "lower": "-1.5708",
+        "upper": "1.5708",
+        "velocity": "3.14"
+      }
+    },
+    {
+      "name": "Head_J2_Joint",
+      "type": "revolute",
+      "limits": {
+        "effort": "22",
+        "lower": "-0.6109",
+        "upper": "0.4363",
+        "velocity": "3.14"
+      }
+    },
+    {
+      "name": "left_base_joint",
+      "type": "fixed",
+      "limits": {}
+    },
+    {
+      "name": "right_base_joint",
+      "type": "fixed",
+      "limits": {}
+    }
+  ],
+  "end_effector_frames": [
+    {
+      "link": "Link7_L",
+      "origin_m": [
+        2.5659293613478074e-10,
+        -0.09499999885448628,
+        7.735928217456056e-11
+      ],
+      "rotation": [
+        [
+          0.0,
+          1.1346431353309926e-05,
+          -0.9999999999356293
+        ],
+        [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.9999999999356293,
+          1.1346431353309926e-05
+        ]
+      ],
+      "mounting_normal_local": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "definition": "Inspected native CAD: circular distal mounting plane at -Y; revolute axis +Z passes through fork caps. X distal, Z palmar; neutral palm normal from projected gravity.",
+      "evidence": "work/gento/flange_native_geometry.png; vendor URDF visual mesh"
+    },
+    {
+      "link": "Link7_R",
+      "origin_m": [
+        9.743937757350496e-10,
+        -0.09499999894673246,
+        -5.703389149847027e-13
+      ],
+      "rotation": [
+        [
+          0.0,
+          -1.1346301135361182e-05,
+          0.9999999999356307
+        ],
+        [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        [
+          0.0,
+          -0.9999999999356307,
+          -1.1346301135361182e-05
+        ]
+      ],
+      "mounting_normal_local": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "definition": "Inspected native CAD: circular distal mounting plane at -Y; revolute axis +Z passes through fork caps. X distal, Z palmar; neutral palm normal from projected gravity.",
+      "evidence": "work/gento/flange_native_geometry.png; vendor URDF visual mesh"
+    }
+  ]
+}

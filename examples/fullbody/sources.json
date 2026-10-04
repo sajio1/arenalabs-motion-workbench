@@ -1,0 +1,4 @@
+{
+  "schema": "alphamotion.sources.v1",
+  "sources": [{"id": "clip_001", "format": "soma", "path": "../../data/source.bvh", "options": {"bind_path": "../../data/soma_bind.bvh"}}]
+}

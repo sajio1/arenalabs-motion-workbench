@@ -1,0 +1,418 @@
+﻿pipeline,category,file,absolute_path
+Nymeria,批处理与交付,aggregate_full_motion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/aggregate_full_motion.py
+Nymeria,批处理与交付,aggregate_near_limits.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/aggregate_near_limits.py
+Nymeria,求解或实验模块,align_support_review.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/align_support_review.py
+Nymeria,审查,audit_acceptance.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_acceptance.py
+Nymeria,审查,audit_arm_dirs.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_arm_dirs.py
+Nymeria,审查,audit_blueman_binding.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_blueman_binding.py
+Nymeria,审查,audit_centroidal.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_centroidal.py
+Nymeria,审查,audit_clock_contract.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_clock_contract.py
+Nymeria,审查,audit_com.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_com.py
+Nymeria,审查,audit_contact_transitions.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_contact_transitions.py
+Nymeria,审查,audit_contact_types.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_contact_types.py
+Nymeria,审查,audit_display_gait.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_display_gait.py
+Nymeria,审查,audit_exported_ground.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_exported_ground.py
+Nymeria,审查,audit_foot_surface.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_foot_surface.py
+Nymeria,审查,audit_full_dynamics_derivative.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_full_dynamics_derivative.py
+Nymeria,审查,audit_joint_latent.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_joint_latent.py
+Nymeria,审查,audit_lafan_native.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_lafan_native.py
+Nymeria,审查,audit_latent_completion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_latent_completion.py
+Nymeria,审查,audit_marker_bias.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_marker_bias.py
+Nymeria,审查,audit_marker_mesh.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_marker_mesh.py
+Nymeria,审查,audit_mesh_fk.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_mesh_fk.py
+Nymeria,审查,audit_mesh_playback.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_mesh_playback.py
+Nymeria,审查,audit_motion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_motion.py
+Nymeria,审查,audit_near_limits.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_near_limits.py
+Nymeria,审查,audit_nymeria_latent.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_nymeria_latent.py
+Nymeria,审查,audit_orientation_error.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_orientation_error.py
+Nymeria,审查,audit_pair_reach.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_pair_reach.py
+Nymeria,审查,audit_palm_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_palm_geometry.py
+Nymeria,审查,audit_palm_orientation.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_palm_orientation.py
+Nymeria,审查,audit_pose_issues.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_pose_issues.py
+Nymeria,审查,audit_pose_seed.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_pose_seed.py
+Nymeria,审查,audit_pose_stages.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_pose_stages.py
+Nymeria,审查,audit_posture.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_posture.py
+Nymeria,审查,audit_prime_descriptors.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_prime_descriptors.py
+Nymeria,审查,audit_prime_heading.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_prime_heading.py
+Nymeria,审查,audit_prior_refinement.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_prior_refinement.py
+Nymeria,审查,audit_reach.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_reach.py
+Nymeria,审查,audit_refined_balance.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_refined_balance.py
+Nymeria,审查,audit_rendered_palm.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_rendered_palm.py
+Nymeria,审查,audit_selected_motion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_selected_motion.py
+Nymeria,审查,audit_shared_contract.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_shared_contract.py
+Nymeria,审查,audit_solver_linearization.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_solver_linearization.py
+Nymeria,审查,audit_source_ankles.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_source_ankles.py
+Nymeria,审查,audit_source_clock.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_source_clock.py
+Nymeria,审查,audit_source_metadata.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_source_metadata.py
+Nymeria,审查,audit_sparse_root.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_sparse_root.py
+Nymeria,审查,audit_support_ablation.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_support_ablation.py
+Nymeria,审查,audit_support_ground.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_support_ground.py
+Nymeria,审查,audit_temporal_model.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_temporal_model.py
+Nymeria,审查,audit_three_seconds.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_three_seconds.py
+Nymeria,审查,audit_torso.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_torso.py
+Nymeria,审查,audit_v3_posture.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_v3_posture.py
+Nymeria,审查,audit_web_motion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_web_motion.py
+Nymeria,审查,audit_wrist_motion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/audit_wrist_motion.py
+Nymeria,求解或实验模块,benchmark_algebra_threads.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/benchmark_algebra_threads.py
+Nymeria,求解或实验模块,benchmark_banded.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/benchmark_banded.py
+Nymeria,求解或实验模块,benchmark_box_qp.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/benchmark_box_qp.py
+Nymeria,求解或实验模块,benchmark_osqp.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/benchmark_osqp.py
+Nymeria,求解或实验模块,benchmark_reference_sequence_v22.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/benchmark_reference_sequence_v22.py
+Nymeria,求解或实验模块,benchmark_refinement.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/benchmark_refinement.py
+Nymeria,求解或实验模块,box_qp.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/box_qp.py
+Nymeria,求解或实验模块,centroidal_balance.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/centroidal_balance.py
+Nymeria,求解或实验模块,centroidal_support_loss.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/centroidal_support_loss.py
+Nymeria,批处理与交付,cloud_video_review_finish.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/cloud_video_review_finish.py
+Nymeria,批处理与交付,collect_crouch_ablations.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/collect_crouch_ablations.py
+Nymeria,批处理与交付,collect_ee_1cm.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/collect_ee_1cm.py
+Nymeria,批处理与交付,collect_final_quality.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/collect_final_quality.py
+Nymeria,批处理与交付,collect_lambda_v2.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/collect_lambda_v2.py
+Nymeria,批处理与交付,collect_motion_screen.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/collect_motion_screen.py
+Nymeria,批处理与交付,corpus_completion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/corpus_completion.py
+Nymeria,批处理与交付,corpus_worker.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/corpus_worker.py
+Nymeria,求解或实验模块,diagnose_motion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/diagnose_motion.py
+Nymeria,批处理与交付,download_corpus.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/download_corpus.py
+Nymeria,批处理与交付,download_selected.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/download_selected.py
+Nymeria,求解或实验模块,embodiment_exact.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/embodiment_exact.py
+Nymeria,求解或实验模块,evaluate_additional.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/evaluate_additional.py
+Nymeria,求解或实验模块,evaluate_inverse_dynamics.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/evaluate_inverse_dynamics.py
+Nymeria,求解或实验模块,exact_mesh_trace.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/exact_mesh_trace.py
+Nymeria,展示与导出,export_compact_drive.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/export_compact_drive.py
+Nymeria,展示与导出,export_dummy_bind_comparison.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/export_dummy_bind_comparison.py
+Nymeria,展示与导出,export_native_web.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/export_native_web.py
+Nymeria,展示与导出,export_web.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/export_web.py
+Nymeria,求解或实验模块,extract_hand_projection.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/extract_hand_projection.py
+Nymeria,求解或实验模块,feasible_qp.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/feasible_qp.py
+Nymeria,求解或实验模块,fetch_annotations.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/fetch_annotations.py
+Nymeria,求解或实验模块,fetch_completed_source_videos.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/fetch_completed_source_videos.py
+Nymeria,求解或实验模块,fetch_head_calibration_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/fetch_head_calibration_audit.py
+Nymeria,求解或实验模块,fetch_sync_metadata.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/fetch_sync_metadata.py
+Nymeria,批处理与交付,finalize_support_report.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/finalize_support_report.py
+Nymeria,求解或实验模块,foot_height_debug.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/foot_height_debug.py
+Nymeria,求解或实验模块,foot_orientation_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/foot_orientation_audit.py
+Nymeria,求解或实验模块,gate_support_evaluation.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/gate_support_evaluation.py
+Nymeria,求解或实验模块,global_rotation_fk.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/global_rotation_fk.py
+Nymeria,求解或实验模块,ground_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/ground_audit.py
+Nymeria,求解或实验模块,ground_refine.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/ground_refine.py
+Nymeria,求解或实验模块,inspect_g1_hand.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/inspect_g1_hand.py
+Nymeria,求解或实验模块,inspect_hand_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/inspect_hand_geometry.py
+Nymeria,求解或实验模块,inspect_toe_pivot.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/inspect_toe_pivot.py
+Nymeria,求解或实验模块,joint_latent_angular.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_angular.py
+Nymeria,求解或实验模块,joint_latent_free_height.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_free_height.py
+Nymeria,求解或实验模块,joint_latent_frozen_prior.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_frozen_prior.py
+Nymeria,求解或实验模块,joint_latent_refine.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_refine.py
+Nymeria,求解或实验模块,joint_latent_seed_preserved.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_seed_preserved.py
+Nymeria,求解或实验模块,joint_latent_support.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_support.py
+Nymeria,求解或实验模块,joint_latent_trunk.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_trunk.py
+Nymeria,求解或实验模块,joint_latent_v3.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_v3.py
+Nymeria,求解或实验模块,joint_latent_v3_pose.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_v3_pose.py
+Nymeria,求解或实验模块,joint_latent_v3_posture.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/joint_latent_v3_posture.py
+Nymeria,求解或实验模块,latent_pose_fit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/latent_pose_fit.py
+Nymeria,求解或实验模块,launch_lambda_v2.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/launch_lambda_v2.py
+Nymeria,求解或实验模块,launch_short_ablations.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/launch_short_ablations.py
+Nymeria,求解或实验模块,leg_reach_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/leg_reach_audit.py
+Nymeria,求解或实验模块,map_clip_clock.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/map_clip_clock.py
+Nymeria,求解或实验模块,map_head_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/map_head_audit.py
+Nymeria,求解或实验模块,motion_tolerances.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/motion_tolerances.py
+Nymeria,求解或实验模块,official_contacts.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/official_contacts.py
+Nymeria,求解或实验模块,orientation_frames.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/orientation_frames.py
+Nymeria,批处理与交付,package_full.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/package_full.py
+Nymeria,批处理与交付,package_lambda_v2.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/package_lambda_v2.py
+Nymeria,求解或实验模块,palm_frame_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/palm_frame_audit.py
+Nymeria,求解或实验模块,prepare_clips.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/prepare_clips.py
+Nymeria,求解或实验模块,prepare_unseen_review.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/prepare_unseen_review.py
+Nymeria,求解或实验模块,probe_input_gauge.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/probe_input_gauge.py
+Nymeria,求解或实验模块,project_hand_surfaces.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/project_hand_surfaces.py
+Nymeria,求解或实验模块,project_head_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/project_head_audit.py
+Nymeria,求解或实验模块,prune_archived_raw.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/prune_archived_raw.py
+Nymeria,求解或实验模块,prune_verified_soma_extraction.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/prune_verified_soma_extraction.py
+Nymeria,批处理与交付,publish_preserved_batch.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/publish_preserved_batch.py
+Nymeria,批处理与交付,publish_v3_cloud_batch.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/publish_v3_cloud_batch.py
+Nymeria,批处理与交付,publish_v3_posture.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/publish_v3_posture.py
+Nymeria,批处理与交付,publish_v3_unseen.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/publish_v3_unseen.py
+Nymeria,求解或实验模块,rank_contact_quality.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/rank_contact_quality.py
+Nymeria,求解或实验模块,rank_source_walks.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/rank_source_walks.py
+Nymeria,求解或实验模块,rank_upright_reach.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/rank_upright_reach.py
+Nymeria,求解或实验模块,reach_check.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/reach_check.py
+Nymeria,求解或实验模块,read_sync_clock.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/read_sync_clock.py
+Nymeria,求解或实验模块,reconstruct_temporal_root.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/reconstruct_temporal_root.py
+Nymeria,求解或实验模块,refine_four_pose.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/refine_four_pose.py
+Nymeria,展示与导出,render_batch_movie.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/render_batch_movie.py
+Nymeria,展示与导出,render_hand_ego_comparison.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/render_hand_ego_comparison.py
+Nymeria,展示与导出,render_hand_projection.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/render_hand_projection.py
+Nymeria,展示与导出,render_pose_review.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/render_pose_review.py
+Nymeria,求解或实验模块,report_stance_revision.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/report_stance_revision.py
+Nymeria,求解或实验模块,research_neutral_control.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/research_neutral_control.py
+Nymeria,求解或实验模块,research_root_completion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/research_root_completion.py
+Nymeria,求解或实验模块,run_fixed_suite.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_fixed_suite.py
+Nymeria,求解或实验模块,run_free_height_ablation.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_free_height_ablation.py
+Nymeria,求解或实验模块,run_latent_initialization.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_latent_initialization.py
+Nymeria,求解或实验模块,run_native_sparse.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_native_sparse.py
+Nymeria,求解或实验模块,run_preserved_batch.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_preserved_batch.py
+Nymeria,求解或实验模块,run_short_ablation.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_short_ablation.py
+Nymeria,求解或实验模块,run_support_ablation.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_support_ablation.py
+Nymeria,求解或实验模块,run_v2_evaluation.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_v2_evaluation.py
+Nymeria,求解或实验模块,run_v3_cloud_batch.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_v3_cloud_batch.py
+Nymeria,求解或实验模块,run_v40_short_review.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/run_v40_short_review.py
+Nymeria,求解或实验模块,screen_actions.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/screen_actions.py
+Nymeria,求解或实验模块,sequence_gauss_newton.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/sequence_gauss_newton.py
+Nymeria,求解或实验模块,so3_pose.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/so3_pose.py
+Nymeria,求解或实验模块,sole_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/sole_geometry.py
+Nymeria,求解或实验模块,solve_head_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/solve_head_audit.py
+Nymeria,求解或实验模块,sparse_root_inverse.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/sparse_root_inverse.py
+Nymeria,求解或实验模块,stance_carrier_audit.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/stance_carrier_audit.py
+Nymeria,求解或实验模块,stance_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/stance_geometry.py
+Nymeria,求解或实验模块,start_second_instance.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/start_second_instance.py
+Nymeria,求解或实验模块,summarize_acceleration.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/summarize_acceleration.py
+Nymeria,求解或实验模块,support_candidates.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/support_candidates.py
+Nymeria,求解或实验模块,sync_ego_video.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/sync_ego_video.py
+Nymeria,求解或实验模块,target_completion_probe.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/target_completion_probe.py
+Nymeria,求解或实验模块,target_temporal_probe.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/target_temporal_probe.py
+Nymeria,求解或实验模块,temporal_latent_probe.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/temporal_latent_probe.py
+Nymeria,审查,test_bounded_sequence_step.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_bounded_sequence_step.py
+Nymeria,审查,test_centroidal_balance.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_centroidal_balance.py
+Nymeria,审查,test_feasible_qp.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_feasible_qp.py
+Nymeria,审查,test_inverse_dynamics_lp.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_inverse_dynamics_lp.py
+Nymeria,审查,test_motion_tolerances.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_motion_tolerances.py
+Nymeria,审查,test_so3_pose.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_so3_pose.py
+Nymeria,审查,test_stance_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_stance_geometry.py
+Nymeria,审查,test_vendor_mass_kinematics.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_vendor_mass_kinematics.py
+Nymeria,审查,test_xsens_clock.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/test_xsens_clock.py
+Nymeria,求解或实验模块,transcode_source_videos_for_hf.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/transcode_source_videos_for_hf.py
+Nymeria,求解或实验模块,vendor_mass_kinematics.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/vendor_mass_kinematics.py
+Nymeria,审查,verify_compact_release.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/verify_compact_release.py
+Nymeria,审查,verify_compact_snapshot.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/verify_compact_snapshot.py
+Nymeria,审查,verify_completed_videos.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/verify_completed_videos.py
+Nymeria,求解或实验模块,xsens_clock.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/nymeria/xsens_clock.py
+Gento,审查,audit_arm_reach.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_arm_reach.py
+Gento,审查,audit_batch_five.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_batch_five.py
+Gento,审查,audit_codec_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_codec_geometry.py
+Gento,审查,audit_cuff_tracking.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_cuff_tracking.py
+Gento,审查,audit_forward_shift.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_forward_shift.py
+Gento,审查,audit_head_frames.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_head_frames.py
+Gento,审查,audit_head_motion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_head_motion.py
+Gento,审查,audit_nearer_base.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_nearer_base.py
+Gento,审查,audit_posture.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_posture.py
+Gento,审查,audit_preview.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_preview.py
+Gento,审查,audit_prime_completion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_prime_completion.py
+Gento,审查,audit_prime_contribution.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_prime_contribution.py
+Gento,审查,audit_prime_known_body.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_prime_known_body.py
+Gento,审查,audit_priority_stability.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_priority_stability.py
+Gento,审查,audit_random50_cloud_review.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_random50_cloud_review.py
+Gento,审查,audit_reach_registration.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_reach_registration.py
+Gento,审查,audit_reused_height.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_reused_height.py
+Gento,审查,audit_temporal_reach.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_temporal_reach.py
+Gento,审查,audit_tool_binding.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/audit_tool_binding.py
+Gento,求解或实验模块,batch_five.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/batch_five.py
+Gento,展示与导出,batch_visor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/batch_visor.py
+Gento,求解或实验模块,benchmark_fk.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/benchmark_fk.py
+Gento,求解或实验模块,build_cloud_package.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/build_cloud_package.py
+Gento,求解或实验模块,canonical_descriptor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/canonical_descriptor.py
+Gento,求解或实验模块,check_fast_fk.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/check_fast_fk.py
+Gento,求解或实验模块,check_forward_reach_gate.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/check_forward_reach_gate.py
+Gento,求解或实验模块,check_personal_drive_auth.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/check_personal_drive_auth.py
+Gento,求解或实验模块,clip_fixed_height.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/clip_fixed_height.py
+Gento,批处理与交付,cloud_egodex_download.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/cloud_egodex_download.py
+Gento,批处理与交付,cloud_egodex_supervisor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/cloud_egodex_supervisor.py
+Gento,批处理与交付,cloud_egodex_worker.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/cloud_egodex_worker.py
+Gento,批处理与交付,cloud_random50_visor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/cloud_random50_visor.py
+Gento,求解或实验模块,compare_body_motion.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/compare_body_motion.py
+Gento,求解或实验模块,compare_solver_budget.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/compare_solver_budget.py
+Gento,求解或实验模块,compare_visor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/compare_visor.py
+Gento,求解或实验模块,compare_wrist_alignment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/compare_wrist_alignment.py
+Gento,求解或实验模块,condition_sparse_model.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/condition_sparse_model.py
+Gento,求解或实验模块,diagnose_codec_roundtrip.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/diagnose_codec_roundtrip.py
+Gento,求解或实验模块,diagnose_scene_reference.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/diagnose_scene_reference.py
+Gento,批处理与交付,download_vendor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/download_vendor.py
+Gento,求解或实验模块,dummy_hands.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/dummy_hands.py
+Gento,求解或实验模块,egodex_range_zip.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/egodex_range_zip.py
+Gento,求解或实验模块,fetch_completed_egodex_videos.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/fetch_completed_egodex_videos.py
+Gento,求解或实验模块,fetch_random50_ego_video.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/fetch_random50_ego_video.py
+Gento,求解或实验模块,finish_cloud_at_target.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/finish_cloud_at_target.py
+Gento,求解或实验模块,forward_reach_gate.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/forward_reach_gate.py
+Gento,求解或实验模块,head_frame_experiment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/head_frame_experiment.py
+Gento,求解或实验模块,head_motion_experiment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/head_motion_experiment.py
+Gento,求解或实验模块,head_observation_experiment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/head_observation_experiment.py
+Gento,求解或实验模块,head_placement_experiment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/head_placement_experiment.py
+Gento,求解或实验模块,head_reference.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/head_reference.py
+Gento,求解或实验模块,head_setback_experiment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/head_setback_experiment.py
+Gento,求解或实验模块,head_shared_height_experiment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/head_shared_height_experiment.py
+Gento,求解或实验模块,height_only_chain.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/height_only_chain.py
+Gento,求解或实验模块,inspect_arm_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/inspect_arm_geometry.py
+Gento,求解或实验模块,inspect_flange.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/inspect_flange.py
+Gento,求解或实验模块,inspect_flange_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/inspect_flange_geometry.py
+Gento,求解或实验模块,merge_semantic_cache.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/merge_semantic_cache.py
+Gento,求解或实验模块,nearer_base_experiment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/nearer_base_experiment.py
+Gento,批处理与交付,package_english_random50_visor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/package_english_random50_visor.py
+Gento,求解或实验模块,polish_head_frame.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/polish_head_frame.py
+Gento,求解或实验模块,posture_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/posture_geometry.py
+Gento,求解或实验模块,prepare_anatomical_three.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/prepare_anatomical_three.py
+Gento,求解或实验模块,prepare_canonical_three.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/prepare_canonical_three.py
+Gento,求解或实验模块,prepare_models.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/prepare_models.py
+Gento,求解或实验模块,prepare_random50_cloud_review.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/prepare_random50_cloud_review.py
+Gento,求解或实验模块,preview_prime_three.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/preview_prime_three.py
+Gento,求解或实验模块,raw_three_visor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/raw_three_visor.py
+Gento,求解或实验模块,reconstruct_three_v3.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/reconstruct_three_v3.py
+Gento,求解或实验模块,refine_arm_priority45.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/refine_arm_priority45.py
+Gento,求解或实验模块,refine_fixed_v3.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/refine_fixed_v3.py
+Gento,展示与导出,render_batch_video.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/render_batch_video.py
+Gento,展示与导出,render_five_when_ready.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/render_five_when_ready.py
+Gento,展示与导出,render_hand_mounts.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/render_hand_mounts.py
+Gento,展示与导出,render_preview.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/render_preview.py
+Gento,求解或实验模块,repair_cad_tool_frames.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/repair_cad_tool_frames.py
+Gento,求解或实验模块,reuse_wrist_alignment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/reuse_wrist_alignment.py
+Gento,求解或实验模块,review_head_experiment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/review_head_experiment.py
+Gento,求解或实验模块,run_constant_height_suite.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/run_constant_height_suite.py
+Gento,求解或实验模块,run_cuff_five.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/run_cuff_five.py
+Gento,求解或实验模块,run_hands_only_suite.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/run_hands_only_suite.py
+Gento,求解或实验模块,run_preview.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/run_preview.py
+Gento,求解或实验模块,show_prime_fixed.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/show_prime_fixed.py
+Gento,求解或实验模块,summarize_hands_only_suite.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/summarize_hands_only_suite.py
+Gento,求解或实验模块,temporal_projected_solver.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/temporal_projected_solver.py
+Gento,求解或实验模块,temporal_seed.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/temporal_seed.py
+Gento,审查,test_upper_proxy.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/test_upper_proxy.py
+Gento,审查,test_wrist_alignment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/test_wrist_alignment.py
+Gento,求解或实验模块,update_camera_head.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/update_camera_head.py
+Gento,求解或实验模块,v3_pose_initialization.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/v3_pose_initialization.py
+Gento,审查,verify_cloud_delivery.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/verify_cloud_delivery.py
+Gento,审查,verify_completed_egodex_videos.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/verify_completed_egodex_videos.py
+Gento,审查,verify_private_hf_delivery.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/verify_private_hf_delivery.py
+Gento,求解或实验模块,wrist_alignment.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/wrist_alignment.py
+Gento,求解或实验模块,write_head_frame_review.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/write_head_frame_review.py
+Gento,求解或实验模块,write_head_motion_review.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/gento/write_head_motion_review.py
+SOMA SDK,求解或实验模块,attach_surface_contact.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/attach_surface_contact.py
+SOMA SDK,批处理与交付,collect_delivery_videos.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/collect_delivery_videos.py
+SOMA SDK,求解或实验模块,compose_variant_videos.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/compose_variant_videos.py
+SOMA SDK,求解或实验模块,dex_contact_terms.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/dex_contact_terms.py
+SOMA SDK,求解或实验模块,g1_csv_to_mjlab.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/g1_csv_to_mjlab.py
+SOMA SDK,求解或实验模块,greenwich_to_mjlab_native.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/greenwich_to_mjlab_native.py
+SOMA SDK,求解或实验模块,native_robot_cfg.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/native_robot_cfg.py
+SOMA SDK,批处理与交付,package_sim_delivery.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/package_sim_delivery.py
+SOMA SDK,求解或实验模块,run_queue_after.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/run_queue_after.py
+SOMA SDK,求解或实验模块,sim9_evaluate.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/sim9_evaluate.py
+SOMA SDK,求解或实验模块,sim9_queue.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/sim9_queue.py
+SOMA SDK,求解或实验模块,sim9_worker.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/sim9_worker.py
+SOMA SDK,求解或实验模块,smoke_native.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/smoke_native.py
+SOMA SDK,求解或实验模块,summarize_sim_runs.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/summarize_sim_runs.py
+SOMA SDK,求解或实验模块,validate_benchmark_bundle.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/validate_benchmark_bundle.py
+SOMA SDK,求解或实验模块,video_contact_sheet.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/quality/beyondmimic/video_contact_sheet.py
+SOMA SDK,审查,audit_ground_error.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/audit_ground_error.py
+SOMA SDK,审查,audit_soma_contact.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/audit_soma_contact.py
+SOMA SDK,审查,audit_soma_foot_phases.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/audit_soma_foot_phases.py
+SOMA SDK,审查,audit_transfer_accuracy.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/audit_transfer_accuracy.py
+SOMA SDK,求解或实验模块,bulk_convert_soma.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/bulk_convert_soma.py
+SOMA SDK,求解或实验模块,compact_robot_motion_delivery.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/compact_robot_motion_delivery.py
+SOMA SDK,展示与导出,export_viewer_robot.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/export_viewer_robot.py
+SOMA SDK,批处理与交付,finalize_h2_compact_delivery.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/finalize_h2_compact_delivery.py
+SOMA SDK,批处理与交付,package_compact_shards.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/package_compact_shards.py
+SOMA SDK,求解或实验模块,prepare_soma_subset.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/prepare_soma_subset.py
+SOMA SDK,展示与导出,render_soma_robot_comparison.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/render_soma_robot_comparison.py
+SOMA SDK,展示与导出,render_soma_robot_grid.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/render_soma_robot_grid.py
+SOMA SDK,求解或实验模块,run_soma_locomotion.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/run_soma_locomotion.py
+SOMA SDK,求解或实验模块,soma_contact_refine.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/soma_contact_refine.py
+SOMA SDK,求解或实验模块,stream_compact50_delivery.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/stream_compact50_delivery.py
+SOMA SDK,求解或实验模块,summarize_soma_locomotion.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/toolkits/greenwich-soma-multibody/scripts/summarize_soma_locomotion.py
+共享 SDK,求解或实验模块,__init__.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/__init__.py
+共享 SDK,求解或实验模块,_bvh.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/_bvh.py
+共享 SDK,求解或实验模块,_smpl_bind.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/_smpl_bind.py
+共享 SDK,求解或实验模块,adapters.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/adapters.py
+共享 SDK,求解或实验模块,body_coordination.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/body_coordination.py
+共享 SDK,求解或实验模块,body_coordination_helpers.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/body_coordination_helpers.py
+共享 SDK,求解或实验模块,card_gallery.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/card_gallery.py
+共享 SDK,求解或实验模块,compact.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/compact.py
+共享 SDK,求解或实验模块,contact_labels.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/contact_labels.py
+共享 SDK,批处理与交付,corpus_screen.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/corpus_screen.py
+共享 SDK,批处理与交付,corpus_support.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/corpus_support.py
+共享 SDK,求解或实验模块,dataset_metadata.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/dataset_metadata.py
+共享 SDK,求解或实验模块,evaluation.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/evaluation.py
+共享 SDK,求解或实验模块,fixed_support.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/fixed_support.py
+共享 SDK,求解或实验模块,kimodo_foot_skate.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/kimodo_foot_skate.py
+共享 SDK,求解或实验模块,locomotion_audit.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/locomotion_audit.py
+共享 SDK,求解或实验模块,motion.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/motion.py
+共享 SDK,求解或实验模块,native_projection.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/native_projection.py
+共享 SDK,求解或实验模块,physics_audit.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/physics_audit.py
+共享 SDK,求解或实验模块,pipeline.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/pipeline.py
+共享 SDK,求解或实验模块,preview_candidates.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/preview_candidates.py
+共享 SDK,展示与导出,render_review.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/render_review.py
+共享 SDK,求解或实验模块,reports.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/reports.py
+共享 SDK,求解或实验模块,review_sampling.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/review_sampling.py
+共享 SDK,求解或实验模块,review_sources.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/review_sources.py
+共享 SDK,求解或实验模块,sampling_statistics.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/sampling_statistics.py
+共享 SDK,求解或实验模块,source_batch.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/source_batch.py
+共享 SDK,求解或实验模块,source_package.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/source_package.py
+共享 SDK,求解或实验模块,support_geometry.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/support_geometry.py
+共享 SDK,求解或实验模块,support_sweep.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/support_sweep.py
+共享 SDK,求解或实验模块,surface_audit.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/surface_audit.py
+共享 SDK,求解或实验模块,surface_contacts.py,C:/Users/Eric/Documents/Codex/2026-09-15/realtime-voice-chat/work/github-sync/alphamotion-motion-toolkit/src/greenwich_motion_sdk/surface_contacts.py
+早期 SOMA 实验,审查,audit_adapter_candidate.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_adapter_candidate.py
+早期 SOMA 实验,审查,audit_batch_q.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_batch_q.py
+早期 SOMA 实验,审查,audit_chain_export_current.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_chain_export_current.py
+早期 SOMA 实验,审查,audit_current_jitter.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_current_jitter.py
+早期 SOMA 实验,审查,audit_ground_stance.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_ground_stance.py
+早期 SOMA 实验,审查,audit_jump_knees.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_jump_knees.py
+早期 SOMA 实验,审查,audit_root_stable.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_root_stable.py
+早期 SOMA 实验,审查,audit_smpl_robot_entry.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_smpl_robot_entry.py
+早期 SOMA 实验,审查,audit_walk_jitter.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/audit_walk_jitter.py
+早期 SOMA 实验,求解或实验模块,check_articulated.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/check_articulated.py
+早期 SOMA 实验,求解或实验模块,check_equator_and_input.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/check_equator_and_input.py
+早期 SOMA 实验,求解或实验模块,check_ground_aware.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/check_ground_aware.py
+早期 SOMA 实验,求解或实验模块,check_soma_gauge.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/check_soma_gauge.py
+早期 SOMA 实验,求解或实验模块,check_soma_rest_adapter.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/check_soma_rest_adapter.py
+早期 SOMA 实验,求解或实验模块,check_temporal_jumps.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/check_temporal_jumps.py
+早期 SOMA 实验,求解或实验模块,compose_adapter_comparison.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/compose_adapter_comparison.py
+早期 SOMA 实验,求解或实验模块,diagnose_motion_quality.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/diagnose_motion_quality.py
+早期 SOMA 实验,批处理与交付,download_seed.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/download_seed.py
+早期 SOMA 实验,求解或实验模块,evaluate_rest_aligned.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/evaluate_rest_aligned.py
+早期 SOMA 实验,求解或实验模块,evaluate_root_cutoffs.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/evaluate_root_cutoffs.py
+早期 SOMA 实验,求解或实验模块,evaluate_smoothing_cutoffs.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/evaluate_smoothing_cutoffs.py
+早期 SOMA 实验,展示与导出,export_adapter_candidate.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/export_adapter_candidate.py
+早期 SOMA 实验,展示与导出,export_global_rotations.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/export_global_rotations.py
+早期 SOMA 实验,求解或实验模块,extract_g1_paired.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/extract_g1_paired.py
+早期 SOMA 实验,批处理与交付,finalize_seed_100.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/finalize_seed_100.py
+早期 SOMA 实验,求解或实验模块,generate_rest_source_mesh.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/generate_rest_source_mesh.py
+早期 SOMA 实验,求解或实验模块,generate_source_mesh.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/generate_source_mesh.py
+早期 SOMA 实验,求解或实验模块,inspect_jump_leg_pose.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/inspect_jump_leg_pose.py
+早期 SOMA 实验,求解或实验模块,inspect_leg_dofs.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/inspect_leg_dofs.py
+早期 SOMA 实验,求解或实验模块,inspect_prefix_metadata.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/inspect_prefix_metadata.py
+早期 SOMA 实验,求解或实验模块,kimodo-bvh.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/kimodo-bvh.py
+早期 SOMA 实验,求解或实验模块,kimodo-skeleton-bvh.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/kimodo-skeleton-bvh.py
+早期 SOMA 实验,求解或实验模块,nvidia-bvh.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/nvidia-bvh.py
+早期 SOMA 实验,求解或实验模块,prepare_seed.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/prepare_seed.py
+早期 SOMA 实验,求解或实验模块,probe_rest_chain.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/probe_rest_chain.py
+早期 SOMA 实验,展示与导出,render_refiner_before_after.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_refiner_before_after.py
+早期 SOMA 实验,展示与导出,render_rest_adapter_comparison.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_rest_adapter_comparison.py
+早期 SOMA 实验,展示与导出,render_rest_probes.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_rest_probes.py
+早期 SOMA 实验,展示与导出,render_seed_articulated.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_seed_articulated.py
+早期 SOMA 实验,展示与导出,render_seed_mesh.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_seed_mesh.py
+早期 SOMA 实验,展示与导出,render_seed_preview.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_seed_preview.py
+早期 SOMA 实验,展示与导出,render_silky_before_after.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_silky_before_after.py
+早期 SOMA 实验,展示与导出,render_smpl_input_data.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_smpl_input_data.py
+早期 SOMA 实验,展示与导出,render_source_audit.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_source_audit.py
+早期 SOMA 实验,展示与导出,render_source_left.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_source_left.py
+早期 SOMA 实验,展示与导出,render_x2_ground_before_after.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/render_x2_ground_before_after.py
+早期 SOMA 实验,求解或实验模块,run_contact_knee_refiner.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/run_contact_knee_refiner.py
+早期 SOMA 实验,求解或实验模块,run_motion_studio_refiner.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/run_motion_studio_refiner.py
+早期 SOMA 实验,求解或实验模块,run_seed_greenwich.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/run_seed_greenwich.py
+早期 SOMA 实验,求解或实验模块,run_silky_smoother.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/run_silky_smoother.py
+早期 SOMA 实验,求解或实验模块,run_soma_rest_adapter.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/run_soma_rest_adapter.py
+早期 SOMA 实验,求解或实验模块,seed_bvh.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/seed_bvh.py
+早期 SOMA 实验,求解或实验模块,select_extract_100.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/select_extract_100.py
+早期 SOMA 实验,求解或实验模块,soma_smpl_rest_adapter.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/soma_smpl_rest_adapter.py
+早期 SOMA 实验,审查,test_native_export.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/test_native_export.py
+早期 SOMA 实验,审查,test_rest_frame_alignment.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/test_rest_frame_alignment.py
+早期 SOMA 实验,审查,test_robot_t_reference.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/test_robot_t_reference.py
+早期 SOMA 实验,审查,test_source_adapters.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/test_source_adapters.py
+早期 SOMA 实验,审查,test_target_gauge.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/test_target_gauge.py
+早期 SOMA 实验,求解或实验模块,validate_100_sources.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/validate_100_sources.py
+早期 SOMA 实验,求解或实验模块,write_adapter_report.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/write_adapter_report.py
+早期 SOMA 实验,求解或实验模块,write_rest_adapter_report.py,C:/Users/Eric/Documents/Codex/2026-09-08/https-huggingface-co-datasets-bones-studio/work/write_rest_adapter_report.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_calibrate_soma_floor.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_calibrate_soma_floor.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_diagnose_source_ground.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_diagnose_source_ground.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_export_foot_surface.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_export_foot_surface.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_export_smpl_canonical.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_export_smpl_canonical.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_export_soma_canonical.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_export_soma_canonical.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_inspect_static_support.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_inspect_static_support.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_preview_raw_soma.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_preview_raw_soma.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_probe_foot_mesh.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_probe_foot_mesh.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_smpl_source_odometry.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_smpl_source_odometry.py
+SMPL / GEM 输入桥接,源适配与诊断,genmo_verify_soma_fk.py,C:/Users/Eric/Documents/Codex/2026-09-24/ni-b/work/genmo_verify_soma_fk.py
