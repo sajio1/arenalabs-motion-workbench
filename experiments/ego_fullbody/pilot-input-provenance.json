@@ -1,0 +1,26 @@
+{
+  "dataset": "Nymeria",
+  "source": "C:\\Users\\Eric\\Documents\\Codex\\2026-09-06\\ni-q\\outputs\\ego-mobile-replacement-20\\sources\\20230803_s0_robert_howard_act2_kobpfk\\xdata.npz",
+  "clip": "carry_jacket_to_wardrobe",
+  "start_frame_30hz": 17684,
+  "frames": 450,
+  "fps": 30,
+  "model_inputs": [
+    "head pose",
+    "left/right wrist pose"
+  ],
+  "withheld": [
+    "pelvis",
+    "feet",
+    "other body joints"
+  ],
+  "finger_observations": false,
+  "cpf_policy": "anatomical head plus SMPL-H neutral eye offset; not calibrated Aria camera",
+  "floor_policy": "Xsens world z=0",
+  "clock": {
+    "policy": "official-XSensBodyLoader-clock-correction",
+    "invalid_timestamp_intervals": 0,
+    "end_drift_us": 0,
+    "space_samples_modified": false
+  }
+}
