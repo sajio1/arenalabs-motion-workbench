@@ -2,7 +2,7 @@ from pathlib import Path
 import json,zipfile
 root=Path(__import__("os").environ.get("ARENA_EGO_WORKDIR", str(Path(__file__).resolve().parent)))
 summary={}
-with zipfile.ZipFile(root/'observed-refinement-v3-delivery.zip','w',zipfile.ZIP_DEFLATED) as z:
+with zipfile.ZipFile(root/'observed-refinement-v5-delivery.zip','w',zipfile.ZIP_DEFLATED) as z:
  for clip,base in [('jacket',root),('crouch',root/'crouch')]:
   summary[clip]={}
   for file in ['01-smplx.mp4','input_manifest.json','human_validation.json']:

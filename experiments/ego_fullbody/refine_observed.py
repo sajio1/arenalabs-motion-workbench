@@ -14,6 +14,7 @@ from greenwich_pipelines.pipelines.nymeria.physical_fk import PhysicalFK
 from greenwich_pipelines.pipelines.nymeria.sole_geometry import sole_surface
 from greenwich_umi_proof.palm_frames import palm_frame,robot_palm_local
 from alphamotion.engine.nets.rotations import rot6d_to_matrix,matrix_to_rot6d
+from body_frames import BodyFrames,angle as frame_angle
 
 root=Path(os.environ.get('ARENA_EGO_WORKDIR',Path(__file__).resolve().parent))
 label=sys.argv[1];start=time.time();device='cuda';torch.set_num_threads(4)
@@ -27,6 +28,11 @@ raw_hash=hashlib.sha256(raw_path.read_bytes()).hexdigest()
 obs=np.load(root/'observations.npz');human=np.load(root/'smplx_motion.npz')
 names=list(body.spec.joint_names);n=len(d['q'])
 ids=[names.index(row['endpoints'][r]) for r in ('left_wrist','right_wrist','left_ankle','right_ankle')]
+body_frames=BodyFrames(body,fk,ids[:2],ids[2:])
+human_chest=cast(C@human['global_rotation'][:,9])
+human_pelvis=cast(C@human['global_rotation'][:,0])
+human_relative=human_pelvis.transpose(-1,-2)@human_chest
+print('BODY_FRAMES',json.dumps(body_frames.metadata),flush=True)
 target=cast(obs['wrist_position']@C.T)
 semantic=C@palm_frame(obs['palm_forward'],obs['palm_normal'])
 local=np.stack([robot_palm_local(row['palm_frames'],s+'_wrist') for s in ('left','right')])
@@ -100,7 +106,10 @@ def evaluate():
  hw=torch.einsum('tfij,fkj->tfki',R[:,ids[2:]],hull)+world[:,ids[2:],None]
  heights=torch.where(valid[None],hw[...,1],torch.inf).amin(-1)
  knees=torch.stack([flex(world,*chain) for chain in chains],1)
+ chest,relative,pelvis=body_frames(R)
  terms={
+  'human_chest_orientation':(torch.relu(frame_angle(chest,human_chest)-.0873)/.25).square().mean(),
+  'human_chest_relative_pelvis':(torch.relu(frame_angle(relative,human_relative)-.0873)/.25).square().mean(),
   'observed_wrist_position':(torch.relu(e.norm(dim=-1)-.002)/.0015).square().mean(),
   'observed_wrist_orientation':(torch.relu(angle-.035)/.075).square().mean(),
   'model_rotation':((R-priorR)/.7).square().mean(),
@@ -112,8 +121,8 @@ def evaluate():
   'penetration':(torch.relu(.001-hw[...,1])[:,valid]/.0003).square().mean(),
   'root_prior':((g-root_prior)/.12).square().mean(),
   'joint_correction_velocity':(d1(u-q0)/.12).square().mean(),
-  'joint_acceleration':(d2(u)/.025).square().mean(),
-  'root_correction_acceleration':(d2(g-root_prior)/.0015).square().mean(),
+  'joint_acceleration':(d2(u)/.018).square().mean(),
+  'root_correction_acceleration':(d2(g-root_prior)/.0012).square().mean(),
   'root_rotation_acceleration':(d2(R[:,fk.root])/.025).square().mean(),
  }
  return sum(terms.values()),terms,R,world,heights,knees,e,angle
@@ -139,7 +148,7 @@ def stats(x):
  x=np.asarray(x);return dict(mean=float(x.mean()),p95=float(np.percentile(x,95)),max=float(x.max()))
 with torch.no_grad():
  loss,terms,R,w,h,k,e,a=evaluate();array=lambda x:x.detach().cpu().numpy()
- out=dict(d);out.update(q=array(fk.expand_angles(u)),rot6d=array(matrix_to_rot6d(R)),root_t=array(g)*100,world_position_cm=array(w)*100,sole_surface_height_cm=array(h)*100,support_surface_height_cm=array(h)*100,observed_wrist_position_yup_m=array(target),observed_wrist_rotation_yup=array(desired),wrist_error_m=array(e.norm(dim=-1)),wrist_error_deg=array(a)*180/np.pi,knee_flexion_rad=array(k),source_knee_flexion_rad=array(knee_target),refiner='observed-wrists-body-prior-v3')
+ out=dict(d);out.update(q=array(fk.expand_angles(u)),rot6d=array(matrix_to_rot6d(R)),root_t=array(g)*100,world_position_cm=array(w)*100,sole_surface_height_cm=array(h)*100,support_surface_height_cm=array(h)*100,observed_wrist_position_yup_m=array(target),observed_wrist_rotation_yup=array(desired),wrist_error_m=array(e.norm(dim=-1)),wrist_error_deg=array(a)*180/np.pi,knee_flexion_rad=array(k),source_knee_flexion_rad=array(knee_target),refiner='observed-wrists-body-prior-v5-torso')
  dest=root/'observed-refinement'/label;dest.mkdir(parents=True,exist_ok=True);np.savez_compressed(dest/'motion.npz',**out)
- report=dict(knee_calibration=calibration,robot=label,seconds=time.time()-start,source='original Nymeria wrist observations; SMPL-X lower-body prior',raw_sha256=raw_hash,original_prior_unchanged=hashlib.sha256(raw_path.read_bytes()).hexdigest()==raw_hash,iterations=int(res.nit),optimizer_success=bool(res.success),message=str(res.message),wrist_position_error_cm=stats(array(e.norm(dim=-1))*100),wrist_orientation_error_deg=stats(array(a)*180/np.pi),minimum_foot_height_cm=float(h.min())*100,knee_range_deg=np.rad2deg(np.stack([array(k).min(0),array(k).max(0)])).tolist(),prior_knee_range_deg=np.rad2deg(np.stack([array(knee_target).min(0),array(knee_target).max(0)])).tolist(),root_vertical_acceleration_m_s2=stats(np.abs(np.diff(array(g)[:,1],n=2)*900)),terms={key:float(v) for key,v in terms.items()},history=history,physical_validation=False)
+ report=dict(body_frames=body_frames.metadata,knee_calibration=calibration,robot=label,seconds=time.time()-start,source='original Nymeria wrist observations; SMPL-X lower-body prior',raw_sha256=raw_hash,original_prior_unchanged=hashlib.sha256(raw_path.read_bytes()).hexdigest()==raw_hash,iterations=int(res.nit),optimizer_success=bool(res.success),message=str(res.message),wrist_position_error_cm=stats(array(e.norm(dim=-1))*100),wrist_orientation_error_deg=stats(array(a)*180/np.pi),minimum_foot_height_cm=float(h.min())*100,knee_range_deg=np.rad2deg(np.stack([array(k).min(0),array(k).max(0)])).tolist(),prior_knee_range_deg=np.rad2deg(np.stack([array(knee_target).min(0),array(knee_target).max(0)])).tolist(),root_vertical_acceleration_m_s2=stats(np.abs(np.diff(array(g)[:,1],n=2)*900)),terms={key:float(v) for key,v in terms.items()},history=history,physical_validation=False)
  (dest/'report.json').write_text(json.dumps(report,indent=2));print('DONE',json.dumps({key:v for key,v in report.items() if key!='history'}),flush=True)

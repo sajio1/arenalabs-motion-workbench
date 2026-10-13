@@ -67,3 +67,26 @@ Final v3 native-FK results (maxima across both wrists and all 450 frames):
 | Crouch/unload washer | A3 | 0.211 | 5.531 | 64.677 → 3.918 | 294.095 → 104.305 |
 
 All four clips satisfy the user's 1 cm / 15 degree wrist tolerance on every frame. Worst native foot penetration is 0.022 mm (H2 carry jacket); the other three minima are positive. No native joint-limit violation exceeds floating-point noise. Crouch peak knee flexion is approximately 141 degrees on H2 and 143 on A3, versus approximately 160 degrees for SMPL-X. Ten delivered videos (source, human, both robots, combined comparison for each clip) decode to exactly 450 frames at 30 Hz. All four solves reached the 1600-iteration budget rather than optimizer convergence; the finite sample checks above do not establish zero-shot generalization or dynamic feasibility.
+
+## Direct torso-prior experiment (v4/v5)
+
+`body_frames.py` identifies the chest as the common ancestor of the two wrist chains and the pelvis as the common ancestor of the two ankle chains. Bilateral shoulder/hip anchors and neutral FK define fixed anatomical frames. The same topology-based code is used for both robots; no robot-name branch selects solver behavior. Human targets use SMPL-X spine3 (joint 9) and pelvis (joint 0), transformed on the world side from Z-up to canonical Y-up.
+
+Two soft objectives are added: chest world orientation and chest orientation relative to pelvis. Each uses an SO(3) angular residual, a 0.0873-radian deadband and a 0.25-radian scale. No absolute human head-height target, elbow target, or finger change is added. The human body targets remain reconstructed priors, not additional observations.
+
+V4 added only these body terms to the v3 policy. It reduced body-orientation error on all four cases but increased some acceleration peaks. V5 retains those terms and strengthens joint second-difference smoothing (scale 0.025 → 0.018 radians per frame squared) and root-correction second-difference smoothing (0.0015 → 0.0012 metres per frame squared). Both policies and all candidate outputs are retained in the private work directory. V3 and V4 directories are immutable comparison baselines; v5 is the current experimental candidate.
+
+The loaded H2 model has waist yaw and roll, but no waist pitch. The loaded A3 model has waist pitch approximately -28 to +24 degrees. Human lumbar flexion cannot therefore be copied exactly in every pose. These are mechanical-model facts, not per-robot tuning rules. The soft objectives may retain residual error when wrist accuracy, leg pose, and native waist limits conflict.
+
+`validate_torso.py` reports anatomical-frame rotation errors, forward tilt and derivative metrics against v3, and checks saved chest rotations against physical-axis FK. `validate_observed.py` independently repeats native wrist/foot/limit checks on the final motion. `assemble_torso_review.py` creates v3/v5 comparison videos and fully decodes all frames. Samples and detailed reports are saved under the task's `outputs/nymeria-torso-prior`; production pipelines remain unchanged.
+
+Final v5 vs v3 sample results:
+
+| Clip / robot | Mean absolute forward-tilt error to SMPL-X, deg | Max wrist error, cm / deg | Peak joint acceleration, rad/s² |
+|---|---:|---:|---:|
+| Carry jacket / H2 | 14.66 → 9.54 | 0.233 / 4.50 | 73.69 → 70.66 |
+| Carry jacket / A3 | 5.63 → 2.51 | 0.217 / 3.85 | 46.53 → 47.52 |
+| Crouch / H2 | 19.40 → 11.56 | 0.246 / 6.80 | 107.07 → 92.33 |
+| Crouch / A3 | 5.89 → 4.01 | 0.221 / 6.93 | 104.31 → 95.14 |
+
+All 1800 robot frames pass 1 cm / 15 degree bilateral wrist tolerance. Worst native foot penetration is 0.332 mm on crouch/H2; all other minimum heights are positive. Native joint-limit excess is under 8e-8 radians. The A3 walking peak joint acceleration rises by approximately 2%; H2 walking peak root acceleration also rises from 3.61 to 3.93 m/s². Thus the candidate improves average body tracking but does not improve every temporal metric. H2 still shows appreciable extra forward tilt and constrained lumbar pose: this is a partial improvement, not exact human-pose recovery. V5 also exhausts the 1600-iteration budget; no convergence or physical-feasibility claim is made.
