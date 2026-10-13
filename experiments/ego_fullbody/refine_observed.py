@@ -18,6 +18,11 @@ from body_frames import BodyFrames,angle as frame_angle
 
 root=Path(os.environ.get('ARENA_EGO_WORKDIR',Path(__file__).resolve().parent))
 label=sys.argv[1];start=time.time();device='cuda';torch.set_num_threads(4)
+policy=dict(body_scale=.08,wrist_orientation_weight=1.,knee_weight=1.,root_height_weight=1.,model_weight=1.)
+policy.update(json.loads(os.environ.get('ARENA_DIAGNOSTIC_POLICY','{}')))
+# A single clip-wide flexion offset adapts stature without independently changing
+# every frame or the left/right knee pattern. It is solved, never robot-configured.
+knee_bias=torch.zeros((),device=device,dtype=torch.float64,requires_grad=True)
 cast=lambda x:torch.as_tensor(x,device=device,dtype=torch.float64)
 C=np.array([[0.,1.,0.],[0.,0.,1.],[1.,0.,0.]])
 row=json.loads((root/(label+'-robot.json')).read_text())[0]
@@ -84,6 +89,9 @@ with torch.no_grad():
  knee_q=cast(np.stack(knee_q,1));u[:,knee_axes]=knee_q
 print('KNEE_CALIBRATION',json.dumps(calibration),flush=True)
 foot_target=cast(hj[:,[7,8]])
+knee_sign=cast([np.sign(c['branch_end_q_deg']-c['straight_q_deg']) for c in calibration])
+knee_branch_low=cast([min(c['straight_q_deg'],c['branch_end_q_deg'])*np.pi/180 for c in calibration])
+knee_branch_high=cast([max(c['straight_q_deg'],c['branch_end_q_deg'])*np.pi/180 for c in calibration])
 # Confidence, not a binary flat-foot lock; source low/slow phases, temporally blended.
 heights=hj[:,[7,8],1];speed=np.linalg.norm(np.gradient(hj[:,[7,8]],axis=0)*30,axis=-1)
 base=np.percentile(heights,15,axis=0)
@@ -108,25 +116,29 @@ def evaluate():
  knees=torch.stack([flex(world,*chain) for chain in chains],1)
  chest,relative,pelvis=body_frames(R)
  terms={
-  'human_chest_orientation':(torch.relu(frame_angle(chest,human_chest)-.0873)/.25).square().mean(),
+  'human_chest_orientation':(torch.relu(frame_angle(chest,human_chest)-.0873)/policy['body_scale']).square().mean(),
   'human_chest_relative_pelvis':(torch.relu(frame_angle(relative,human_relative)-.0873)/.25).square().mean(),
   'observed_wrist_position':(torch.relu(e.norm(dim=-1)-.002)/.0015).square().mean(),
-  'observed_wrist_orientation':(torch.relu(angle-.035)/.075).square().mean(),
-  'model_rotation':((R-priorR)/.7).square().mean(),
-  'model_relative_position':((p-priorpos)/.12).square().mean(),
+  'observed_wrist_orientation':policy.get('wrist_orientation_weight',1.)*(torch.relu(angle-.035)/.075).square().mean(),
+  'model_rotation':policy.get('model_weight',1.)*((R-priorR)/.7).square().mean(),
+  'model_relative_position':policy.get('model_weight',1.)*((p-priorpos)/.12).square().mean(),
   'feet_horizontal':((world[:,ids[2:]][...,[0,2]]-foot_target[...,[0,2]])/.065).square().mean(),
-  'knee_prior':((u[:,knee_axes]-knee_q)/.12).square().mean(),
+  'knee_prior':policy.get('knee_weight',1.)*((u[:,knee_axes]-torch.clamp(knee_q+knee_sign*knee_bias,min=knee_branch_low,max=knee_branch_high))/.12).square().mean(),
+  'knee_morphology_bias':(knee_bias/.3).square(),
+  # At the fixed 30 Hz timebase, regularize extra foot motion, not source motion.
+  # The 3.3-mm/frame deadband is an objective tolerance, not a contact certificate.
+  'foot_correction_velocity':(torch.relu(d1(world[:,ids[2:]]-foot_target)[...,[0,2]].norm(dim=-1)-.0033)/.0033).square().mean(),
   'clearance':((heights-clearance)/.04).square().mean(),
   'support':(conf*(heights/.015).square()).mean(),
   'penetration':(torch.relu(.001-hw[...,1])[:,valid]/.0003).square().mean(),
-  'root_prior':((g-root_prior)/.12).square().mean(),
+  'root_prior':(((g-root_prior)/.12).square()*cast([1.,policy.get('root_height_weight',1.),1.])).mean(),
   'joint_correction_velocity':(d1(u-q0)/.12).square().mean(),
   'joint_acceleration':(d2(u)/.018).square().mean(),
   'root_correction_acceleration':(d2(g-root_prior)/.0012).square().mean(),
   'root_rotation_acceleration':(d2(R[:,fk.root])/.025).square().mean(),
  }
  return sum(terms.values()),terms,R,world,heights,knees,e,angle
-parameters=[u,g,r];sizes=[p.numel() for p in parameters]
+parameters=[u,g,r,knee_bias];sizes=[p.numel() for p in parameters]
 def closure(x):
  global evaluations
  offset=0
@@ -140,15 +152,15 @@ def closure(x):
   history.append(entry);print(json.dumps(entry),flush=True)
  return float(loss.detach()),np.concatenate([p.grad.detach().cpu().numpy().ravel() for p in parameters])
 x0=np.concatenate([p.detach().cpu().numpy().ravel() for p in parameters])
-lo=np.r_[np.tile(fk.lower.cpu().numpy(),n),np.full(sizes[1]+sizes[2],-np.inf)]
-hi=np.r_[np.tile(fk.upper.cpu().numpy(),n),np.full(sizes[1]+sizes[2],np.inf)]
+lo=np.r_[np.tile(fk.lower.cpu().numpy(),n),np.full(sizes[1]+sizes[2],-np.inf),-.5]
+hi=np.r_[np.tile(fk.upper.cpu().numpy(),n),np.full(sizes[1]+sizes[2],np.inf),.5]
 res=minimize(closure,x0,jac=True,method='L-BFGS-B',bounds=list(zip(lo,hi)),options=dict(maxiter=1600,maxcor=30,ftol=1e-11,gtol=1e-7,maxls=30))
 closure(res.x)
 def stats(x):
  x=np.asarray(x);return dict(mean=float(x.mean()),p95=float(np.percentile(x,95)),max=float(x.max()))
 with torch.no_grad():
  loss,terms,R,w,h,k,e,a=evaluate();array=lambda x:x.detach().cpu().numpy()
- out=dict(d);out.update(q=array(fk.expand_angles(u)),rot6d=array(matrix_to_rot6d(R)),root_t=array(g)*100,world_position_cm=array(w)*100,sole_surface_height_cm=array(h)*100,support_surface_height_cm=array(h)*100,observed_wrist_position_yup_m=array(target),observed_wrist_rotation_yup=array(desired),wrist_error_m=array(e.norm(dim=-1)),wrist_error_deg=array(a)*180/np.pi,knee_flexion_rad=array(k),source_knee_flexion_rad=array(knee_target),refiner='observed-wrists-body-prior-v5-torso')
- dest=root/'observed-refinement'/label;dest.mkdir(parents=True,exist_ok=True);np.savez_compressed(dest/'motion.npz',**out)
- report=dict(body_frames=body_frames.metadata,knee_calibration=calibration,robot=label,seconds=time.time()-start,source='original Nymeria wrist observations; SMPL-X lower-body prior',raw_sha256=raw_hash,original_prior_unchanged=hashlib.sha256(raw_path.read_bytes()).hexdigest()==raw_hash,iterations=int(res.nit),optimizer_success=bool(res.success),message=str(res.message),wrist_position_error_cm=stats(array(e.norm(dim=-1))*100),wrist_orientation_error_deg=stats(array(a)*180/np.pi),minimum_foot_height_cm=float(h.min())*100,knee_range_deg=np.rad2deg(np.stack([array(k).min(0),array(k).max(0)])).tolist(),prior_knee_range_deg=np.rad2deg(np.stack([array(knee_target).min(0),array(knee_target).max(0)])).tolist(),root_vertical_acceleration_m_s2=stats(np.abs(np.diff(array(g)[:,1],n=2)*900)),terms={key:float(v) for key,v in terms.items()},history=history,physical_validation=False)
+ out=dict(d);out.update(q=array(fk.expand_angles(u)),rot6d=array(matrix_to_rot6d(R)),root_t=array(g)*100,world_position_cm=array(w)*100,sole_surface_height_cm=array(h)*100,support_surface_height_cm=array(h)*100,observed_wrist_position_yup_m=array(target),observed_wrist_rotation_yup=array(desired),wrist_error_m=array(e.norm(dim=-1)),wrist_error_deg=array(a)*180/np.pi,knee_flexion_rad=array(k),source_knee_flexion_rad=array(knee_target),refiner='observed-wrists-body-prior-v7-posture-foot-motion')
+ dest=Path(os.environ.get('ARENA_OUTPUTDIR',root/'observed-refinement'/label));dest.mkdir(parents=True,exist_ok=True);np.savez_compressed(dest/'motion.npz',**out)
+ report=dict(knee_morphology_bias_deg=float(knee_bias.detach())*180/np.pi,policy=policy,body_frames=body_frames.metadata,knee_calibration=calibration,robot=label,seconds=time.time()-start,source='original Nymeria wrist observations; SMPL-X lower-body prior',raw_sha256=raw_hash,original_prior_unchanged=hashlib.sha256(raw_path.read_bytes()).hexdigest()==raw_hash,iterations=int(res.nit),optimizer_success=bool(res.success),message=str(res.message),wrist_position_error_cm=stats(array(e.norm(dim=-1))*100),wrist_orientation_error_deg=stats(array(a)*180/np.pi),minimum_foot_height_cm=float(h.min())*100,knee_range_deg=np.rad2deg(np.stack([array(k).min(0),array(k).max(0)])).tolist(),prior_knee_range_deg=np.rad2deg(np.stack([array(knee_target).min(0),array(knee_target).max(0)])).tolist(),root_vertical_acceleration_m_s2=stats(np.abs(np.diff(array(g)[:,1],n=2)*900)),terms={key:float(v) for key,v in terms.items()},history=history,physical_validation=False)
  (dest/'report.json').write_text(json.dumps(report,indent=2));print('DONE',json.dumps({key:v for key,v in report.items() if key!='history'}),flush=True)

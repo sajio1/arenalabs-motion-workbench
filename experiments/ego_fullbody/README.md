@@ -76,7 +76,7 @@ Two soft objectives are added: chest world orientation and chest orientation rel
 
 V4 added only these body terms to the v3 policy. It reduced body-orientation error on all four cases but increased some acceleration peaks. V5 retains those terms and strengthens joint second-difference smoothing (scale 0.025 → 0.018 radians per frame squared) and root-correction second-difference smoothing (0.0015 → 0.0012 metres per frame squared). Both policies and all candidate outputs are retained in the private work directory. V3 and V4 directories are immutable comparison baselines; v5 is the current experimental candidate.
 
-The loaded H2 model has waist yaw and roll, but no waist pitch. The loaded A3 model has waist pitch approximately -28 to +24 degrees. Human lumbar flexion cannot therefore be copied exactly in every pose. These are mechanical-model facts, not per-robot tuning rules. The soft objectives may retain residual error when wrist accuracy, leg pose, and native waist limits conflict.
+Correction to the initial mechanical audit: the loaded H2 model DOES have waist pitch, approximately -25 to +30 degrees, in addition to yaw and roll. The descriptor merges `torso_link` into a node named `waist_roll_link`; the original inspection incorrectly used that node name as the native frame and omitted pitch. Resolve through `build_merge`'s representative-frame mapping before inspecting a native chest chain. The loaded A3 model has waist pitch approximately -28 to +24 degrees. The refiner itself already included the merged pitch DoF; the earlier explanation that H2 lacked pitch was wrong. Residual forward tilt needs an objective/reachability diagnosis, not that explanation.
 
 `validate_torso.py` reports anatomical-frame rotation errors, forward tilt and derivative metrics against v3, and checks saved chest rotations against physical-axis FK. `validate_observed.py` independently repeats native wrist/foot/limit checks on the final motion. `assemble_torso_review.py` creates v3/v5 comparison videos and fully decodes all frames. Samples and detailed reports are saved under the task's `outputs/nymeria-torso-prior`; production pipelines remain unchanged.
 
@@ -90,3 +90,22 @@ Final v5 vs v3 sample results:
 | Crouch / A3 | 5.89 → 4.01 | 0.221 / 6.93 | 104.31 → 95.14 |
 
 All 1800 robot frames pass 1 cm / 15 degree bilateral wrist tolerance. Worst native foot penetration is 0.332 mm on crouch/H2; all other minimum heights are positive. Native joint-limit excess is under 8e-8 radians. The A3 walking peak joint acceleration rises by approximately 2%; H2 walking peak root acceleration also rises from 3.61 to 3.93 m/s². Thus the candidate improves average body tracking but does not improve every temporal metric. H2 still shows appreciable extra forward tilt and constrained lumbar pose: this is a partial improvement, not exact human-pose recovery. V5 also exhausts the 1600-iteration budget; no convergence or physical-feasibility claim is made.
+
+## Posture/morphology experiment (v6/v7)
+
+Controlled v5 ablations on carry-jacket/H2 found that removing wrist orientation barely improved torso tracking and increased maximum wrist orientation error to 49 degrees. Removing root-height or model priors had little effect. Strengthening the world-chest objective (scale 0.25 to 0.08 radians) improved body tracking, but v6 increased extra foot movement. V6 is retained as a rejected intermediate, not the recommended result.
+
+V7 retains the stronger chest term and adds two shared objectives. One optimized, clip-wide knee-flexion offset is shared by both legs, softly regularized at 0.3 radians and bounded to ±0.5 radians. Signed native hinge calibration maps the offset to each robot's valid bending branch and clips to its mechanical range. This preserves the reference knee time pattern except where range clipping is necessary, while allowing stature adaptation. The offset is a solved variable, never a robot-name parameter. A horizontal foot-correction-velocity objective penalizes added motion relative to the human prior, with a 3.3-mm/frame deadband and scale at the fixed 30-Hz timebase. It does not demand zero foot velocity or perfectly fixed heel/toe contact.
+
+| Clip / robot | Mean absolute forward-tilt error v5 → v7, deg | Solved knee offset, deg | Max wrist error, cm / deg |
+|---|---:|---:|---:|
+| Carry jacket / H2 | 9.54 → 3.81 | 11.78 | 0.297 / 5.31 |
+| Carry jacket / A3 | 2.51 → 2.22 | 0.55 | 0.220 / 3.83 |
+| Crouch / H2 | 11.56 → 5.56 | 8.12 | 0.272 / 7.06 |
+| Crouch / A3 | 4.01 → 2.86 | 0.22 | 0.220 / 7.10 |
+
+The ankle-speed proxy during low/slow reconstructed-human phases improves in all four cases (p95: 60.09→12.67, 20.09→12.67, 26.15→15.30, 21.70→13.95 cm/s). This is an ankle diagnostic, not measured material-contact slip. Crouch/H2 mean horizontal ankle deviation from the human prior worsens 2.90→4.29 cm: body adaptation trades exact human foot placement for torso posture. Peak joint acceleration changes 70.66→73.98, 47.52→48.51, 92.33→96.76, 95.14→94.08 rad/s² respectively. Do not claim universal temporal improvement or physical feasibility. All runs use the same 1600-iteration budget and reach it; no convergence claim is made. Raw AlphaMotion hashes and all prior versions are retained.
+
+`validate_native_chest.py` checks descriptor chest matrices against the actual merged representative native body, avoiding the earlier node-name inspection error. `validate_foot_prior.py` reports the foot-placement/motion tradeoff. `validate_torso.py` now defaults to v5 as the before baseline; `ARENA_BASELINE_FOLDER` can select an older comparison. Current review artifacts are in the task's `outputs/nymeria-posture-priority` folder. Production code is unchanged.
+
+Final v7 native validation: all 1800 robot frames pass the user's bilateral wrist tolerance. Worst native mesh penetration is 0.4033 mm (carry-jacket/H2); crouch/H2 is 0.0932 mm, and A3 minima remain above ground. Native joint-limit excess is below 8e-8 radians. Chest rotation fields agree with native representative bodies within 2.1e-6 degrees in every case. Four final robot videos and two before/after composites were fully decoded: each is 450 frames at 30 Hz. This validates these saved kinematic samples, not torque, balance, self-collision, or unseen-motion performance.

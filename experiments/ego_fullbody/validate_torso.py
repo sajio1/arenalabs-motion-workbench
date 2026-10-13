@@ -18,7 +18,7 @@ def pitch(R):
  R=R.numpy();up=R[:,:,1];heading=R[:,:,2].copy();heading[:,1]=0;heading/=np.linalg.norm(heading,axis=-1,keepdims=True)
  return np.rad2deg(np.arctan2((up*heading).sum(-1),up[:,1]))
 report=dict(frames=frames.metadata,source_pitch_deg=pitch(chest).tolist(),versions={})
-for version,folder in [('before','observed-refinement-v3'),('after','observed-refinement')]:
+for version,folder in [('before',os.environ.get('ARENA_BASELINE_FOLDER','observed-refinement-v5')),('after','observed-refinement')]:
  d=np.load(root/folder/label/'motion.npz');R=rot6d_to_matrix(torch.tensor(d['rot6d'],dtype=torch.float64));actual,rel,pel=frames(R)
  # Compare saved rotation fields with actual physical-axis forward kinematics.
  q=torch.tensor(d['q'],dtype=torch.float64).flatten(1)[:,fk.active_indices];check,_=fk(q,R[:,fk.root]);native,_,_=frames(check)
