@@ -4,31 +4,31 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import type {Robot,Playback,Neutral} from './types';
 import {sampleFrame} from './state.js';
 
-interface Instance {group:THREE.Group;model:THREE.Group;geoms:Map<number,THREE.Object3D>;payload?:Playback;skeleton:THREE.LineSegments;targetGroup:THREE.Group;markers:THREE.Mesh[];offset:THREE.Vector3;}
+interface Instance {group:THREE.Group;model:THREE.Group;geoms:Map<number,THREE.Object3D>;payload?:Playback;skeleton:THREE.LineSegments;targetGroup:THREE.Group;markers:THREE.Mesh[];errorLines?:THREE.LineSegments;offset:THREE.Vector3;}
 export class Stage {
   renderer:THREE.WebGLRenderer;scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(38,1,.01,100);
   controls:OrbitControls;loader=new GLTFLoader();instances=new Map<number,Instance>();cache=new Map<string,Promise<{model:THREE.Group;neutral:Neutral}>>();
-  mesh=true;skeleton=false;targets=false;wireframe=false;autoRotate=true;private last=performance.now();
-  readonly anchors=[new THREE.Vector3(-1.6,0,0),new THREE.Vector3(0,0,0),new THREE.Vector3(1.6,0,0)];
+  mesh=true;skeleton=false;targets=false;autoRotate=true;private last=performance.now();
+  readonly anchors=[new THREE.Vector3(-2.8,0,0),new THREE.Vector3(0,0,0),new THREE.Vector3(2.8,0,0)];
   constructor(public host:HTMLElement,public onInteract:()=>void){
     this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.15;
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.append(this.renderer.domElement);
-    this.scene.background=new THREE.Color('#0c0c0d');this.scene.fog=new THREE.Fog('#0c0c0d',15,38);
+    this.scene.background=new THREE.Color('#111b18');this.scene.fog=new THREE.Fog('#111b18',15,38);
     this.camera.position.set(1.3,2.8,9.8);this.controls=new OrbitControls(this.camera,this.renderer.domElement);
     this.controls.target.set(0,.85,0);this.controls.enableDamping=true;this.controls.dampingFactor=.06;this.controls.minDistance=2;this.controls.maxDistance=25;
     this.controls.maxPolarAngle=Math.PI*.48;this.controls.addEventListener('start',()=>{this.autoRotate=false;this.onInteract();});
-    this.scene.add(new THREE.HemisphereLight(0xeee7dd,0x242120,2.6));
+    this.scene.add(new THREE.HemisphereLight(0xdceee4,0x1b2923,2.6));
     const key=new THREE.DirectionalLight(0xfff5e6,4);key.position.set(-3,7,4);key.castShadow=true;key.shadow.mapSize.set(2048,2048);
     Object.assign(key.shadow.camera,{left:-9,right:9,top:7,bottom:-7,near:.1,far:25});key.shadow.normalBias=.025;this.scene.add(key);
-    const fill=new THREE.DirectionalLight(0xd7dce8,2);fill.position.set(4,3,-4);this.scene.add(fill);
-    const floor=new THREE.Mesh(new THREE.PlaneGeometry(150,150),new THREE.MeshStandardMaterial({color:0x161617,roughness:.95,metalness:.05}));
+    const fill=new THREE.DirectionalLight(0xbbd9cf,2);fill.position.set(4,3,-4);this.scene.add(fill);
+    const floor=new THREE.Mesh(new THREE.PlaneGeometry(150,150),new THREE.MeshStandardMaterial({color:0x14231b,roughness:.95,metalness:.05}));
     floor.rotation.x=-Math.PI/2;floor.position.y=-.006;floor.receiveShadow=true;this.scene.add(floor);
-    const grid=new THREE.GridHelper(40,80,0x48403a,0x282628);grid.material.transparent=true;grid.material.opacity=.46;this.scene.add(grid);
+    const grid=new THREE.GridHelper(40,80,0x3b5547,0x27392f);grid.material.transparent=true;grid.material.opacity=.46;this.scene.add(grid);
     this.anchors.forEach((p,i)=>{
-      const ring=new THREE.Mesh(new THREE.RingGeometry(.7,.714,96),new THREE.MeshBasicMaterial({color:i===0?0xff8906:0x675447,transparent:true,opacity:.75,side:THREE.DoubleSide}));
+      const ring=new THREE.Mesh(new THREE.RingGeometry(.7,.714,96),new THREE.MeshBasicMaterial({color:i===0?0x87c996:0x4d6a59,transparent:true,opacity:.75,side:THREE.DoubleSide}));
       ring.rotation.x=-Math.PI/2;ring.position.copy(p).add(new THREE.Vector3(0,.006,0));this.scene.add(ring);
-      const dot=new THREE.Mesh(new THREE.CircleGeometry(.022,16),new THREE.MeshBasicMaterial({color:0xff8906}));dot.rotation.x=-Math.PI/2;dot.position.copy(p).add(new THREE.Vector3(0,.007,0));this.scene.add(dot);
+      const dot=new THREE.Mesh(new THREE.CircleGeometry(.022,16),new THREE.MeshBasicMaterial({color:0x8dbb98}));dot.rotation.x=-Math.PI/2;dot.position.copy(p).add(new THREE.Vector3(0,.007,0));this.scene.add(dot);
     });
     new ResizeObserver(()=>this.resize()).observe(host);this.resize();
   }
@@ -50,9 +50,20 @@ export class Stage {
       const points=payload.targets.map(f=>new THREE.Vector3(...f[i] as [number,number,number]));
       const trail=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color,transparent:true,opacity:.35}));targetGroup.add(trail);
     }
+    let errorLines:THREE.LineSegments|undefined;
+    if(payload.tracking){
+      const colors=[0xffb45e,0x8ac7e6];const vertices=new Float32Array(12);const lineColors:number[]=[];
+      for(let hand=0;hand<2;hand++){
+        const color=new THREE.Color(colors[hand]);lineColors.push(color.r,color.g,color.b,color.r,color.g,color.b);
+        const points=payload.tracking.actual_positions.map(frame=>new THREE.Vector3(...frame[hand] as [number,number,number]));
+        const trail=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineDashedMaterial({color:colors[hand],dashSize:.025,gapSize:.025,transparent:true,opacity:.55}));trail.computeLineDistances();targetGroup.add(trail);
+      }
+      const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(vertices,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(lineColors,3));
+      errorLines=new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({vertexColors:true,depthTest:false}));errorLines.renderOrder=3;targetGroup.add(errorLines);
+    }
     const origin=payload.skeleton[0]?.[0]||payload.positions[0]?.[0]||[0,0,0];const offset=new THREE.Vector3(this.anchors[index].x-origin[0],0,-origin[2]);
     const group=new THREE.Group();group.position.copy(offset);group.add(model,skeleton,targetGroup);
-    this.remove(index);this.scene.add(group);this.instances.set(index,{group,model,geoms,payload,skeleton,targetGroup,markers,offset});this.pose(index,0);this.visibility();
+    this.remove(index);this.scene.add(group);this.instances.set(index,{group,model,geoms,payload,skeleton,targetGroup,markers,errorLines,offset});this.pose(index,0);this.visibility();
   }
   remove(index:number){const old=this.instances.get(index);if(!old)return;this.scene.remove(old.group);
     old.group.traverse(o=>{if(o instanceof THREE.Mesh){(o.material as THREE.Material).dispose();}else if(o instanceof THREE.Line){o.geometry.dispose();(o.material as THREE.Material).dispose();}});this.instances.delete(index);
@@ -63,9 +74,10 @@ export class Stage {
     if(joints)joints.forEach((point,j)=>{const parent=p.parents[j];if(parent>=0&&parent!==j&&joints[parent])segments.push(...point,...joints[parent]);});
     v.skeleton.geometry.setAttribute('position',new THREE.Float32BufferAttribute(segments,3));
     v.markers.forEach((m,i)=>m.position.fromArray(p.targets[f][i]));
+    if(v.errorLines&&p.tracking){const attribute=v.errorLines.geometry.getAttribute('position') as THREE.BufferAttribute;for(let hand=0;hand<2;hand++){attribute.setXYZ(hand*2,...p.tracking.target_positions[f][hand] as [number,number,number]);attribute.setXYZ(hand*2+1,...p.tracking.actual_positions[f][hand] as [number,number,number]);}attribute.needsUpdate=true;}
   }
   visibility(){this.instances.forEach(v=>{v.model.visible=this.mesh;v.skeleton.visible=this.skeleton;v.targetGroup.visible=this.targets;
-    v.model.traverse(o=>{if(o instanceof THREE.Mesh)(o.material as THREE.MeshStandardMaterial).wireframe=this.wireframe;});});}
+    });}
   reset(){this.camera.position.set(1.3,2.8,9.8);this.controls.target.set(0,.85,0);this.controls.update();}
   frame(time:number){const now=performance.now();const dt=Math.min((now-this.last)/1000,.1);this.last=now;
     if(this.autoRotate){const relative=this.camera.position.clone().sub(this.controls.target);relative.applyAxisAngle(new THREE.Vector3(0,1,0),dt*.09);this.camera.position.copy(relative.add(this.controls.target));}

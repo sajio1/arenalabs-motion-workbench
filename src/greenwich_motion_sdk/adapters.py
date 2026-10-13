@@ -36,13 +36,25 @@ def bvh(path,*,bind_path,frame:CoordinateFrame,position_channels='replace',remov
     positions[:,:,1]-=frame.ground_y_cm
     bp=(bind['positions'][0,start:]@B.T)*frame.cm_per_unit;bp[:,1]-=frame.ground_y_cm
     offsets=bp.copy()
+    bind_difference=0.0
     for j,p in enumerate(parents):
-        if p>=0:offsets[j]=bp[j]-bp[p]
+        if p<0:continue
+        source_j=j+start;source_p=p+start
+        local_offset=np.einsum('tji,tj->ti',motion['global_rot'][:,source_p],
+            motion['positions'][:,source_j]-motion['positions'][:,source_p])
+        # Static source geometry belongs to the capture. Bind supplies axes,
+        # rather than imposing its slightly different bone lengths.
+        variation=np.max(np.linalg.norm(local_offset-local_offset[0],axis=-1))*frame.cm_per_unit
+        if variation>1e-3:
+            raise ValueError(f'Animated non-root translation at {names[j]}: {variation:.6g} cm')
+        own_offset=B@bind['global_rot'][0,source_p]@local_offset[0]*frame.cm_per_unit
+        bind_difference=max(bind_difference,float(np.linalg.norm(own_offset-(bp[j]-bp[p]))))
+        offsets[j]=own_offset
     delta=motion['global_rot'][:,start:]@bind['global_rot'][0,start:].swapaxes(-1,-2)
     rotation=B@delta@B.T
     return MotionClip(names,parents,offsets,rotation,positions,
         np.arange(len(positions))*motion['dt'],{'source':str(path),'bind':str(bind_path),'format':'bvh',
-        'units':'cm','up':'Y','ground_y_cm':0,'position_channels':position_channels,'removed_identity_root':remove_identity_root})
+        'units':'cm','up':'Y','ground_y_cm':0,'position_channels':position_channels,'removed_identity_root':remove_identity_root,'rest_geometry':'source static offsets in bind axes','bind_offset_difference_max_cm':bind_difference})
 
 def soma(path,*,bind_path):
     clip=bvh(path,bind_path=bind_path,frame=CoordinateFrame(np.eye(3),1.,0.),remove_identity_root=True)

@@ -24,6 +24,34 @@ class SDKTests(unittest.TestCase):
             np.tile(np.eye(3),(2,2,1,1)),np.zeros((2,2,3)),np.array([0.,1.]))
         with self.assertRaisesRegex(ValueError,'FK mismatch'):c.validate()
 
+    def test_bvh_uses_capture_geometry_and_preserves_bind_axes(self):
+        self._check_capture_offset(False)
+
+    def test_bvh_rejects_animated_non_root_translation(self):
+        self._check_capture_offset(True)
+
+    def _check_capture_offset(self, animated):
+        def text(rows):
+            return "\n".join(["HIERARCHY", "ROOT Root", "{", "OFFSET 0 0 0",
+                "CHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation",
+                "JOINT Child", "{", "OFFSET 0 2 0",
+                "CHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation",
+                "}", "}", "MOTION", "Frames: 2", "Frame Time: 0.0333333333", *rows])
+        with tempfile.TemporaryDirectory() as tmp:
+            source=Path(tmp)/'source.bvh';bind=Path(tmp)/'bind.bvh'
+            bind.write_text(text(['0 0 0 90 0 0 0 2 0 0 0 0']*2))
+            source.write_text(text(['0 0 0 0 0 0 0 2.01074 0 0 0 0',
+                f'1 0 0 30 0 0 0 {2.2 if animated else 2.01074} 0 0 0 0']))
+            options=dict(format='bvh',bind_path=bind,frame=CoordinateFrame(np.eye(3),1.,0.))
+            if animated:
+                with self.assertRaisesRegex(ValueError,'Animated non-root translation'):
+                    load_motion(source,**options)
+            else:
+                clip=load_motion(source,**options)
+                np.testing.assert_allclose(clip.world_position_cm[0,1],[0,2.01074,0],atol=1e-10)
+                self.assertAlmostEqual(clip.metadata['bind_offset_difference_max_cm'],.01074)
+                clip.save(Path(tmp)/'roundtrip.npz')
+
     def test_request_preserves_paths_and_rejects_invalid_modes(self):
         p=Pipeline(Path('toolkit with spaces'))
         req=RunRequest((3,),Path('output with spaces'),Path('robot.json'))

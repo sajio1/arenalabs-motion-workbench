@@ -10,7 +10,7 @@ requires-python = ">=3.10"
 dependencies = ["numpy>=1.24", "scipy>=1.10"]
 
 [project.optional-dependencies]
-runtime = ["torch>=2.1", "mujoco>=3.2", "h5py>=3.10", "trimesh", "platformdirs", "transformers", "huggingface-hub", "safetensors", "opencv-python", "Pillow", "imageio-ffmpeg"]
+runtime = ["torch>=2.1", "mujoco>=3.2", "h5py>=3.10", "trimesh", "platformdirs", "transformers", "huggingface-hub", "safetensors", "sentencepiece", "protobuf", "opencv-python", "Pillow>=10.3", "imageio-ffmpeg"]
 test = ["pytest>=7"]
 viewer = ["fastapi>=0.115", "uvicorn>=0.30", "python-multipart>=0.0.18", "mujoco>=3.2", "trimesh", "imageio-ffmpeg"]
 

@@ -1,6 +1,7 @@
 """Loopback-only Motion Lab service. Explicit catalog paths, no cloud work."""
 import argparse,json,os,subprocess,sys,threading,uuid,hashlib
 from concurrent.futures import ThreadPoolExecutor
+from queue import SimpleQueue
 from pathlib import Path
 from fastapi import FastAPI,HTTPException,UploadFile,File
 from fastapi.staticfiles import StaticFiles
@@ -34,10 +35,21 @@ def create_app(config_path):
     config_path=Path(config_path).resolve();config=json.loads(config_path.read_text(encoding='utf-8'))
     root=config_path.parent.parent;storage=Path(config['storage']).resolve();storage.mkdir(parents=True,exist_ok=True)
     robots={r['id']:r for r in config['robots']};clips={c['id']:c for c in config['clips']}
-    jobs={};lock=threading.Lock();video_lock=threading.Lock();pool=ThreadPoolExecutor(max_workers=1);app=FastAPI(title='arenalab Motion Lab')
+    devices=config.get('conversion_devices',[None])
+    if not isinstance(devices,list) or not devices or len(set(map(str,devices)))!=len(devices) or (None in devices and len(devices)>1) or any(d is not None and (not isinstance(d,str) or not d.isdecimal()) for d in devices):
+        raise ValueError('conversion_devices must be a nonempty list of unique GPU index strings')
+    available_devices=SimpleQueue()
+    for device in devices:available_devices.put(device)
+    jobs={};lock=threading.Lock();video_lock=threading.Lock();pool=ThreadPoolExecutor(max_workers=len(devices));app=FastAPI(title='arenalab Motion Lab')
     conversion_registry=storage/'viewer-conversions.json'
     saved_conversions=json.loads(conversion_registry.read_text()) if conversion_registry.exists() else {}
     app.state.executor=pool
+    def job_view(job):
+        result=job.copy()
+        if job['status']=='queued':
+            waiting=[j['id'] for j in jobs.values() if j['status']=='queued']
+            result['queue_position']=waiting.index(job['id'])+1
+        return result
     def public_robot(row):return {k:v for k,v in row.items() if k in {'id','label','kind','pages','model_url','neutral_url','status','report','conversion_ready'}}
     def public_clip(row):
         result={k:v for k,v in row.items() if k in {'id','page','title','family','description','frames','fps','duration','source_name','source_format','preview','cache','version','metadata'}}
@@ -76,18 +88,27 @@ def create_app(config_path):
     @app.get('/api/catalog/{page}')
     def catalog(page:str):
         if page not in PAGES:raise HTTPException(404,'Unknown pipeline')
-        with lock:return dict(page=page,robots=[public_robot(r) for r in robots.values() if page in r['pages']],clips=[public_clip(c) for c in clips.values() if c['page']==page])
+        with lock:return dict(page=page,robots=[public_robot(r) for r in robots.values() if page in r['pages'] and r['id'] not in config.get('hidden_robot_ids',[])],clips=[public_clip(c) for c in clips.values() if c['page']==page],presets=config.get('presets',{}).get(page,[]))
     def convert_task(jobid,clip,robot):
         job=jobs[jobid]
+        device=available_devices.get()
         try:
-            job['status']='running';folder=storage/'jobs'/jobid;folder.mkdir(parents=True)
+            with lock:job.update(status='running',device=device)
+            environment=os.environ.copy()
+            if device is not None:environment['CUDA_VISIBLE_DEVICES']=device
+            environment.setdefault('OMP_NUM_THREADS','4')
+            environment.setdefault('MKL_NUM_THREADS','4')
+            folder=storage/'jobs'/jobid;folder.mkdir(parents=True)
             roster=folder/'robots.json';array_json(roster,[robot['pipeline_row']])
             spec=dict(schema='greenwich.job.v1',id='viewer_'+jobid,pipeline=PAGES[clip['page']],source=str(prepare_source(clip,folder)),robots=str(roster),runtime=config['runtime'],output=str(folder/'output'),fps=30)
             if 'max_seconds' in clip:spec['max_seconds']=clip['max_seconds']
             array_json(folder/'job.json',spec)
             with (folder/'run.log').open('w',encoding='utf-8') as log:
-                result=subprocess.run([sys.executable,'-m','greenwich_pipelines','run',str(folder/'job.json')],stdout=log,stderr=subprocess.STDOUT,cwd=root)
-            if result.returncode:raise RuntimeError('Conversion failed. Logs and intermediate results are retained in the local job directory.')
+                result=subprocess.run([sys.executable,'-m','greenwich_pipelines','run',str(folder/'job.json')],stdout=log,stderr=subprocess.STDOUT,cwd=root,env=environment)
+            if result.returncode:
+                lines=(folder/'run.log').read_text(encoding='utf-8',errors='replace').splitlines()
+                reason=next((line for line in reversed(lines) if line.startswith(('ValueError:', 'RuntimeError:', 'FileNotFoundError:', 'torch.OutOfMemoryError:')) and '/' not in line and '\\' not in line),'Conversion worker exited unexpectedly')
+                raise RuntimeError(f'{reason[:240]} · Task {jobid}')
             report=json.loads((folder/'output/result.json').read_text(encoding='utf-8'))
             motions=[a for a in report['artifacts'] if a['kind']=='motion']
             motions.sort(key=lambda a:a.get('clip',''))
@@ -98,7 +119,10 @@ def create_app(config_path):
                 clip.setdefault('cache',{})[robot['id']]=url;job.update(status='completed',url=url)
                 saved_conversions[f"{clip['id']}:{robot['id']}"]=dict(clip_id=clip['id'],robot_id=robot['id'],signature=conversion_signature(clip,robot),url=url)
                 array_json(conversion_registry,saved_conversions)
-        except Exception as exc:job.update(status='failed',error=str(exc))
+        except Exception as exc:
+            with lock:job.update(status='failed',error=str(exc))
+        finally:
+            available_devices.put(device)
     @app.post('/api/convert')
     def convert(request:Conversion):
         clip=clips.get(request.clip_id);robot=robots.get(request.robot_id)
@@ -108,14 +132,14 @@ def create_app(config_path):
         if not robot.get('conversion_ready'):raise HTTPException(409,robot.get('report',{}).get('message','Mechanical metadata required. Model preview only.'))
         with lock:
             existing=next((j for j in jobs.values() if j['clip_id']==clip['id'] and j['robot_id']==robot['id'] and j['status'] in {'queued','running'}),None)
-            if existing:return existing.copy()
+            if existing:return job_view(existing)
             jid=uuid.uuid4().hex[:16];job=dict(id=jid,status='queued',clip_id=clip['id'],robot_id=robot['id']);jobs[jid]=job
         pool.submit(convert_task,jid,clip,robot)
-        return job.copy()
+        with lock:return job_view(job)
     @app.get('/api/jobs/{job_id}')
     def get_job(job_id:str):
         if job_id not in jobs:raise HTTPException(404,'Unknown job')
-        return jobs[job_id].copy()
+        with lock:return job_view(jobs[job_id])
     @app.patch('/api/robots/{robot_id}/metadata')
     def update_metadata(robot_id:str,metadata:PhysicalMetadata):
         import numpy as np

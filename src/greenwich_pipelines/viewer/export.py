@@ -77,9 +77,11 @@ def motion_payload(row,path,pipeline):
         targets=d.get('input_positions_yup_cm',d.get('source_positions_cm',skeleton*100))/100
     T=len(positions)
     if not all(np.isfinite(v).all() for v in (positions,rotations,skeleton,targets)):raise ValueError('Nonfinite playback')
+    from .tracking import tracking_payload
+    tracking=tracking_payload(row,d,pipeline,model)
     return dict(schema='greenwich.playback.v1',fps=30,frames=T,duration=(T-1)/30,unit='m',axis='y-up',geom_ids=ids,
                 positions=positions.astype(np.float32).tolist(),quaternions=Rotation.from_matrix(rotations.reshape(-1,3,3)).as_quat().reshape(T,len(ids),4).astype(np.float32).tolist(),
-                skeleton=skeleton.astype(np.float32).tolist(),parents=parents,targets=targets.astype(np.float32).tolist(),quality_status='not_evaluated')
+                skeleton=skeleton.astype(np.float32).tolist(),parents=parents,targets=targets.astype(np.float32).tolist(),quality_status='not_evaluated',**({'tracking':tracking} if tracking else {}))
 
 
 def join_playback_segments(segments):
@@ -93,6 +95,12 @@ def join_playback_segments(segments):
             if result.get(key)!=segment.get(key):raise ValueError('Incompatible playback segment '+key)
         boundaries.append(total)
         for key in ('positions','quaternions','skeleton','targets'):result[key].extend(segment[key])
+        if bool(result.get('tracking'))!=bool(segment.get('tracking')):raise ValueError('Incompatible segment tracking')
+        if result.get('tracking'):
+            for key in ('roles','reference','unit','axis','thresholds'):
+                if result['tracking'][key]!=segment['tracking'][key]:raise ValueError('Incompatible tracking '+key)
+            for key in ('actual_positions','target_positions','position_error_mm','orientation_error_deg'):
+                result['tracking'][key].extend(segment['tracking'][key])
         total+=segment['frames']
     result.update(frames=total,duration=(total-1)/result['fps'],window_boundaries=boundaries)
     return result

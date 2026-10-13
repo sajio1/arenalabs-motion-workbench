@@ -9,6 +9,45 @@ from greenwich_pipelines.viewer.export import C,motion_payload
 
 URDF=b'''<robot name="Test arm"><link name="base"><visual><geometry><box size="0.2 0.2 0.2"/></geometry></visual></link><link name="arm"><inertial><mass value="1"/><inertia ixx=".01" iyy=".01" izz=".01" ixy="0" ixz="0" iyz="0"/></inertial><visual><geometry><box size="0.1 0.1 0.5"/></geometry><origin xyz="0 0 .25"/></visual></link><joint name="lift" type="revolute"><parent link="base"/><child link="arm"/><origin xyz="0 0 .2"/><axis xyz="0 1 0"/><limit lower="-1" upper="1" effort="10" velocity="1"/></joint></robot>'''
 
+def test_two_clients_share_worker_but_second_reports_queue_position(tmp_path,monkeypatch):
+    import threading,time
+    from types import SimpleNamespace
+    import greenwich_pipelines.viewer.server as server
+    entered=[threading.Event(),threading.Event()];release=[threading.Event(),threading.Event()];calls=[]
+    def blocked(*args,**kwargs):
+        i=len(calls);calls.append(i);entered[i].set()
+        assert release[i].wait(10)
+        return SimpleNamespace(returncode=1)
+    monkeypatch.setattr(server.subprocess,'run',blocked)
+    monkeypatch.setattr(server,'prepare_source',lambda clip,folder:tmp_path/'source.json')
+    config=tmp_path/'configs/viewer.json';config.parent.mkdir()
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',robots=[dict(id='r',pages=['locomotion'],conversion_ready=True,pipeline_row={})],clips=[dict(id=c,page='locomotion') for c in ['a','b']])))
+    app=create_app(config)
+    try:
+        with TestClient(app) as first,TestClient(app) as second:
+            one=first.post('/api/convert',json=dict(clip_id='a',robot_id='r')).json()
+            assert entered[0].wait(3)
+            two=second.post('/api/convert',json=dict(clip_id='b',robot_id='r')).json()
+            assert two['status']=='queued' and two['queue_position']==1
+            assert first.get('/api/jobs/'+one['id']).json()['status']=='running'
+            assert second.post('/api/convert',json=dict(clip_id='b',robot_id='r')).json()['id']==two['id']
+            assert not entered[1].is_set()
+            release[0].set();assert entered[1].wait(3)
+            current=second.get('/api/jobs/'+two['id']).json()
+            assert current['status']=='running' and 'queue_position' not in current
+    finally:
+        for event in release:event.set()
+        app.state.executor.shutdown(wait=True)
+
+def test_catalog_hides_retired_choice_and_exposes_explicit_presets(tmp_path):
+    config=tmp_path/'configs/viewer.json';config.parent.mkdir()
+    presets=[dict(clip_id='dance',robot_id='h2')]
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',robots=[dict(id=r,pages=['locomotion']) for r in ['h2','retired']],clips=[],hidden_robot_ids=['retired'],presets=dict(locomotion=presets))))
+    with TestClient(create_app(config)) as client:
+        result=client.get('/api/catalog/locomotion').json()
+        assert [r['id'] for r in result['robots']]==['h2']
+        assert result['presets']==presets
+
 @pytest.mark.parametrize('path',['../escape.urdf','/escape.urdf','C:/escape.urdf','a/../../escape.urdf'])
 def test_upload_rejects_archive_escape(tmp_path,path):
     stream=io.BytesIO()
@@ -171,3 +210,67 @@ def test_shoulders_resolve_from_tree_without_shoulder_names():
     from greenwich_pipelines.robot_semantics import shoulder_landmarks
     spec=SimpleNamespace(parents=np.array([-1,0,1,2,3,1,5,6]),joint_names=['base','torso','left_upper_arm','left_forearm','left_end_effector','right_upper_arm','right_forearm','right_end_effector'])
     assert shoulder_landmarks(spec,[4,7])==[2,5]
+
+
+def test_failed_conversion_reports_reason_and_task_id(tmp_path,monkeypatch):
+    import time
+    from types import SimpleNamespace
+    import greenwich_pipelines.viewer.server as server
+    def failed(*args,**kwargs):
+        kwargs['stdout'].write('ValueError: Animated non-root translation at Spine2\n')
+        return SimpleNamespace(returncode=1)
+    monkeypatch.setattr(server.subprocess,'run',failed)
+    monkeypatch.setattr(server,'prepare_source',lambda clip,folder:tmp_path/'source.json')
+    config=tmp_path/'configs/viewer.json';config.parent.mkdir()
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',
+        robots=[dict(id='r',pages=['locomotion'],conversion_ready=True,pipeline_row={})],
+        clips=[dict(id='a',page='locomotion')])))
+    app=create_app(config)
+    try:
+        with TestClient(app) as client:
+            job=client.post('/api/convert',json=dict(clip_id='a',robot_id='r')).json()
+            for _ in range(100):
+                result=client.get('/api/jobs/'+job['id']).json()
+                if result['status']=='failed':break
+                time.sleep(.01)
+            assert result['status']=='failed'
+            assert 'Animated non-root translation at Spine2' in result['error']
+            assert job['id'] in result['error']
+            assert 'local job directory' not in result['error']
+    finally:app.state.executor.shutdown(wait=True)
+
+
+def test_four_gpu_workers_are_isolated_and_overflow_stays_queued(tmp_path,monkeypatch):
+    import threading,time
+    from types import SimpleNamespace
+    import greenwich_pipelines.viewer.server as server
+    release=threading.Event();started=[];guard=threading.Lock()
+    def run(*args,**kwargs):
+        with guard:started.append(kwargs['env']['CUDA_VISIBLE_DEVICES'])
+        assert release.wait(10)
+        kwargs['stdout'].write('RuntimeError: test worker finished\n')
+        return SimpleNamespace(returncode=1)
+    monkeypatch.setattr(server.subprocess,'run',run)
+    monkeypatch.setattr(server,'prepare_source',lambda clip,folder:tmp_path/'source.json')
+    config=tmp_path/'configs/viewer.json';config.parent.mkdir()
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',conversion_devices=['0','1','2','3'],
+        robots=[dict(id='r',pages=['locomotion'],conversion_ready=True,pipeline_row={})],
+        clips=[dict(id=str(i),page='locomotion') for i in range(5)])))
+    app=create_app(config)
+    try:
+        with TestClient(app) as client:
+            jobs=[client.post('/api/convert',json=dict(clip_id=str(i),robot_id='r')).json() for i in range(5)]
+            deadline=time.monotonic()+5
+            while len(started)<4 and time.monotonic()<deadline:time.sleep(.01)
+            assert sorted(started)==['0','1','2','3']
+            states=[client.get('/api/jobs/'+j['id']).json() for j in jobs]
+            assert [s['status'] for s in states]==['running']*4+['queued']
+            assert states[-1]['queue_position']==1
+            duplicate=client.post('/api/convert',json=dict(clip_id='4',robot_id='r')).json()
+            assert duplicate['id']==jobs[-1]['id']
+            release.set()
+            app.state.executor.shutdown(wait=True)
+            assert len(started)==5 and started[-1] in {'0','1','2','3'}
+            assert all(client.get('/api/jobs/'+j['id']).json()['status']=='failed' for j in jobs)
+    finally:
+        release.set();app.state.executor.shutdown(wait=True)
