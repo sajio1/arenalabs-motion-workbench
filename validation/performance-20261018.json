@@ -1,0 +1,20 @@
+{
+  "source_frames": 539,
+  "probe_frames": 30,
+  "depth_archive_bytes": 303425644,
+  "six_repeated_member_reads_s": 5.2632070609834045,
+  "single_materialization_s": 0.8766928690019995,
+  "depth_values_bitwise_equal": true,
+  "render_before_s": 40.243020333815366,
+  "decoded_before_sha256": "9ffc9eceed9c284523496ed2cf382478add20f2475aece60688a69c799a71fe4",
+  "render_after_s": 15.204356915084645,
+  "decoded_after_sha256": "9ffc9eceed9c284523496ed2cf382478add20f2475aece60688a69c799a71fe4",
+  "decoded_video_bitwise_equal": true,
+  "system_ffmpeg_nvenc_usable": true,
+  "nvenc_probe_detail": "",
+  "jax_backend_probe": "gpu\n[CudaDevice(id=0)]\n",
+  "egl_probe": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA RTX A6000/PCIe/SSE2"
+  }
+}

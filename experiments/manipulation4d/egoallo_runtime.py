@@ -11,7 +11,7 @@ def gpu_environment(base=None):
         raise RuntimeError(f'Missing isolated JAX CUDA dependencies: {deps}')
     cache = RUNTIME / 'jax-cache'
     cache.mkdir(parents=True, exist_ok=True)
-    env.update(CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'), JAX_PLATFORMS='cuda',
+    env.update(CUDA_VISIBLE_DEVICES=env.get('CUDA_VISIBLE_DEVICES','3'), JAX_PLATFORMS='cuda',
         XLA_PYTHON_CLIENT_PREALLOCATE='false', JAX_DEFAULT_MATMUL_PRECISION='highest',
         JAX_COMPILATION_CACHE_DIR=str(cache))
     for key, prefix in [('PYTHONPATH', str(deps)),

@@ -1,70 +1,104 @@
-# Greenwich Motion Pipelines
+# ArenaLabs Motion Workbench
 
-一个本地 repo，三条生产路线：SOMA/SMPL 全身转换、Nymeria 双腕双踝补全、Gento 轮式上身适配。Greenwich 是自研模型。本仓库整合现有调用与依赖，不重新训练模型，也不声称此次迁移修好了旧动作质量问题。
+Turn synchronized egocentric recordings into robot motion and a downloadable
+multimodal manipulation episode. The web workbench combines human-motion
+reconstruction, cross-embodiment motion conversion, scene perception and
+robot-view compositing. This repository contains inference/integration code;
+it does not include pretrained weights, private recordings or generated caches.
 
-## 快速开始
+**Current robot conditioning:** pelvis, head, left/right hand and left/right
+foot — six observed human joints. AlphaMotion predicts frames independently;
+body reconstruction and the robot refiner supply temporal structure. Changing
+the target robot reuses the saved human prior and scene estimates.
 
-Python 3.10+，完整运行需 PyTorch、MuJoCo 和本地 Prime checkpoint。全身后端目前要求 CUDA。建议独立虚拟环境：
+## Start here
 
-```bash
-python -m pip install -e ".[runtime,test]"
-python -m greenwich_pipelines list
-python -m greenwich_pipelines plan examples/gento/job.json
-python -m greenwich_pipelines doctor examples/gento/job.json
-python -m greenwich_pipelines run examples/gento/job.json
-```
+- [Complete workbench guide](docs/workbench-guide.md): what each stage does,
+  supported inputs, outputs, cloud use, API examples, deployment and limitations.
+- [Performance audit](docs/performance-audit-20261018.md): actual CPU/GPU paths,
+  measured bottlenecks, applied fixes and remaining optimization work.
+- [Recording upload / LeRobot export contract](docs/dataset-io.md): exact arrays,
+  axes, units, clocks, packaging and browser workspace isolation.
+- [Weights and model release](docs/model-release.md): what belongs on Hugging
+  Face, what must be obtained upstream and what a model release needs.
+- [Validation](docs/release-validation.md): six-point migration and dataset
+  reader checks. Generation does not certify physical execution or task success.
 
-先修改例子的输入路径和 runtime 配置；`*.local.json` 不进入 Git。checkpoint 目录需要 `config.json`、`model.safetensors`。语义编码模型需提前放入 Hugging Face 缓存；运行默认离线，不自动下载或发布。示例机器人掌框架必须用实际机械元数据替换，不能把模板向量当作校准结果。
-
-## 目录
+## End-to-end path
 
 ```text
-src/greenwich_pipelines/
-  config.py                 # 统一 job 与相对路径解析
-  cli.py / worker.py        # plan、doctor、隔离进程、状态和结果
-  runtime.py                # 共享本地 Prime checkpoint
-  artifacts.py              # 原始编码的结果索引和 SHA256
-  pipelines/
-    fullbody/               # SOMA/SMPL/BVH/canonical；100+100
-    nymeria/                # 原始 Xsens / 四端点；V3 物理精修
-    gento/                  # EgoDex 双腕+头参考；混合关节精修
-src/alphamotion/             # 模型推理核心与机械描述器
-src/greenwich_motion_sdk/    # 全身输入格式、投影、协调与几何模块
-src/greenwich_umi_proof/     # 共用足底、掌框架、原生几何工具
-assets/robots/gento/         # 两个已接入机器人模型、TCP 与 vendor 网格
-configs/                    # runtime、机械 roster、公共策略
-examples/                   # 三条 job、输入清单和可选验收接口
-docs/                       # 架构、输入输出、迁移与已知边界
-provenance/                  # 迁移来源和原文件哈希
-tests/                      # 格式、契约、数值迁移回归
-validation/                 # 本次整合验证报告
+Video + measured head/camera and bilateral hand/gripper trajectories
+    ├── windowed EgoAllo (CUDA PyTorch + CUDA JAX) → SMPL-H → SMPL-X
+    │       → six-point AlphaMotion → original robot refinement → joint states
+    └── video frames → DA3 depth + Qwen object proposals → SAM 3.1 masks
+            → current-frame segmented point cloud and 3D visible-surface boxes
+Robot motion + camera + masks + depth → synthetic robot arm/hand FOV composite
+Observed hands + video / object points → contact estimates / proximity indices
+Saved modalities → LeRobot v3 episode + lossless ArenaLabs extension ZIP
 ```
 
-## 三条流程
+EgoDex observed finger landmarks map separately to Wuji. Nymeria uses no
+invented dexterous fingers. UMI and real-robot adapters use observed end-effector
+references and gripper openings; recorded robot body, pelvis and feet are not
+used as a human prior. A calibrated camera/head reference is still required.
 
-|流程|输入|生产算法|原生输出|
-|---|---|---|---|
-|fullbody|SOMA BVH+bind；SMPL poses/trans+shaped skeleton；canonical NPZ|全身编码→Prime 解码→机械投影→接触 100→协调 100|Y-up/cm；q、rot6d、root_t、源动作与几何报告|
-|nymeria|Xsens xdata 或明确的四端点 NPZ，含 heel/toe 接触|四端点 mask→Prime 补全→V3 q/root 联合精修，最大 1200 次|Y-up/cm；原始模型 prior、关节轨迹、接触与报告|
-|gento|EgoDex HDF5，双腕、掌框架地标、camera/hip/Arm|三节点 mask→Prime→真实 TCP、躯干和滑轨时序求解|Z-up/m；MuJoCo qpos、实际 TCP、目标与报告|
+## Use the hosted service
 
-只有 30 Hz。两个 100 步只属于 fullbody。Nymeria 默认 900 帧独立窗口，不承诺窗口接缝连续。Gento 是固定底盘上身适配，不包含轮式行驶规划。手指地标只用于定义腕朝向，不生成手指动作。
+Open the workbench, choose a preset or **Upload data**, select a robot and end
+effector, and download the generated episode using **Download dataset**. Upload
+requires an explicit recording package, not a bare video. Users do not need
+SSH access or local model weights to use a service whose owner supplies them.
+The current browser workspace cookie is not a full account or quota system.
 
-## 结果与 Motion Lab
+## Develop or self-host
 
-每个任务有独立输出目录。`result.json` 是未来网页读取的统一索引：相对 artifact 路径、机器人、片段、帧数、坐标轴、单位、关节编码和哈希。原生 NPZ 保持原编码，不能把不同管线的 `q`/`qpos` 混读。
+Core Python code requires Python 3.10+ and CUDA for the full-body model. The
+current complete cloud deployment uses separate environments for the API,
+EgoAllo/JAX, DA3 and SAM/Qwen/rendering. Do not install all model dependencies
+into one environment and assume they are compatible.
 
-原始模型输出保存为 `prime_original.npz`，精修输出单独保存。任务目录已存在会拒绝运行；失败保留中间结果与 `status.json`。代码不会覆盖之前的模型 prior 或拿前一个精修结果代替 prior。
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[runtime,viewer,dataset,test]"
+python -m greenwich_pipelines list
+cd web
+npm ci
+npm run build
+```
 
-默认 `accepted=null`、`quality_status=not_evaluated`。原求解器历史报告中的 `accepted=false` 不会被整合层改成通过。可选 `acceptance: "your_module:evaluate"` 接收最终 result.json，并返回 `{accepted: bool, ...}`。未启用严格 mean/P95 指标，也没有新增早停或总 loss 门槛。结构检查、有限值检查、Gento 独立 FK 一致性检查不代表运动质量认证。
+These commands install/build the core package and UI. They do **not** download
+weights or prepare a complete cloud installation. Follow the deployment section
+in the [workbench guide](docs/workbench-guide.md); several production worker
+paths still assume the documented Linux layout. This is not yet a portable
+one-command installer or a published Docker image.
 
-已加入本地 Motion Lab 网页：三个独立页面、共享三卡槽 3D 场景、动作拖入与替换、逐卡槽机器人选择、URDF/ZIP 上传检查。启动与边界见 [Motion Lab](docs/motion-lab.md)。
+## Repository map
 
-阅读顺序：[架构](docs/architecture.md) → [输入输出契约](docs/contracts.md) → [迁移范围与限制](docs/migration.md) → [验证报告](validation/README.md)。
+| Path | Responsibility |
+|---|---|
+| `experiments/manipulation4d/` | Current workbench coordinator, adapters, human windows, perception, rendering, exports |
+| `src/greenwich_pipelines/input_policy.py` | Shared six-point visibility mask |
+| `src/greenwich_pipelines/frame_cache.py` | Exact-code reuse of streamed AlphaMotion outputs |
+| `src/greenwich_pipelines/pipelines/fullbody/` | Native full-body decoder/projection and original refinement |
+| `src/alphamotion/` | Model inference and mechanical descriptors |
+| `src/greenwich_motion_sdk/` | Human motion formats and geometry |
+| `web/src/manipulation4d/` | Interactive viewer, upload and dataset downloads |
+| `configs/`, `examples/` | Core runtime/job and mechanical metadata examples |
+| `tools/` | Explicit maintenance and read-only performance audit commands |
+| `provenance/`, `validation/` | Migration sources and historical checks |
 
-## Manipulation workbench datasets
+The original standalone Nymeria/Gento CLI adapters remain available for legacy
+experiments; their historical endpoint policies are not the current web
+workbench path. See [legacy runtime notes](docs/legacy-runtime-guide.md).
+Existing research scripts are retained as history, not advertised as extra
+user-facing generation routes.
 
-The Manipulation workspace supports user recording packages and complete LeRobot v3 downloads.
-See [the recording and export contract](docs/dataset-io.md) for input fields, synchronized modalities,
-workspace isolation, deployment prerequisites and the private-weight boundaries.
-The spatial encoder observes pelvis, head, both hands and both feet; original body and operation refinement remains separate.
+## Models, licensing and data
+
+Model files stay outside Git. AlphaMotion currently loads `config.json` and
+`model.safetensors` from the runtime configuration. Third-party body templates,
+models, meshes and datasets retain their own terms; public repository visibility
+does not grant permission to redistribute them. No project-wide license for
+all first-party code/weights has been selected in this repository. See the
+[release guide](docs/model-release.md) before redistributing model bundles.

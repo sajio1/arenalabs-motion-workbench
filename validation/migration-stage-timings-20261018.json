@@ -1,0 +1,74 @@
+{
+  "SAM category worker": {
+    "n": 11,
+    "execution_median_s": 139.898,
+    "execution_max_s": 585.31,
+    "queue_median_s": 247.205
+  },
+  "classify_capture_hardware.py": {
+    "n": 1,
+    "execution_median_s": 36.653,
+    "execution_max_s": 36.653,
+    "queue_median_s": 331.188
+  },
+  "contact_recording.py": {
+    "n": 1,
+    "execution_median_s": 570.64,
+    "execution_max_s": 570.64,
+    "queue_median_s": 267.992
+  },
+  "gripper_body.py": {
+    "n": 1,
+    "execution_median_s": 86.687,
+    "execution_max_s": 86.687,
+    "queue_median_s": 172.529
+  },
+  "gripper_render.py": {
+    "n": 10,
+    "execution_median_s": 149.282,
+    "execution_max_s": 583.234,
+    "queue_median_s": 338.995
+  },
+  "gripper_retarget.py": {
+    "n": 9,
+    "execution_median_s": 48.003,
+    "execution_max_s": 64.597,
+    "queue_median_s": 258.057
+  },
+  "mobile_render_job.py": {
+    "n": 1,
+    "execution_median_s": 298.009,
+    "execution_max_s": 298.009,
+    "queue_median_s": 156.533
+  },
+  "propagate_capture_hardware.py": {
+    "n": 1,
+    "execution_median_s": 206.186,
+    "execution_max_s": 206.186,
+    "queue_median_s": 453.732
+  },
+  "render_recording.py": {
+    "n": 13,
+    "execution_median_s": 28.108,
+    "execution_max_s": 241.761,
+    "queue_median_s": 150.917
+  },
+  "retarget_robot.py": {
+    "n": 16,
+    "execution_median_s": 57.705,
+    "execution_max_s": 129.077,
+    "queue_median_s": 84.683
+  },
+  "scene_inference.py": {
+    "n": 3,
+    "execution_median_s": 20.515,
+    "execution_max_s": 148.637,
+    "queue_median_s": 393.718
+  },
+  "wheeled_job.py": {
+    "n": 1,
+    "execution_median_s": 37.648,
+    "execution_max_s": 37.648,
+    "queue_median_s": 53.048
+  }
+}

@@ -14,7 +14,12 @@ def run(work,rid,dest):
  if not (scene_path/'cameras.npz').exists():
   from robot_preview import run as preview
   preview(work,rid,dest);return
- playback=json.loads((folder/'playback.json').read_text());selected=json.loads((folder/'render-layout.json').read_text())['arm_and_gripper_geoms'];model=trimesh.load(folder/'model.glb',force='scene');cameras=np.load(scene_path/'cameras.npz');depth=np.load(scene_path/'depth.npz');K=cameras['intrinsic'];poses=cameras['poses'];n=playback['frames'];p=np.array(playback['positions']);rot=R.from_quat(np.array(playback['quaternions']).reshape(-1,4)).as_matrix().reshape(n,-1,3,3)
+ playback=json.loads((folder/'playback.json').read_text());selected=json.loads((folder/'render-layout.json').read_text())['arm_and_gripper_geoms'];model=trimesh.load(folder/'model.glb',force='scene')
+ # NpzFile does not cache decompressed members: archive['depth'][frame] would
+ # inflate the entire sequence on every rendered frame. Keep only needed arrays.
+ with np.load(scene_path/'depth.npz') as saved:depth={key:saved[key] for key in ['depth','intrinsics','ids']}
+ with np.load(scene_path/'cameras.npz') as saved:K=saved['intrinsic'];poses=saved['poses']
+ n=playback['frames'];p=np.array(playback['positions']);rot=R.from_quat(np.array(playback['quaternions']).reshape(-1,4)).as_matrix().reshape(n,-1,3,3)
  render=pyrender.Scene(bg_color=[0,0,0,0],ambient_light=[.65]*3);nodes=[]
  for i in selected:
   mesh=model.geometry[f'geom_{i}'];nodes.append((i,render.add(pyrender.Mesh.from_trimesh(mesh))))
