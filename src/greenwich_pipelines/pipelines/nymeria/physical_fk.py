@@ -19,6 +19,7 @@ class PhysicalFK(torch.nn.Module):
         parents=np.asarray(spec.parents);self.root=int(np.flatnonzero(parents<0)[0])
         dof=torch.as_tensor(body.dof,device=device,dtype=dtype);axes,active=_slot_axes(dof)
         active[self.root]=False
+        self.register_buffer('root_index',torch.tensor([self.root],device=device),persistent=False)
         self.register_buffer('active_indices',active.flatten().nonzero().flatten())
         self.register_buffer('parents',torch.tensor(np.maximum(parents,0),device=device))
         x,y,z=axes.unbind(-1);zero=torch.zeros_like(x)
@@ -48,7 +49,7 @@ class PhysicalFK(torch.nn.Module):
         q=self.expand_angles(active_q)
         elementary=self.identity+q.sin()[...,None,None]*self.K+(1-q.cos())[...,None,None]*self.K2
         local=elementary[:,:,0]@elementary[:,:,1]@elementary[:,:,2]@self.rest
-        R=torch.zeros_like(local).index_copy(1,torch.tensor([self.root],device=q.device),root_R[:,None])
+        R=torch.zeros_like(local).index_copy(1,self.root_index,root_R[:,None])
         for name in self.level_names:
             ids=getattr(self,name)
             R=R.index_copy(1,ids,R.index_select(1,self.parents[ids])@local.index_select(1,ids))

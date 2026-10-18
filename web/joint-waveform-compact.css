@@ -1,0 +1,5 @@
+/* Compact joint waveforms: no secondary position meter. */
+body.workbench4d .wb-state-table .wb-motor-meter{display:none}
+body.workbench4d .wb-state-table canvas.wb-motor-signal{width:100%;height:28px!important;margin:0}
+body.workbench4d .wb-state-table tbody th,body.workbench4d .wb-state-table tbody td{padding:4px 7px}
+body.workbench4d #joint-state-signals{display:none}

@@ -1,0 +1,22 @@
+.arenalab-demo-nav{display:flex;align-items:center;gap:5px;flex-shrink:0}.arenalab-demo-nav a{color:#9bb29f;text-decoration:none;font:500 13px Inter,Arial,sans-serif;padding:10px 13px;border-radius:8px;white-space:nowrap}.arenalab-demo-nav a:hover{background:#243d2c;color:#d6e8ca}.arenalab-demo-nav a[aria-current=page]{background:#2b422e;color:#c7e1ad}.isaac-arena-brand{display:flex;align-items:center;gap:10px;color:#dce8d8;text-decoration:none;font-size:21px;font-weight:650}.isaac-arena-brand img{width:35px;height:35px;object-fit:contain}.isaac-arena-brand small{letter-spacing:.5px;font-size:11px;margin-left:8px}.wb-legacy{display:flex;gap:10px;margin:12px 20px;font-size:10px;color:#a8bda0}.wb-legacy a{text-decoration:underline}.wb-hand-check{padding:12px 14px;border-top:1px solid #2c4432}.wb-hand-check summary{cursor:pointer;color:#b7d29e;font-size:12px}.wb-hand-check p{margin:10px 0;font-size:11px}.wb-hand-check select{width:100%;margin:0;padding:6px}.wb-hand-check canvas{width:100%;margin:8px 0;height:90px}.wb-hand-check .hand-legend{display:flex;gap:15px;font-size:10px;color:#a0b69c}.hand-legend span:first-child{color:#e6b778}.hand-legend span+span{color:#a3d391}.wb-map-status{position:absolute;left:16px;top:85px;color:#86ab91;font-size:10px;pointer-events:none}@media(max-width:800px){.arenalab-demo-nav a{font-size:11px;padding:8px}.isaac-arena-brand small{display:none}}
+
+.wb-scene-tools{z-index:5}.wb-object-tags{pointer-events:none}.wb-display{position:relative;z-index:6}.wb-display[open]{box-shadow:0 10px 30px #0008}.wb-display[open]>div{min-width:210px}
+
+body.workbench4d .wb-joints{flex:0 0 auto;min-height:220px}
+
+/* The same left-aligned app header on every demo. */
+html body .arena-header{height:76px;display:flex;align-items:center;justify-content:flex-start;gap:32px;padding:0 24px;background:#0a1510;border-bottom:1px solid #2c4032;color:#dae7d8;z-index:60;font-family:Inter,Arial,sans-serif;flex-shrink:0}
+html body .arena-brand{display:flex;align-items:center;gap:10px;color:#dae7d8;text-decoration:none;font-size:21px;font-weight:700;letter-spacing:-.7px;white-space:nowrap;flex-shrink:0}
+html body .arena-brand img{width:39px;height:39px;object-fit:contain}
+html body .arena-header .arenalab-demo-nav{display:flex;gap:5px;margin:0;align-items:center}
+html body .arena-header .arenalab-demo-nav a{font:500 13px Inter,Arial,sans-serif;padding:10px 13px;color:#9bb29f;border-radius:8px}
+html body .arena-header .arenalab-demo-nav a[aria-current=page]{background:#2b422e;color:#c7e1ad}
+.arena-context{margin-left:auto;color:#89a98a;font-size:10px;letter-spacing:1.2px;text-transform:uppercase}
+body.motion-page .arena-header{position:fixed;inset:0 0 auto 0}
+body.motion-page .sidebar{top:94px}
+body.motion-page .top-tools,body.motion-page .display-panel{top:94px}
+body.operator-page .layout{height:calc(100dvh - 76px)}
+@media(max-width:1150px){html body .arena-header{gap:12px;padding:0 15px}}
+@media(max-width:800px){html body .arena-header{gap:8px;padding:0 12px}html body .arena-brand{font-size:16px;gap:7px}html body .arena-brand img{width:28px;height:28px}html body .arena-header .arenalab-demo-nav a{font-size:11px;padding:8px}.arena-context{display:none}body.operator-page .layout{height:auto}}
+
+.wb-object-tags a{pointer-events:auto;display:inline-block;margin-left:8px;padding:2px 5px;border:1px solid #617e55;border-radius:4px;color:#c7e1ad}.wb-object-tags a:hover{background:#345139}

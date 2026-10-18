@@ -11,6 +11,8 @@ from .export import array_json,robot_model,motion_payload,join_playback_segments
 from .uploads import unpack_robot,MAX_BYTES
 from .sources import prepare_source
 from .ingest import ingest_humanoid
+from .mobile_ingest import ingest_registered_mobile
+from .robot_deletion import delete_robot_assets
 
 PAGES={'locomotion':'fullbody','localmanipulation':'nymeria','manipulation':'gento'}
 _code_digest=hashlib.sha256()
@@ -35,6 +37,9 @@ def create_app(config_path):
     config_path=Path(config_path).resolve();config=json.loads(config_path.read_text(encoding='utf-8'))
     root=config_path.parent.parent;storage=Path(config['storage']).resolve();storage.mkdir(parents=True,exist_ok=True)
     robots={r['id']:r for r in config['robots']};clips={c['id']:c for c in config['clips']}
+    # Only signed results from this code/policy may populate the active cache.
+    for clip in clips.values():
+        if clip['page']=='locomotion':clip['cache']={}
     devices=config.get('conversion_devices',[None])
     if not isinstance(devices,list) or not devices or len(set(map(str,devices)))!=len(devices) or (None in devices and len(devices)>1) or any(d is not None and (not isinstance(d,str) or not d.isdecimal()) for d in devices):
         raise ValueError('conversion_devices must be a nonempty list of unique GPU index strings')
@@ -113,7 +118,7 @@ def create_app(config_path):
             motions=[a for a in report['artifacts'] if a['kind']=='motion']
             motions.sort(key=lambda a:a.get('clip',''))
             payload=join_playback_segments(motion_payload(robot['pipeline_row'],folder/'output'/a['path'],PAGES[clip['page']]) for a in motions)
-            payload.update(clip_id=clip['id'],robot_id=robot['id'],version='Current pipeline · Motion quality not evaluated')
+            payload.update(encoder_policy=__import__('greenwich_pipelines.input_policy',fromlist=['POLICY']).POLICY if clip['page']=='locomotion' else None,clip_id=clip['id'],robot_id=robot['id'],version='Current pipeline · Motion quality not evaluated')
             export=folder/'playback.json';array_json(export,payload);url=f'/assets/jobs/{jobid}/playback.json'
             with lock:
                 clip.setdefault('cache',{})[robot['id']]=url;job.update(status='completed',url=url)
@@ -168,6 +173,20 @@ def create_app(config_path):
                 array_json(storage/'uploaded/registry.json',[r for r in robots.values() if r['id'].startswith('custom_')])
             except (ValueError,KeyError) as exc:raise HTTPException(400,str(exc)) from exc
         return public_robot(robot)
+    @app.delete('/api/robots/{robot_id}')
+    def delete_robot(robot_id:str):
+        with lock:
+            if any(j['robot_id']==robot_id and j['status'] in {'queued','running'} for j in jobs.values()):
+                raise HTTPException(409,'This robot is still generating. Delete it after its current task finishes.')
+            try:result=delete_robot_assets(config_path,robot_id)
+            except KeyError:raise HTTPException(404,'Robot not found')
+            except RuntimeError as exc:raise HTTPException(409,str(exc)) from exc
+            except ValueError as exc:raise HTTPException(400,str(exc)) from exc
+            for rid in result['deleted_robot_ids']:robots.pop(rid,None)
+            config.clear();config.update(json.loads(config_path.read_text()))
+            clips.clear();clips.update({c['id']:c for c in config['clips']})
+            saved_conversions.clear();saved_conversions.update(json.loads(conversion_registry.read_text()))
+        return result
     @app.post('/api/robots/{page}')
     async def upload(page:str,file:UploadFile=File(...)):
         if page not in PAGES:raise HTTPException(404,'Unknown pipeline')
@@ -177,12 +196,13 @@ def create_app(config_path):
             row=dict(id=rid,label=label,kind='Custom URDF',pages=[page],status=report['status'],report=report,conversion_ready=False)
             if not report['missing_meshes']:
                 try:
-                    pipeline_row=None
-                    if page in {'locomotion','localmanipulation'}:
+                    pipeline_row=ingest_registered_mobile(xml,folder,rid,report,list(robots.values())+config.get('robot_templates',[]))
+                    mobile=pipeline_row is not None
+                    if not mobile and page in {'locomotion','localmanipulation'}:
                         try:pipeline_row=ingest_humanoid(xml,folder,rid,report)
                         except Exception as exc:report.update(status='needs_metadata',message=f'Automatic humanoid ingestion could not complete: {exc}')
                     if pipeline_row:
-                        row.update(pipeline_row=pipeline_row,conversion_ready=True,pages=['locomotion','localmanipulation'],kind='Humanoid',status='ready')
+                        row.update(pipeline_row=pipeline_row,conversion_ready=True,pages=['manipulation'] if mobile else ['locomotion','localmanipulation'],kind='Wheeled' if mobile else 'Humanoid',status='ready')
                     robot_model(pipeline_row or dict(xml=str(xml)),folder)
                     row.update(model_url=f'/assets/uploaded/{rid}/model.glb',neutral_url=f'/assets/uploaded/{rid}/neutral.json')
                 except Exception as exc:report.update(status='invalid_model',conversion_ready=False,message=f'Model loading failed: {exc}');row.update(status='invalid_model',conversion_ready=False)

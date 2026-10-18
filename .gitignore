@@ -15,3 +15,16 @@ weights/
 .env
 web/node_modules/
 validation/local-*.json
+
+# Local runs, build variants and private artifacts
+work/
+web/dist-*/
+*.mp4
+*.npz
+*.npy
+*.hdf5
+*.h5
+*.zip
+*.pem
+*.key
+*.parquet

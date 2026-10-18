@@ -1,3 +1,4 @@
+import {demoNavigation,demoBrand} from './demo-nav';
 import {createIcons,icons} from 'lucide';
 import './style.css';
 import {errorChart} from './tracking.js';
@@ -13,11 +14,10 @@ const pages:Record<Page,{subtitle:string;title:string;index:string;source:string
 const path=location.pathname.slice(1) as Page;const page:Page=path in pages?path:'locomotion';const info=pages[page];
 const robotStatus=(r:Robot)=>r.conversion_ready?'Ready':r.status==='invalid_model'?'Model load failed':r.status==='missing_assets'?'Missing meshes':'Needs physical metadata';
 const icon=(name:string,cls='')=>`<i data-lucide="${name}" class="${cls}"></i>`;
+document.body.classList.add('motion-page');document.title='ArenaLabs · Locomotion';
 const app=document.getElementById('app')!;
 app.innerHTML=`<div id="viewport"></div>
- <div class="brand"><div class="brand-mark"></div><div class="brand-name">ArenaLabs</div></div>
- <div class="pipeline-wrap"><button id="pipeline-toggle" class="pipeline-toggle" aria-expanded="false" aria-label="Switch pipeline"><span class="type-icon">${icon(info.icon)}</span><span><strong>${page}</strong><small>${info.subtitle}</small></span>${icon('chevrons-up-down','chevron')}</button>
- <nav id="pipeline-menu" class="pipeline-menu" hidden>${Object.entries(pages).map(([key,value])=>`<a href="/${key}" class="${key===page?'current':''}">${key}<small>${value.subtitle}</small></a>`).join('')}</nav></div>
+ <header class="arena-header">${demoBrand()}${demoNavigation('locomotion')}<span class="arena-context">Locomotion</span></header>
  <aside class="sidebar"><section class="library-panel"><div class="section-title">MOTION LIBRARY<span id="catalog-count" class="count">—</span></div>
  <div class="drag-hint">${icon('mouse-pointer-2')}Drag a motion into a scene slot</div><label class="searchbox">${icon('search')}<input id="search" placeholder="Search motions, families…" aria-label="Search motions"/></label><div class="library-tabs" role="tablist" aria-label="Motion library filter"><button id="library-all" role="tab" aria-selected="true">All <span id="all-count"></span></button><button id="library-cached" role="tab" aria-selected="false">Cached <span id="cached-count"></span></button></div><div id="catalog" class="catalog"></div>
  </section><section id="metadata" class="metadata"></section></aside>
@@ -57,10 +57,17 @@ function renderPicker(){
  const robots=robotChoices(catalog.robots);
  el('modal-root').innerHTML='';
  const bar=el('robot-picker');bar.hidden=false;
- bar.innerHTML=`<header><span>Slot 0${index+1} · Robot</span><span class="bar-motion">${esc(clip.title)}</span></header><div class="bar-robots">${robots.map(r=>`<div class="bar-item"><button class="bar-robot ${clip.cache?.[r.id]?'cached':''}" data-pick-robot="${r.id}" aria-label="Use ${esc(r.label)}${clip.cache?.[r.id]?' · Cached':''}" ${!r.conversion_ready?'disabled':''}>${clip.cache?.[r.id]?'<span class="cache-tag">Cached</span>':''}${robotImage(r)}<strong>${esc(r.label.replace('Unitree ',''))}</strong>${!r.conversion_ready?`<small class="robot-unavailable">${esc(robotStatus(r))}</small>`:''}</button>${r.id.startsWith('custom_')?`<button class="bar-inspect" data-inspect-robot="${r.id}" aria-label="Inspect ${esc(r.label)}">${icon('info')}</button>`:''}</div>`).join('')}<button class="bar-robot bar-upload" id="upload-open" aria-label="Upload robot URDF">${icon('plus')}<strong>Upload robot</strong><small>URDF / ZIP</small></button></div>`;
+ bar.innerHTML=`<header><span>Slot 0${index+1} · Robot</span><span class="bar-motion">${esc(clip.title)}</span></header><div class="bar-robots">${robots.map(r=>`<div class="bar-item"><button class="bar-robot ${clip.cache?.[r.id]?'cached':''}" data-pick-robot="${r.id}" aria-label="Use ${esc(r.label)}${clip.cache?.[r.id]?' · Cached':''}" ${!r.conversion_ready?'disabled':''}>${clip.cache?.[r.id]?'<span class="cache-tag">Cached</span>':''}${robotImage(r)}<strong>${esc(r.label)}</strong>${!r.conversion_ready?`<small class="robot-unavailable">${esc(robotStatus(r))}</small>`:''}</button><button class="bar-delete-robot" data-delete-robot="${r.id}" aria-label="Delete ${esc(r.label)}" title="Delete robot and its motion cache">×</button>${r.id.startsWith('custom_')?`<button class="bar-inspect" data-inspect-robot="${r.id}" aria-label="Inspect ${esc(r.label)}">${icon('info')}</button>`:''}</div>`).join('')}<button class="bar-robot bar-upload" id="upload-open" aria-label="Upload robot URDF">${icon('plus')}<strong>Upload robot</strong><small>URDF / ZIP</small></button></div>`;
  positionPicker();
  document.querySelectorAll<HTMLButtonElement>('[data-pick-robot]').forEach(b=>b.onclick=()=>chooseRobot(b.dataset.pickRobot!));
  document.querySelectorAll<HTMLButtonElement>('[data-inspect-robot]').forEach(b=>b.onclick=()=>openInspection(catalog.robots.find(r=>r.id===b.dataset.inspectRobot)!));
+ document.querySelectorAll<HTMLButtonElement>('[data-delete-robot]').forEach(b=>b.onclick=async()=>{
+  const id=b.dataset.deleteRobot!,robot=catalog.robots.find(r=>r.id===id)!;
+  if(!confirm(`Delete ${robot.label} and its generated motion cache? Original SMPL and source data will be kept.`))return;
+  b.disabled=true;
+  try{const response=await fetch(`/api/robots/${encodeURIComponent(id)}`,{method:'DELETE'});const result=await response.json();if(!response.ok)throw new Error(result.detail||'Deletion failed');location.reload();}
+  catch(error){b.disabled=false;alert((error as Error).message);}
+ });
  el('upload-open').onclick=openUpload;
  refreshIcons();
 }
@@ -223,7 +230,7 @@ async function uploadRobot(file:File){const result=el('upload-result');result.te
  result.innerHTML=`${esc(robot.label)} · ${esc(robotStatus(robot))}.<br/>${esc(robot.report?.message||'Model inspection complete')}<div class="modal-buttons"><button class="primary" id="upload-done">View robot</button></div>`;
  el('upload-done').textContent='Back to robot selection';el('upload-done').onclick=()=>renderPicker();
  }catch(error){result.textContent=(error as Error).message;}}
-el('pipeline-toggle').onclick=()=>{const menu=el('pipeline-menu');menu.hidden=!menu.hidden;el('pipeline-toggle').setAttribute('aria-expanded',String(!menu.hidden));};
+
 el('library-all').onclick=()=>{libraryFilter='all';renderCatalog();};el('library-cached').onclick=()=>{libraryFilter='cached';renderCatalog();};
 el('search').addEventListener('input',()=>renderCatalog());el('play').onclick=togglePlay;el('prev').onclick=()=>step(-1);el('next').onclick=()=>step(1);
 el('orbit').onclick=()=>{stage.autoRotate=!stage.autoRotate;syncOrbit();};el('reset').onclick=()=>{stage.reset();time=0;};

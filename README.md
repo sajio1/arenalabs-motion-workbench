@@ -61,3 +61,10 @@ validation/                 # 本次整合验证报告
 已加入本地 Motion Lab 网页：三个独立页面、共享三卡槽 3D 场景、动作拖入与替换、逐卡槽机器人选择、URDF/ZIP 上传检查。启动与边界见 [Motion Lab](docs/motion-lab.md)。
 
 阅读顺序：[架构](docs/architecture.md) → [输入输出契约](docs/contracts.md) → [迁移范围与限制](docs/migration.md) → [验证报告](validation/README.md)。
+
+## Manipulation workbench datasets
+
+The Manipulation workspace supports user recording packages and complete LeRobot v3 downloads.
+See [the recording and export contract](docs/dataset-io.md) for input fields, synchronized modalities,
+workspace isolation, deployment prerequisites and the private-weight boundaries.
+The spatial encoder observes pelvis, head, both hands and both feet; original body and operation refinement remains separate.

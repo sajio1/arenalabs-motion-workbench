@@ -198,17 +198,22 @@ def main():
         reach=float(np.linalg.norm(gp,axis=-1).max())
         pose=torch.cat([r6,torch.tensor(gp/reach,dtype=torch.float32)],-1).to('cuda')
         t=time.perf_counter()
-        codes=torch.cat([gw.encode(pose[k:k+a.chunk],encode_spec,encode_dof) for k in range(0,len(take),a.chunk)])
+        from greenwich_pipelines.input_policy import encode_observed,receipt
+        encoder_roles=source_roles if a.source_manifest else ([i-1 for i in source_roles] if a.input_representation=='soma77' else [0,15,20,21,7,8])
+        input_policy=receipt(encode_spec.joint_names,encoder_roles)
+        codes=torch.cat([encode_observed(gw,pose[k:k+a.chunk],encode_spec,encode_dof,encoder_roles) for k in range(0,len(take),a.chunk)])
         torch.cuda.synchronize();encode_s=time.perf_counter()-t
         for robot,spec,dof,rest,sole,support_surface,surfaces in targets:
             folder=a.output/row['stem']/robot['name']
             if not a.compact:folder.mkdir(parents=True,exist_ok=True)
-            t=time.perf_counter();out=[gw.decode_full(codes[k:k+a.chunk],spec,dof,contact=True) for k in range(0,len(take),a.chunk)]
-            raw=torch.cat([x[0] for x in out]);dp=torch.cat([x[1] for x in out]);contact=torch.cat([x[2] for x in out]);torch.cuda.synchronize();decode_s=time.perf_counter()-t
+            t=time.perf_counter()
+            from greenwich_pipelines.frame_cache import decode_cached
+            raw,dp,contact,frame_reuse=decode_cached(gw,codes,spec,dof,take,clip.timestamps_s[take],os.environ.get('ARENA_FRAME_CACHE_DIR'),chunk=a.chunk)
+            torch.cuda.synchronize();decode_s=time.perf_counter()-t
             if not a.compact:
                 prior_path=folder/'prime_original.npz'
                 if prior_path.exists():raise FileExistsError(prior_path)
-                np.savez_compressed(prior_path,codes=codes.detach().cpu().numpy(),raw_rot6d=raw.detach().cpu().numpy(),decoder_position=dp.detach().cpu().numpy(),model_contact=contact.detach().cpu().numpy(),joint_names=np.asarray(spec.joint_names),fps=a.fps)
+                np.savez_compressed(prior_path,codes=codes.detach().cpu().numpy(),encoder_policy=np.array(input_policy['policy']),observed_joints=np.asarray(input_policy['observed_joints']),raw_rot6d=raw.detach().cpu().numpy(),decoder_position=dp.detach().cpu().numpy(),model_contact=contact.detach().cpu().numpy(),joint_names=np.asarray(spec.joint_names),fps=a.fps)
             t=time.perf_counter();dt=torch.tensor(dof,device='cuda',dtype=torch.float64);rs=torch.tensor(rest,device='cuda',dtype=torch.float64)
             from greenwich_motion_sdk.native_projection import project
             q,_,projection_info=project(raw.double(),spec,dt,rs,geometry_strength=projection_geometry_strength,method=projection_method)
@@ -255,7 +260,7 @@ def main():
             if not np.isfinite(world).all() or limit_violation>1e-7:raise ValueError('Nonfinite or infeasible final joint trajectory')
             stats={'source':row['stem'],'robot':robot['name'],'model':a.model,'frames':len(take),'fps':a.fps,
                    'input':input_description,'input_representation':row['source_format'] if a.source_manifest else a.input_representation,
-                   'source_joint_count':encode_spec.J,'source_fk_max_error_cm':fk_error,
+                   'source_joint_count':encode_spec.J,'encoder_input':input_policy,'frame_stream_reuse':frame_reuse,'source_fk_max_error_cm':fk_error,
                    'max_joint_limit_violation_rad':limit_violation,
                    'contact_refinement':refinement,'body_coordination':coordination,'native_projection':projection_info,'raw_rotation_fk_penetration_cm':raw_penetration,'before_contact_penetration_cm':before_penetration,
                    'root_height':'Prime decoder pos[:,root,0] metres'+(' + explicit contact residual' if refinement else '; unrefined')+'; no render lift',
@@ -301,7 +306,7 @@ def main():
                 brief['artifact']='motions/'+row['stem']+'.npz';ledger.append(brief)
                 (a.output/'results.json').write_text(json.dumps(ledger,indent=2));print(json.dumps(brief),flush=True)
                 continue
-            np.savez_compressed(folder/'motion.npz',**surface_payload,constraint_joint_indices=np.array(native_key_indices(spec,robot)[2:4]),q=q.detach().cpu().numpy(),rot6d=final_rot6d,raw_rot6d=raw.detach().cpu().numpy(),decoder_position=dp.detach().cpu().numpy(),root_t=root_target,world_position_cm=world,joint_names=np.array(spec.joint_names),fps=a.fps,sole_surface_height_cm=heights,support_surface_height_cm=support_heights,support_surface_roles=np.asarray(support_surface.roles),source_root_cm=root,source_positions_cm=source_p,source_joint_names=np.array(b['names']),source_parents=b['parents'],source_contact_proxy=source_contact,source_support_proxy=source_support,model_contact=predicted,source_role_indices=np.array(source_roles),source_timestamps_s=clip.timestamps_s[take]-clip.timestamps_s[take[0]],source_foot_indices=np.array(footids),source_clearance_cm=source_clearance)
+            np.savez_compressed(folder/'motion.npz',**surface_payload,constraint_joint_indices=np.array(native_key_indices(spec,robot)[2:4]),q=q.detach().cpu().numpy(),rot6d=final_rot6d,encoder_policy=np.array(input_policy['policy']),observed_joints=np.asarray(input_policy['observed_joints']),raw_rot6d=raw.detach().cpu().numpy(),decoder_position=dp.detach().cpu().numpy(),root_t=root_target,world_position_cm=world,joint_names=np.array(spec.joint_names),fps=a.fps,sole_surface_height_cm=heights,support_surface_height_cm=support_heights,support_surface_roles=np.asarray(support_surface.roles),source_root_cm=root,source_positions_cm=source_p,source_joint_names=np.array(b['names']),source_parents=b['parents'],source_contact_proxy=source_contact,source_support_proxy=source_support,model_contact=predicted,source_role_indices=np.array(source_roles),source_timestamps_s=clip.timestamps_s[take]-clip.timestamps_s[take[0]],source_foot_indices=np.array(footids),source_clearance_cm=source_clearance)
             if a.skip_preview:
                 stats['timing_s']['render']=0.0
                 (folder/'report.json').write_text(json.dumps(stats,indent=2))

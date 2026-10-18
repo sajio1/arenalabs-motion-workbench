@@ -122,3 +122,5 @@ body .sidebar{bottom:72px}
 .sidebar .subclass>.clip{margin-left:16px;width:calc(100% - 16px)}
 .sidebar .clip>.grip{color:#91aa97;width:15px;height:15px}
 .sidebar .clip:hover{background:#b4d6a015}
+
+.bar-item{position:relative}.bar-delete-robot{position:absolute;right:4px;top:4px;z-index:3;border:0;background:#15251bc9;color:#c3d3bd;border-radius:4px;width:25px;height:25px;font-size:21px;line-height:1;cursor:pointer}.bar-delete-robot:hover{background:#54352e;color:#ffe0d5}
