@@ -21,6 +21,8 @@ the target robot reuses the saved human prior and scene estimates.
   reuse, exact-mask checks and measured improvements in GPU occupancy.
 - [Recording upload / LeRobot export contract](docs/dataset-io.md): exact arrays,
   axes, units, clocks, packaging and browser workspace isolation.
+- [Point-cloud direction](docs/point-cloud-direction.md): depth-only backend
+  comparisons and compact depth/camera storage after retiring scene assets.
 - [Weights and model release](docs/model-release.md): what belongs on Hugging
   Face, what must be obtained upstream and what a model release needs.
 - [Validation](docs/release-validation.md): six-point migration and dataset
