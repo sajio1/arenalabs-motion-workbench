@@ -21,9 +21,6 @@ the target robot reuses the saved human prior and scene estimates.
   reuse, exact-mask checks and measured improvements in GPU occupancy.
 - [Recording upload / LeRobot export contract](docs/dataset-io.md): exact arrays,
   axes, units, clocks, packaging and browser workspace isolation.
-- [MapAnything scene-asset experiment](docs/scene-assets-experiment.md): isolated
-  masked reconstruction, static SPZ / object GLB packages and deferred rendering;
-  the hosted DA3 page remains unchanged.
 - [Weights and model release](docs/model-release.md): what belongs on Hugging
   Face, what must be obtained upstream and what a model release needs.
 - [Validation](docs/release-validation.md): six-point migration and dataset
