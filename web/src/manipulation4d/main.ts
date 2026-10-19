@@ -13,10 +13,10 @@ const ENCODER_POLICY='human-six-pelvis-head-hands-feet-v1';
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 const escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 document.getElementById('app')!.innerHTML=`
-<header class="wb-header arena-header">${demoBrand()}${demoNavigation('manipulation')}<div class="wb-source"><button id="library-open">Data library <span id="library-count"></span><span>⌄</span></button><button id="recording-upload">Upload data</button><strong id="clip-name">Loading scene…</strong></div><span class="wb-mode">4D WORKSPACE</span></header>
+<header class="wb-header arena-header">${demoBrand()}${demoNavigation('manipulation')}<span class="wb-mode">4D WORKSPACE</span></header>
 <main class="wb-layout">
 <aside class="wb-left">
- <section class="wb-panel"><header><span>Original FOV</span><div><small id="source-kind">EgoDex</small><button id="trajectory-height-open" hidden>Trajectory height</button></div></header><video id="source-video" muted playsinline preload="auto"></video></section>
+ <section class="wb-panel wb-fov-source" aria-label="Original FOV and raw data"><header><span>Original FOV</span><small id="source-kind">EgoDex</small></header><video id="source-video" muted playsinline preload="auto"></video><div class="wb-raw-data"><div class="wb-raw-label"><span>RAW DATA</span><small><span id="library-count">—</span> recordings</small></div><button id="library-open" class="wb-recording-picker" aria-label="Choose raw data recording" aria-haspopup="dialog" aria-expanded="false" aria-controls="library"><span id="clip-name">Loading scene…</span><span aria-hidden="true">⌄</span></button><div class="wb-source-actions"><button id="recording-upload">＋ Upload data</button><button id="trajectory-height-open" hidden>Trajectory height</button></div></div></section>
  <section class="wb-panel"><header><span>Robot arm & hand view</span><small id="patch-label">Source camera</small></header><div class="wb-video-box"><video id="patch-video" muted playsinline preload="auto" hidden></video><div id="patch-empty" class="wb-unavailable">Preparing the source-camera composite</div></div></section>
  <section class="wb-panel wb-joints"><header><span>Joint output</span><div class="wb-joint-downloads"><button id="dataset-download" disabled>Download dataset ↓</button></div></header><div class="wb-state-meta"><strong id="joint-state-count">No joint states</strong><small id="joint-state-frame">—</small></div><details id="joint-states" open><summary>All joint states <span id="joint-unit">rad</span></summary><input id="joint-filter" type="search" placeholder="Filter joints…" aria-label="Filter joint states" disabled/><div class="wb-state-table"><table aria-label="Whole-body joint states"><thead><tr><th>Joint name</th><th>Motion signal</th></tr></thead><tbody id="joint-state-rows"></tbody></table><p id="joint-state-empty">Select a recording with robot output.</p></div><button id="joint-copy" aria-label="Copy current frame joint state" disabled>Copy current frame</button><p id="joint-state-signals"></p></details><details id="joint-trace"><summary>Single-joint trace</summary><select id="joint-select" aria-label="Select joint"></select><div class="wb-joint-value"><strong id="joint-value">—</strong><small>Current joint position</small></div><canvas id="joint-chart"></canvas><p id="joint-note"></p></details><details class="wb-hand-check"><summary>Finger motion verification</summary><p id="hand-audit-summary">Hand articulation check unavailable</p><select id="finger-select" aria-label="Verify finger"></select><div class="hand-legend"><span>Source bend</span><span>Wuji bend</span></div><canvas id="finger-chart"></canvas><p id="finger-stat"></p></details></section>
 </aside>
@@ -32,7 +32,7 @@ document.getElementById('app')!.innerHTML=`
 </aside>
 </main>
 <footer class="wb-transport"><button id="play" aria-label="Play or pause">Ⅱ</button><button id="step-back" aria-label="Previous frame">‹</button><span id="time">0.00 / 0.00</span><input id="timeline" type="range" min="0" max="1" step="0.0333333333333333" value="0" aria-label="Shared timeline"/><button id="step-next" aria-label="Next frame">›</button><select id="speed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select><small id="frame-info">30 Hz</small><span class="wb-geometry-note">Estimated geometry · Kinematic playback</span></footer>
-<aside id="library" class="wb-library" hidden><header><div><small>DATA LIBRARY</small><h2>Choose a motion</h2></div><button id="library-close" aria-label="Close library">×</button></header><div class="wb-datasets">${[['EgoDex','Ego (manipulation)'],['Nymeria','Ego (locomanipulation)'],['UMI','UMI'],['Real robot','Real robot'],['Uploaded','My uploads']].map(([value,label])=>`<button data-dataset="${value}">${label}</button>`).join('')}</div><input id="library-search" placeholder="Search tasks, files…" aria-label="Search motions"/><div id="library-list"></div><section id="library-meta"></section></aside>
+<aside id="library" class="wb-library" role="dialog" aria-label="Raw data library" hidden><header><div><small>RAW DATA LIBRARY</small><h2>Choose a recording</h2></div><button id="library-close" aria-label="Close library">×</button></header><div class="wb-datasets">${[['EgoDex','Ego (manipulation)'],['Nymeria','Ego (locomanipulation)'],['UMI','UMI'],['Real robot','Real robot'],['Uploaded','My uploads']].map(([value,label])=>`<button data-dataset="${value}">${label}</button>`).join('')}</div><input id="library-search" placeholder="Search tasks, files…" aria-label="Search motions"/><div id="library-list"></div><section id="library-meta"></section></aside>
 <div id="wb-loading">Loading synchronized workspace…</div><div id="wb-notice" role="status" hidden></div>`;
 
 const stage=new Workspace($('wb-viewport'));stage.segments=true;let asset:SceneAsset;let library:LibraryClip[]=[];let dataset='EgoDex';let currentRobot='';let selectedHand='';let time=0,playing=false,speed=1,last=performance.now();let loadingToken=0;let loadSerial=0;let previousChart=-1;let contact:{fps:number;likelihood:(number|null)[][][];model?:string;hand_contact?:{state:string;object:string;evidence:string}[][];observations?:{time:number;evidence:string;uncertainty:string}[]} | undefined;
@@ -186,7 +186,7 @@ async function reconstructClip(clip:LibraryClip){
 function previewClip(clip:LibraryClip,generate=false){
  if(!clip.video){notice('Source video is unavailable for this recording');return;}
  const scene:SceneAsset={id:clip.id,title:clip.title,dataset:clip.dataset,end_effector:clip.end_effector,fps:30,frames:Math.round(clip.duration*30)+1,duration:clip.duration,world:'Source video only',video:clip.video,robots:[],semantic:{task:clip.family,objects:[],provenance:'Source catalog metadata; no 4D scene generated'},tactile:{status:'unavailable',reason:'No contact reconstruction generated for this recording'},wrist_videos:[],geometry:{status:'Source preview only; no reconstructed robot or scene is substituted'}};
- $('library').hidden=true;void load(scene).then(()=>{if(!generate){$('scene-generation-status').textContent='Choose a robot and end effector to continue';$('scene-status').textContent='Choose a robot and end effector to continue';}});if(generate)void reconstructClip(clip);return scene;
+ setLibraryOpen(false);void load(scene).then(()=>{if(!generate){$('scene-generation-status').textContent='Choose a robot and end effector to continue';$('scene-status').textContent='Choose a robot and end effector to continue';}});if(generate)void reconstructClip(clip);return scene;
 }
 
 const libraryCache=new Map<string,string[]>();
@@ -213,6 +213,7 @@ function libraryCacheBadge(clip:LibraryClip){
 }
 
 function renderLibrary(){
+ $('library-count').textContent=String(library.length);
  const query=$<HTMLInputElement>('library-search').value.toLowerCase();const clips=library.filter(c=>c.dataset===dataset&&`${c.title} ${c.family}`.toLowerCase().includes(query));
  const groups=new Map<string,LibraryClip[]>();for(const clip of clips){const key=`${clip.dataset} / ${motionGroup({...clip,page:clip.dataset==='Nymeria'?'localmanipulation':'manipulation'})[0]}`;groups.set(key,[...(groups.get(key)||[]),clip]);}
  $('library-list').innerHTML=!clips.length?'<p>No recordings connected for this source yet.</p>':[...groups].map(([name,rows])=>`<details ${query||groups.size===1?'open':''}><summary>${escape(name)}<span>${rows.length}</span></summary>${rows.map(c=>`<button data-motion="${escape(c.id)}" class="${c.id===asset?.id?'selected':''}"><strong>${escape(c.title)}</strong>${libraryCacheBadge(c)}<small>${c.duration.toFixed(2)} s${(libraryCache.get(c.id)?.length??0)>0?'':c.scene_url?' · Scene available':' · Generate on selection'}</small></button>`).join('')}</details>`).join('');
@@ -220,7 +221,9 @@ function renderLibrary(){
   void selectClip(clip);});
  document.querySelectorAll<HTMLButtonElement>('[data-dataset]').forEach(b=>b.classList.toggle('selected',b.dataset.dataset===dataset));
 }
-$('library-open').onclick=()=>{$('library').hidden=!$('library').hidden;if(!$('library').hidden)void refreshLibraryCache();};$('library-close').onclick=()=>$('library').hidden=true;$<HTMLInputElement>('library-search').oninput=renderLibrary;
+function setLibraryOpen(open:boolean){$('library').hidden=!open;$('library-open').setAttribute('aria-expanded',String(open));if(open){void refreshLibraryCache();$<HTMLInputElement>('library-search').focus();}else $('library-open').focus();}
+$('library-open').onclick=()=>setLibraryOpen($('library').hidden);$('library-close').onclick=()=>setLibraryOpen(false);$<HTMLInputElement>('library-search').oninput=renderLibrary;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('library').hidden){e.preventDefault();setLibraryOpen(false);}});
 document.querySelectorAll<HTMLButtonElement>('[data-dataset]').forEach(b=>b.onclick=()=>{dataset=b.dataset.dataset!;renderLibrary();});
 $('robot-open').onclick=showRobotPicker;$('hand-open').onclick=()=>void showHandPicker();
 document.addEventListener('pointerdown',e=>{if(!(e.target as HTMLElement).closest('.wb-embodiment'))$('embodiment-bar').hidden=true;});
@@ -261,7 +264,7 @@ async function selectClip(clip:LibraryClip){
    if(setup.requires_initial_height){const preview=previewClip(clip,false);if(preview)await showTrajectoryHeight(preview,heightApplied,true);return;}
    if(setup.default_scene_url)clip.scene_url=setup.default_scene_url;
   }
-  if(clip.scene_url){$('library').hidden=true;await load(clip.scene_url);}else previewClip(clip);
+  if(clip.scene_url){setLibraryOpen(false);await load(clip.scene_url);}else previewClip(clip);
  }catch(e){notice((e as Error).message);}
 }
 $('trajectory-height-open').onclick=()=>{playing=false;void showTrajectoryHeight(asset,heightApplied).catch(e=>notice(e.message));};
