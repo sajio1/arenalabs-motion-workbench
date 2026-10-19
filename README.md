@@ -17,6 +17,8 @@ the target robot reuses the saved human prior and scene estimates.
   supported inputs, outputs, cloud use, API examples, deployment and limitations.
 - [Performance audit](docs/performance-audit-20261018.md): actual CPU/GPU paths,
   measured bottlenecks, applied fixes and remaining optimization work.
+- [SAM acceleration measurements](docs/sam-speed-20261018.md): bounded feature
+  reuse, exact-mask checks and measured improvements in GPU occupancy.
 - [Recording upload / LeRobot export contract](docs/dataset-io.md): exact arrays,
   axes, units, clocks, packaging and browser workspace isolation.
 - [Weights and model release](docs/model-release.md): what belongs on Hugging

@@ -17,8 +17,8 @@ def main():
     for p in sorted(Path(env['ARENA_SEGMENT_FRAMES']).glob('*.jpg')):frame_hash.update(p.name.encode()+p.read_bytes())
     frame_identity=frame_hash.hexdigest()
     started=time.monotonic()
-    helper=worker.with_name('tracking_recovery.py')
-    worker_hash=hashlib.sha256(worker.read_bytes()+(helper.read_bytes() if helper.exists() else b'')).hexdigest()
+    helpers=[worker.with_name(name) for name in ['tracking_recovery.py','sam_runtime.py','sam_features.py']]
+    worker_hash=hashlib.sha256(worker.read_bytes()+b''.join(p.read_bytes() for p in helpers if p.exists())).hexdigest()
     weights=Path('/home/ubuntu/arenalab-experiments/manipulation4d/sam31-weights/sam3.1_multiplex.pt')
     stat=weights.stat() if weights.exists() else None
     model_identity=(str(weights),stat.st_size,stat.st_mtime_ns) if stat else None
@@ -48,6 +48,7 @@ def main():
                 with (directory/'worker.log').open('w') as log:
                     run([sys.executable,str(worker)],env=child,label='SAM: '+', '.join(p[1] for p in missing),stdout=log,stderr=subprocess.STDOUT,check=True)
                 inferred=json.loads((directory/'segmentation.json').read_text())
+                details.update({k:v for k,v in inferred.items() if k!='prompts'})
                 for item in missing:
                     source=directory/(item[0]+'-masks.npz')
                     if not source.exists():raise RuntimeError('SAM category output missing')

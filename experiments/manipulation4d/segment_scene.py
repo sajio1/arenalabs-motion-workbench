@@ -7,6 +7,8 @@ import numpy as np
 import torch
 from sam3.model_builder import build_sam3_multiplex_video_predictor
 from tracking_recovery import propagate_resilient
+from sam_runtime import TextFeatureCache, video_session
+from sam_features import ImageFeatureCache
 
 ROOT = Path('/home/ubuntu/arenalab-experiments/manipulation4d')
 FRAMES = Path(os.environ['ARENA_SEGMENT_FRAMES'])
@@ -28,7 +30,18 @@ def init_state_compat(*, offload_state_to_cpu=False, **kwargs):
 predictor.model.init_state = init_state_compat
 report = json.loads((OUT/'segmentation.json').read_text()) if (OUT/'segmentation.json').exists() else {'model': 'SAM 3.1 Object Multiplex', 'source_fps': 30, 'mask_fps': 15, 'prompts': {}}
 prompts=json.loads(os.environ['ARENA_SEGMENT_PROMPTS'])
-with torch.inference_mode(), torch.autocast('cuda', dtype=torch.bfloat16):
+frame_count=len(list(FRAMES.glob('*.jpg')))
+image_cache_bytes=int(float(os.environ.get('ARENA_SAM_IMAGE_CACHE_GIB','8'))*1024**3)
+if image_cache_bytes<0:raise ValueError('SAM image cache budget must be nonnegative')
+with (
+    torch.inference_mode(),
+    torch.autocast('cuda', dtype=torch.bfloat16),
+    TextFeatureCache(predictor.model.detector.backbone) as text_cache,
+    ImageFeatureCache(predictor.model.detector,max_bytes=image_cache_bytes) as image_cache,
+    video_session(predictor, FRAMES) as session,
+):
+    # Each add_prompt internally resets the multiplex tracker. Keep immutable
+    # video inputs resident instead of decoding/rebuilding them per category.
     for item in prompts:
         key, prompt = item[:2]
         discovery_frame = int(item[2]) if len(item)>2 else 0
@@ -37,8 +50,6 @@ with torch.inference_mode(), torch.autocast('cuda', dtype=torch.bfloat16):
         # and can desynchronize multiplex masks from IDs.
         seed_frame = 0
         category_start=time.monotonic()
-        response = predictor.handle_request({'type': 'start_session', 'resource_path': str(FRAMES)})
-        session = response['session_id']
         frame_masks, audit = {}, {}
         def record(index, data, offset):
             masks=np.asarray(data['out_binary_masks']);ids=np.asarray(data['out_obj_ids'])
@@ -52,15 +63,15 @@ with torch.inference_mode(), torch.autocast('cuda', dtype=torch.bfloat16):
             frame_masks[index]=labelmap
             audit[index]={'frame':index,'instances':(ids+offset).tolist(),'pixels':int((labelmap>0).sum())}
             return bool(np.any(labelmap)),int(labelmap.max())
-        recoveries=propagate_resilient(predictor,session,prompt,len(list(FRAMES.glob('*.jpg'))),record)
+        recoveries=propagate_resilient(predictor,session,prompt,frame_count,record,prompt_resets_state=True)
         indices = sorted(frame_masks)
-        expected=len(list(FRAMES.glob('*.jpg')))
+        expected=frame_count
         if indices!=list(range(expected)):raise ValueError('SAM output does not cover all prepared frames')
         np.savez_compressed(OUT / f'{key}-masks.npz', masks=np.stack([frame_masks[i] for i in indices]), frame_indices=indices, source_frame_indices=np.asarray(indices) * 2)
         report['prompts'][key] = {'text': prompt, 'seed_frame':next((i for i in indices if audit[i]['pixels']>0),None), 'no_instances_detected':not any(audit[i]['pixels'] for i in indices), 'discovery_frame':discovery_frame, 'frames': len(indices), 'seconds':time.monotonic()-category_start, 'audit': [audit[i] for i in indices], 'tracker_recoveries': recoveries, 'tracking_policy': 'Contiguous observed text-seeded propagation; new IDs after an empty-tracker restart'}
         (OUT / 'segmentation.json').write_text(json.dumps(report, indent=2))
-        predictor.handle_request({'type': 'close_session', 'session_id': session})
         print('SEGMENTED', key, len(indices), flush=True)
+    report['execution'] = {'policy':'sam31-session-features-reuse-v1','video_sessions':1,'text_features':text_cache.report(),'image_features':image_cache.report(),'frame_search':'Every prepared frame; no temporal subsampling'}
 report['seconds'] = time.time() - start
 (OUT / 'segmentation.json').write_text(json.dumps(report, indent=2))
 print('SEGMENTATION_COMPLETE', flush=True)

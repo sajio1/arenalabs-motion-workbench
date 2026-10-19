@@ -5,13 +5,13 @@ cross-restart object identity is introduced. Successful propagation is unchanged
 """
 
 
-def propagate_resilient(predictor, session, prompt, count, record):
+def propagate_resilient(predictor, session, prompt, count, record, *, prompt_resets_state=False):
     cursor = 0
     offset = 0
     maximum_label = 0
     recoveries = []
     while cursor < count:
-        if cursor:
+        if cursor and not prompt_resets_state:
             predictor.handle_request({'type': 'reset_session', 'session_id': session})
         while cursor < count:
             response = predictor.handle_request({'type': 'add_prompt', 'session_id': session, 'frame_index': cursor, 'text': prompt})
@@ -20,7 +20,7 @@ def propagate_resilient(predictor, session, prompt, count, record):
             if detected:
                 break
             cursor += 1
-            if cursor < count:
+            if cursor < count and not prompt_resets_state:
                 predictor.handle_request({'type': 'reset_session', 'session_id': session})
         if cursor == count:
             break

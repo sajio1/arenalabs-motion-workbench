@@ -1,5 +1,9 @@
 # Pipeline performance audit — 2026-10-18
 
+Subsequent execution measurements: [AlphaMotion cache fix](alphamotion-speed-20261018.md)
+and [SAM feature/session reuse](sam-speed-20261018.md). The observations below
+describe the earlier audit baseline.
+
 ## Scope and evidence
 
 Inspected the deployed workbench workers and repository sources, the GPU lease

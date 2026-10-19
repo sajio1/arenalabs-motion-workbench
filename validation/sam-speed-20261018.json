@@ -1,0 +1,847 @@
+{
+  "hardware": "4 x NVIDIA RTX A6000 48 GB; existing host",
+  "source_fps": 30,
+  "mask_fps": 15,
+  "finger_contact_excluded": true,
+  "weights_changed": false,
+  "frame_search": "Every prepared frame; no skipping",
+  "matched_worker_runs": [
+    {
+      "name": "egodex",
+      "mode": "candidate",
+      "gpu": 2,
+      "prompts": [
+        [
+          "object-01",
+          "cup",
+          0
+        ],
+        [
+          "object-02",
+          "lid",
+          26
+        ],
+        [
+          "object-03",
+          "plate",
+          0
+        ],
+        [
+          "human-hand",
+          "hand"
+        ],
+        [
+          "human-arm",
+          "arm"
+        ]
+      ],
+      "exit_code": 0,
+      "wall_seconds": 148.18600210896693
+    },
+    {
+      "name": "egodex",
+      "mode": "baseline",
+      "gpu": 0,
+      "prompts": [
+        [
+          "object-01",
+          "cup",
+          0
+        ],
+        [
+          "object-02",
+          "lid",
+          26
+        ],
+        [
+          "object-03",
+          "plate",
+          0
+        ],
+        [
+          "human-hand",
+          "hand"
+        ],
+        [
+          "human-arm",
+          "arm"
+        ]
+      ],
+      "exit_code": 0,
+      "wall_seconds": 151.19174646306783
+    },
+    {
+      "name": "real",
+      "mode": "candidate",
+      "gpu": 3,
+      "prompts": [
+        [
+          "object-02",
+          "cap",
+          215
+        ],
+        [
+          "human-hand",
+          "hand"
+        ],
+        [
+          "human-robot-gripper",
+          "robot gripper"
+        ],
+        [
+          "human-controller-ring",
+          "black tracking ring on handheld controller"
+        ]
+      ],
+      "exit_code": 0,
+      "wall_seconds": 363.44776847492903
+    },
+    {
+      "name": "real",
+      "mode": "baseline",
+      "gpu": 1,
+      "prompts": [
+        [
+          "object-02",
+          "cap",
+          215
+        ],
+        [
+          "human-hand",
+          "hand"
+        ],
+        [
+          "human-robot-gripper",
+          "robot gripper"
+        ],
+        [
+          "human-controller-ring",
+          "black tracking ring on handheld controller"
+        ]
+      ],
+      "exit_code": 0,
+      "wall_seconds": 378.46230428898707
+    }
+  ],
+  "optimized_worker_runs": [
+    {
+      "name": "egodex",
+      "mode": "candidate-v5",
+      "gpu": 1,
+      "prompts": [
+        [
+          "object-01",
+          "cup",
+          0
+        ],
+        [
+          "object-02",
+          "lid",
+          26
+        ],
+        [
+          "object-03",
+          "plate",
+          0
+        ],
+        [
+          "human-hand",
+          "hand"
+        ],
+        [
+          "human-arm",
+          "arm"
+        ]
+      ],
+      "exit_code": 0,
+      "wall_seconds": 101.12884027091786
+    },
+    {
+      "name": "real",
+      "mode": "candidate-v5",
+      "gpu": 3,
+      "prompts": [
+        [
+          "object-02",
+          "cap",
+          215
+        ],
+        [
+          "human-hand",
+          "hand"
+        ],
+        [
+          "human-robot-gripper",
+          "robot gripper"
+        ],
+        [
+          "human-controller-ring",
+          "black tracking ring on handheld controller"
+        ]
+      ],
+      "exit_code": 0,
+      "wall_seconds": 302.3764344700612
+    }
+  ],
+  "matched_quality": [
+    {
+      "case": "egodex",
+      "mode": "candidate-v5",
+      "execution": {
+        "policy": "sam31-session-features-reuse-v1",
+        "video_sessions": 1,
+        "text_features": {
+          "hits": 6,
+          "misses": 5,
+          "capacity": 16
+        },
+        "image_features": {
+          "target": "shared_vision_trunk",
+          "hits": 50,
+          "misses": 17,
+          "reused_frames": 546,
+          "cpu_bytes": 2993946624,
+          "capacity_bytes": 8589934592,
+          "skipped_capacity": 0
+        },
+        "frame_search": "Every prepared frame; no temporal subsampling"
+      },
+      "categories": [
+        {
+          "key": "object-01",
+          "text": "cup",
+          "frames": 133,
+          "baseline_seconds": 24.688448179047555,
+          "candidate_seconds": 25.450986206065863,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "object-02",
+          "text": "lid",
+          "frames": 133,
+          "baseline_seconds": 24.03289478411898,
+          "candidate_seconds": 11.77460796199739,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "object-03",
+          "text": "plate",
+          "frames": 133,
+          "baseline_seconds": 23.965687011834234,
+          "candidate_seconds": 11.458766529103741,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-hand",
+          "text": "hand",
+          "frames": 133,
+          "baseline_seconds": 23.603972724173218,
+          "candidate_seconds": 11.258323841029778,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-arm",
+          "text": "arm",
+          "frames": 133,
+          "baseline_seconds": 25.799752187216654,
+          "candidate_seconds": 12.532519718864933,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        }
+      ]
+    },
+    {
+      "case": "real",
+      "mode": "candidate-v5",
+      "execution": {
+        "policy": "sam31-session-features-reuse-v1",
+        "video_sessions": 1,
+        "text_features": {
+          "hits": 807,
+          "misses": 4,
+          "capacity": 16
+        },
+        "image_features": {
+          "target": "shared_vision_trunk",
+          "hits": 669,
+          "misses": 967,
+          "reused_frames": 669,
+          "cpu_bytes": 8578400256,
+          "capacity_bytes": 8589934592,
+          "skipped_capacity": 816
+        },
+        "frame_search": "Every prepared frame; no temporal subsampling"
+      },
+      "categories": [
+        {
+          "key": "object-02",
+          "text": "cap",
+          "frames": 270,
+          "baseline_seconds": 47.69727377104573,
+          "candidate_seconds": 52.894598077982664,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-hand",
+          "text": "hand",
+          "frames": 270,
+          "baseline_seconds": 100.4298231669236,
+          "candidate_seconds": 83.67225858196616,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-robot-gripper",
+          "text": "robot gripper",
+          "frames": 270,
+          "baseline_seconds": 100.50765730114654,
+          "candidate_seconds": 68.0086245010607,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-controller-ring",
+          "text": "black tracking ring on handheld controller",
+          "frames": 270,
+          "baseline_seconds": 100.68974520312622,
+          "candidate_seconds": 68.14365184796043,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        }
+      ]
+    }
+  ],
+  "production_style_parallel": {
+    "exit_code": 0,
+    "wall_seconds": 232.92269881395623,
+    "lease_seconds": 800.6758563518524,
+    "queue_seconds": [
+      0.788581371307373,
+      0.6617653369903564,
+      0.8761391639709473,
+      0.14599943161010742
+    ],
+    "workers": 4,
+    "source_frames": 539,
+    "mask_frames": 270,
+    "prompts": [
+      [
+        "object-01",
+        "bottle",
+        0
+      ],
+      [
+        "object-02",
+        "cap",
+        215
+      ],
+      [
+        "human-hand",
+        "hand"
+      ],
+      [
+        "human-arm",
+        "arm"
+      ],
+      [
+        "human-robot-arm",
+        "robot arm"
+      ],
+      [
+        "human-robot-gripper",
+        "robot gripper"
+      ],
+      [
+        "human-handheld-gripper",
+        "handheld robot gripper"
+      ],
+      [
+        "human-controller",
+        "handheld motion controller"
+      ],
+      [
+        "human-controller-ring",
+        "black tracking ring on handheld controller"
+      ],
+      [
+        "human-game-controller",
+        "game controller"
+      ],
+      [
+        "human-vr-controller",
+        "VR controller"
+      ],
+      [
+        "human-black-gripper",
+        "black gripper"
+      ]
+    ]
+  },
+  "parallel_quality": [
+    {
+      "case": "real",
+      "mode": "candidate-v5",
+      "execution": null,
+      "categories": [
+        {
+          "key": "object-01",
+          "text": "bottle",
+          "frames": 270,
+          "baseline_seconds": 48.34978679404594,
+          "candidate_seconds": 53.57947318814695,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-robot-arm",
+          "text": "robot arm",
+          "frames": 270,
+          "baseline_seconds": 49.68645480507985,
+          "candidate_seconds": 24.938479870092124,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-controller-ring",
+          "text": "black tracking ring on handheld controller",
+          "frames": 270,
+          "baseline_seconds": 101.500556379091,
+          "candidate_seconds": 84.49146269704215,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "object-02",
+          "text": "cap",
+          "frames": 270,
+          "baseline_seconds": 47.89183047809638,
+          "candidate_seconds": 51.49578063399531,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-robot-gripper",
+          "text": "robot gripper",
+          "frames": 270,
+          "baseline_seconds": 101.28965170611627,
+          "candidate_seconds": 83.43701117997989,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-game-controller",
+          "text": "game controller",
+          "frames": 270,
+          "baseline_seconds": 101.40284063806757,
+          "candidate_seconds": 67.86370047391392,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-hand",
+          "text": "hand",
+          "frames": 270,
+          "baseline_seconds": 101.02706850203685,
+          "candidate_seconds": 72.47695328202099,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-handheld-gripper",
+          "text": "handheld robot gripper",
+          "frames": 270,
+          "baseline_seconds": 101.14336658315733,
+          "candidate_seconds": 39.47752050985582,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-vr-controller",
+          "text": "VR controller",
+          "frames": 270,
+          "baseline_seconds": 101.50079212198034,
+          "candidate_seconds": 39.33698486187495,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-arm",
+          "text": "arm",
+          "frames": 270,
+          "baseline_seconds": 54.14340032893233,
+          "candidate_seconds": 56.75073929899372,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-controller",
+          "text": "handheld motion controller",
+          "frames": 270,
+          "baseline_seconds": 57.32677710405551,
+          "candidate_seconds": 28.219092787941918,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        },
+        {
+          "key": "human-black-gripper",
+          "text": "black gripper",
+          "frames": 270,
+          "baseline_seconds": 102.13448230782524,
+          "candidate_seconds": 80.12388063408434,
+          "bit_exact": true,
+          "changed_label_pixels": 0,
+          "foreground_iou_mean": 1.0,
+          "foreground_iou_min": 1.0,
+          "different_empty_frames": [],
+          "frame_ids_equal": true,
+          "tracker_audit_equal": true
+        }
+      ]
+    }
+  ],
+  "parallel_baseline_lease_seconds": 1080.2140655517578,
+  "parallel_lease_reduction_fraction": 0.2587803826245507,
+  "limitations": [
+    "Two source clips; one measured run per configuration, not a confidence interval.",
+    "Matched single-worker category groups are not the four-worker production grouping.",
+    "Parallel baseline came from the retained earlier full-generation run; queue and other concurrent stages differ.",
+    "GPU lease time includes CPU and IO while the card is reserved.",
+    "Equality to previous predictions is not ground-truth segmentation accuracy."
+  ],
+  "final_smoke": {
+    "frozen_worker_files": [
+      "scene_inference.py",
+      "video_io.py",
+      "segment_scene.py",
+      "segment_parallel.py",
+      "tracking_recovery.py",
+      "sam_runtime.py",
+      "sam_features.py",
+      "export_scene_cloud.py",
+      "discovery_output.py",
+      "discover_objects.py",
+      "nymeria_camera.py",
+      "gpu_scheduler.py"
+    ],
+    "masks": [
+      {
+        "prompt": "cup",
+        "bit_exact": true
+      },
+      {
+        "prompt": "hand",
+        "bit_exact": true
+      }
+    ]
+  },
+  "deployment": {
+    "deployed": true,
+    "http_status": 200,
+    "service_restarted_while_idle": true,
+    "files": {
+      "scene_job.py": "e45cff2302542480a241028cc0deec88917e18a30873a1111ce947455e797cf2",
+      "segment_parallel.py": "ecbb81c093cd1b5d4d33fe95498215716468a1e9fb1298a6579cecb43b192754",
+      "segment_scene.py": "6368b7cc83802a78d1a417d7f765e26518ab43c45a5f796f7a3c0902eeab9d41",
+      "tracking_recovery.py": "8de2764b688457321de61f9c43568f354f017b9d849216733c648e1d96a8fbca",
+      "sam_runtime.py": "00b670e516d09d90e1d4df38221e68400b8560d26469a55de8e4d2d921617a47",
+      "sam_features.py": "84cf2b2d4755e21f81fd1580ebe8a597806f05e0c08f749c4bfb886128d2c8aa"
+    }
+  },
+  "unit_tests": {
+    "passed": 13,
+    "scope": [
+      "SAM feature cache",
+      "SAM text/session cache",
+      "tracking recovery",
+      "AlphaMotion frame cache",
+      "CUDA JAX device environment"
+    ]
+  },
+  "rejected_experiments": {
+    "results-v2.json": [
+      {
+        "name": "egodex",
+        "mode": "candidate-v2",
+        "gpu": 0,
+        "prompts": [
+          [
+            "object-01",
+            "cup",
+            0
+          ],
+          [
+            "object-02",
+            "lid",
+            26
+          ],
+          [
+            "object-03",
+            "plate",
+            0
+          ],
+          [
+            "human-hand",
+            "hand"
+          ],
+          [
+            "human-arm",
+            "arm"
+          ]
+        ],
+        "exit_code": 0,
+        "wall_seconds": 143.15529946307652
+      },
+      {
+        "name": "real",
+        "mode": "candidate-v2",
+        "gpu": 2,
+        "prompts": [
+          [
+            "object-02",
+            "cap",
+            215
+          ],
+          [
+            "human-hand",
+            "hand"
+          ],
+          [
+            "human-robot-gripper",
+            "robot gripper"
+          ],
+          [
+            "human-controller-ring",
+            "black tracking ring on handheld controller"
+          ]
+        ],
+        "exit_code": 0,
+        "wall_seconds": 364.3791241769213
+      }
+    ],
+    "results-v3.json": [
+      {
+        "name": "egodex",
+        "mode": "candidate-v3",
+        "gpu": 1,
+        "prompts": [
+          [
+            "object-01",
+            "cup",
+            0
+          ],
+          [
+            "object-02",
+            "lid",
+            26
+          ],
+          [
+            "object-03",
+            "plate",
+            0
+          ],
+          [
+            "human-hand",
+            "hand"
+          ],
+          [
+            "human-arm",
+            "arm"
+          ]
+        ],
+        "exit_code": 0,
+        "wall_seconds": 214.27370662917383
+      },
+      {
+        "name": "real",
+        "mode": "candidate-v3",
+        "gpu": 3,
+        "prompts": [
+          [
+            "object-02",
+            "cap",
+            215
+          ],
+          [
+            "human-hand",
+            "hand"
+          ],
+          [
+            "human-robot-gripper",
+            "robot gripper"
+          ],
+          [
+            "human-controller-ring",
+            "black tracking ring on handheld controller"
+          ]
+        ],
+        "exit_code": -15,
+        "wall_seconds": 494.6166101559065
+      }
+    ],
+    "results-v4.json": [
+      {
+        "name": "egodex",
+        "mode": "candidate-v4",
+        "gpu": 0,
+        "prompts": [
+          [
+            "object-01",
+            "cup",
+            0
+          ],
+          [
+            "object-02",
+            "lid",
+            26
+          ],
+          [
+            "object-03",
+            "plate",
+            0
+          ],
+          [
+            "human-hand",
+            "hand"
+          ],
+          [
+            "human-arm",
+            "arm"
+          ]
+        ],
+        "exit_code": 0,
+        "wall_seconds": 254.313520349795
+      },
+      {
+        "name": "real",
+        "mode": "candidate-v4",
+        "gpu": 2,
+        "prompts": [
+          [
+            "object-02",
+            "cap",
+            215
+          ],
+          [
+            "human-hand",
+            "hand"
+          ],
+          [
+            "human-robot-gripper",
+            "robot gripper"
+          ],
+          [
+            "human-controller-ring",
+            "black tracking ring on handheld controller"
+          ]
+        ],
+        "exit_code": -15,
+        "wall_seconds": 293.3535528939683
+      }
+    ]
+  }
+}

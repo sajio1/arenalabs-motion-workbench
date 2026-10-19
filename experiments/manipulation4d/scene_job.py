@@ -12,6 +12,9 @@ from gpu_scheduler import run as gpu_run
 ROOT=Path(os.environ.get('ARENA_WORKBENCH_ROOT','/home/ubuntu/arenalab-experiments/manipulation4d'))
 STORE=Path('/opt/arenalab/store/manipulation4d')
 POLICY='scene-cloud-v6-da3-sam31'
+WORKER_FILES=('scene_inference.py','video_io.py','segment_scene.py','segment_parallel.py','tracking_recovery.py',
+              'sam_runtime.py','sam_features.py','export_scene_cloud.py','discovery_output.py',
+              'discover_objects.py','nymeria_camera.py','gpu_scheduler.py')
 # Bump POLICY when model versions, reconstruction settings or output semantics
 # change. Exact worker hashes additionally identify each immutable build artifact.
 
@@ -49,7 +52,7 @@ def policy_key(scene_id):
 def cache_key(scene_id):
     public,row=resolve_clip(scene_id)
     h=hashlib.sha256(json.dumps(dict(policy=POLICY,id=scene_id,window=row.get('source_window'),video_start=row.get('video',{}).get('start_seconds',0),frames=row['frames']),sort_keys=True).encode())
-    for name in ['scene_job.py','scene_inference.py','video_io.py','segment_scene.py','tracking_recovery.py','export_scene_cloud.py','discovery_output.py','discover_objects.py','nymeria_camera.py','gpu_scheduler.py']:h.update(Path(__file__).with_name(name).read_bytes())
+    for name in ('scene_job.py', *WORKER_FILES):h.update(Path(__file__).with_name(name).read_bytes())
     for name in [row['source'],row['video']['path']]:h.update(digest(name).encode())
     return h.hexdigest()
 def depth_current(scene):
@@ -73,7 +76,7 @@ def run(scene_id,status):
     mark_private(destination,public.get('owner'))
     manifest=dict(policy=POLICY,cache_key=key,public=public,source=row,destination=str(destination),url=f'/assets/manipulation4d/generated/{key}/',gpu_pool=[0,1,2,3],source_sha256=digest(row['source']),video_sha256=digest(row['video']['path']),source_trajectory_edited=False)
     code=work/'code';code.mkdir(exist_ok=True)
-    for name in ['scene_inference.py','video_io.py','segment_scene.py','tracking_recovery.py','export_scene_cloud.py','discovery_output.py','discover_objects.py','nymeria_camera.py','gpu_scheduler.py']:shutil.copy2(Path(__file__).with_name(name),code/name)
+    for name in WORKER_FILES:shutil.copy2(Path(__file__).with_name(name),code/name)
     manifest['worker_code_sha256']={p.name:digest(p) for p in code.glob('*.py')}
     save(work/'manifest.json',manifest)
     environment=os.environ.copy();environment.update(CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),OMP_NUM_THREADS='2',OPENBLAS_NUM_THREADS='1',PYTHONPATH=str(ROOT/'sam3')+':'+environment.get('PYTHONPATH',''))
@@ -88,7 +91,7 @@ def run(scene_id,status):
         if stage=='segment':
             prompts=read(work/'prompts.json');stage_env.update(ARENA_SEGMENT_FRAMES=str(work/'frames'),ARENA_SEGMENT_OUTPUT=str(work/'masks'),ARENA_SEGMENT_PROMPTS=json.dumps(prompts))
             stage_env['ARENA_SEGMENT_SCRIPT']=str(code/'segment_scene.py')
-            command=[str(ROOT/'venv/bin/python'),str(Path(__file__).with_name('segment_parallel.py'))]
+            command=[str(ROOT/'venv/bin/python'),str(code/'segment_parallel.py')]
         else:
             script='export_scene_cloud.py' if stage=='export' else 'scene_inference.py'
             command=[str(ROOT/'venv/bin/python'),str(code/script),str(work)]
