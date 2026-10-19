@@ -2,8 +2,7 @@ from pathlib import Path
 import json
 import sys
 import numpy as np
-sys.path.insert(0,str(Path(__file__).parents[1]/'experiments/manipulation4d'))
-from recorded_camera_distortion import inverse_brown_render_map,recorded_render_map
+from arenalab_workbench.recorded_camera_distortion import inverse_brown_render_map,recorded_render_map
 
 
 def test_zero_distortion_is_identity():

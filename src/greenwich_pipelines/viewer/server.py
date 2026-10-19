@@ -15,14 +15,12 @@ from .mobile_ingest import ingest_registered_mobile
 from .robot_deletion import delete_robot_assets
 
 PAGES={'locomotion':'fullbody','localmanipulation':'nymeria','manipulation':'gento'}
-_code_digest=hashlib.sha256()
-for _source in sorted(Path(__file__).resolve().parents[2].rglob('*.py')):
-    _code_digest.update(str(_source.relative_to(Path(__file__).resolve().parents[2])).encode());_code_digest.update(_source.read_bytes())
-CODE_SIGNATURE=_code_digest.hexdigest()
+from greenwich_pipelines.code_identity import conversion_code_signature
+CODE_SIGNATURES={pipeline:conversion_code_signature(pipeline) for pipeline in PAGES.values()}
 
 def conversion_signature(clip,robot):
     source=Path(clip['source']);model=Path(robot['pipeline_row']['xml'])
-    identity=dict(code=CODE_SIGNATURE,pipeline=clip['page'],source=str(source),source_stat=[source.stat().st_size,source.stat().st_mtime_ns],window=clip.get('source_window'),max_seconds=clip.get('max_seconds'),robot=robot['pipeline_row'],model_sha256=hashlib.sha256(model.read_bytes()).hexdigest(),fps=30)
+    identity=dict(code=CODE_SIGNATURES[PAGES[clip['page']]],pipeline=clip['page'],source=str(source),source_stat=[source.stat().st_size,source.stat().st_mtime_ns],window=clip.get('source_window'),max_seconds=clip.get('max_seconds'),robot=robot['pipeline_row'],model_sha256=hashlib.sha256(model.read_bytes()).hexdigest(),fps=30)
     return hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
 
 class Conversion(BaseModel):

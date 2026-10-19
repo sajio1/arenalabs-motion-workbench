@@ -1,0 +1,729 @@
+{
+  "schema": "arenalab.workbench-cleanup.v1",
+  "baseline": "d453e5051830f18b740d06f222145f9803964748",
+  "numeric_ast_checks": [
+    {
+      "module": "body_frames",
+      "normalized_ast_identical": true,
+      "old_sha256": "8c479cf5e365422bd20cb1e26e1f4d032c5604b2c656e2873a41e21739c5e4d3",
+      "new_sha256": "8c479cf5e365422bd20cb1e26e1f4d032c5604b2c656e2873a41e21739c5e4d3"
+    },
+    {
+      "module": "refine_operation",
+      "normalized_ast_identical": true,
+      "old_sha256": "063c57aa8bc5b2d1ff1de0b0be3177a6081a81c6bd738c6220d8e264c9287191",
+      "new_sha256": "9a56fd89f3bfafcf3beefee469b91c5f0c261dc76ddc23c4038fdb2c789343f2"
+    },
+    {
+      "module": "support_reference",
+      "normalized_ast_identical": true,
+      "old_sha256": "542040e86be79423896c02d9374e6d7f25cd88b9681d645388a305c66c8dd4c8",
+      "new_sha256": "542040e86be79423896c02d9374e6d7f25cd88b9681d645388a305c66c8dd4c8"
+    },
+    {
+      "module": "window_guidance",
+      "normalized_ast_identical": true,
+      "old_sha256": "931959e287b1657fa0a12113b0135882ccb6051efc36cbd25538e5ba41b1374c",
+      "new_sha256": "931959e287b1657fa0a12113b0135882ccb6051efc36cbd25538e5ba41b1374c"
+    },
+    {
+      "module": "window_sampling",
+      "normalized_ast_identical": true,
+      "old_sha256": "7eb408b6bef0c37b26b86f5d6e783cd59c9234c5f56bbe33f200ce82a2a32d41",
+      "new_sha256": "b86637d4e1053e349d7907cd01b884b93edc7b1705c029620c9c82505b87f0be"
+    },
+    {
+      "module": "window_plan",
+      "normalized_ast_identical": true,
+      "old_sha256": "d511bf07703c0a00435a6911b803f831f2553d9deeb885927bd211413c245cac",
+      "new_sha256": "d511bf07703c0a00435a6911b803f831f2553d9deeb885927bd211413c245cac"
+    },
+    {
+      "module": "transfer_smplx",
+      "normalized_ast_identical": true,
+      "old_sha256": "661a1cce3c422c13f78f5ddaa69d15f2f2e47117ba52bea77d07e09d9261c02a",
+      "new_sha256": "661a1cce3c422c13f78f5ddaa69d15f2f2e47117ba52bea77d07e09d9261c02a"
+    },
+    {
+      "module": "captured_objective",
+      "normalized_ast_identical": true,
+      "old_sha256": "b05daad07825cf7c345636d44d2e74e4ae529c9d666c2e30217b7a0569906cfa",
+      "new_sha256": "b05daad07825cf7c345636d44d2e74e4ae529c9d666c2e30217b7a0569906cfa"
+    },
+    {
+      "module": "refinement_runtime",
+      "normalized_ast_identical": true,
+      "old_sha256": "bfc11b33a7f90c25cc94964ac98ffed57e205aac3f2e09d20e0d6f48fe84f6bc",
+      "new_sha256": "bfc11b33a7f90c25cc94964ac98ffed57e205aac3f2e09d20e0d6f48fe84f6bc"
+    },
+    {
+      "module": "gripper_reference",
+      "normalized_ast_identical": true,
+      "old_sha256": "41830dd507a696eaf3f9f96cfb12d3ae6bab07efdcc84c31c30699039355366f",
+      "new_sha256": "41830dd507a696eaf3f9f96cfb12d3ae6bab07efdcc84c31c30699039355366f"
+    }
+  ],
+  "moved": [
+    {
+      "old": "experiments/manipulation4d/audit_recording.py",
+      "new": "src/arenalab_workbench/audit_recording.py",
+      "baseline_sha256": "95752a45067560b24e4665849800156cd083d8a8dcb7e0941c3ef4197863a2d5",
+      "current_sha256": "ec2fe8d588ff07b9cd3b58fc3cc40cfcecf36078e3cd4e4424818364219ff8e0"
+    },
+    {
+      "old": "experiments/manipulation4d/audit_support.py",
+      "new": "src/arenalab_workbench/audit_support.py",
+      "baseline_sha256": "4cfb95bef1ffe0751c41707ddbb295968ae96fb34bbf67858eee2e8d80e6a0dd",
+      "current_sha256": "f80e568b224b41f53214b543137426c0b263a748a3aded7e80c2ec68a2e7e5e4"
+    },
+    {
+      "old": "experiments/manipulation4d/audit_windowed.py",
+      "new": "src/arenalab_workbench/audit_windowed.py",
+      "baseline_sha256": "a85c43dd249d522775cc1a6aea9b80a589db1675f2e3d3752eab11bfec8856fb",
+      "current_sha256": "5a5abafb163f843771e0172b750ba6b202a92aa3bd37c25017e202671158fb1d"
+    },
+    {
+      "old": "experiments/manipulation4d/body_inference.py",
+      "new": "src/arenalab_workbench/body_inference.py",
+      "baseline_sha256": "d3f78de6a0dd905f184e7386a92dc2aba9cd77e9374aa52665013a8e72def4d3",
+      "current_sha256": "72c23f45adee8ad62928dbe09762e61cf4652fa5a7842ecf1a4f0660121ed3c0"
+    },
+    {
+      "old": "experiments/manipulation4d/body_prior.py",
+      "new": "src/arenalab_workbench/body_prior.py",
+      "baseline_sha256": "ac61679f27b791a745c73835eac24d0590594a7f85194f02f444cb73fa6232d5",
+      "current_sha256": "bfc93faa6f05c35cd654b2b4ab80cbb4c1e04caea0ccaba6e392d7309d3b7c1c"
+    },
+    {
+      "old": "experiments/manipulation4d/captured_objective.py",
+      "new": "src/arenalab_workbench/captured_objective.py",
+      "baseline_sha256": "b7b84d58ee60e7f020e01c2a724898d447fcb2d8b3b5e3b765813a93d21eb78b",
+      "current_sha256": "5e836f9eca2f4593157ec902702bf14676d40cd44db4af815166eb06a7daad4a"
+    },
+    {
+      "old": "experiments/manipulation4d/classify_capture_hardware.py",
+      "new": "src/arenalab_workbench/classify_capture_hardware.py",
+      "baseline_sha256": "a94eaecc8ecb8d8d44007117ab52704a0cad63f4e7db69c36648e907a97d41c7",
+      "current_sha256": "a94eaecc8ecb8d8d44007117ab52704a0cad63f4e7db69c36648e907a97d41c7"
+    },
+    {
+      "old": "experiments/manipulation4d/contact_crop.py",
+      "new": "src/arenalab_workbench/contact_crop.py",
+      "baseline_sha256": "a883ddc8336aaddc29270378ea9455cccef5c14c62adeb2e5c432ba49647d48a",
+      "current_sha256": "080d733c979c28d11bcf80368c57c641dec753624f6667a44bd207b32fb82f24"
+    },
+    {
+      "old": "experiments/manipulation4d/contact_recording.py",
+      "new": "src/arenalab_workbench/contact_recording.py",
+      "baseline_sha256": "f4a030397d9abe80cc66efabc9210fcc3f668cb98fa0e667b1f72848eb90ad72",
+      "current_sha256": "7a28a8ab232829a9ce33db9b1fde5c3fd218cc39e13fbc5e016ee0c1fe10cf8c"
+    },
+    {
+      "old": "experiments/manipulation4d/discovery_output.py",
+      "new": "src/arenalab_workbench/discovery_output.py",
+      "baseline_sha256": "e1a189cfdcb995fdca81c5ff2a98d340e8fc89abc2cc9257f58fbc755c339820",
+      "current_sha256": "e7c84e0cae00eb8fad20bc5568f461e38f0d7913bf7b4fd95c3019a925c3b47c"
+    },
+    {
+      "old": "experiments/manipulation4d/discover_objects.py",
+      "new": "src/arenalab_workbench/discover_objects.py",
+      "baseline_sha256": "57d1fdc71c7fd368dbe9dead1150e6f6f86d240ad35957aa3a9c0c25249f15d8",
+      "current_sha256": "00208441e1ebbd6f982ee754000b0f73b27fa4630d4192ecc86968fb769f93a4"
+    },
+    {
+      "old": "experiments/manipulation4d/egoallo_runtime.py",
+      "new": "src/arenalab_workbench/egoallo_runtime.py",
+      "baseline_sha256": "f8abdf102d300473e2c27b21b75ed6aad5f6c236aec7f4b4cd33125528a63e0a",
+      "current_sha256": "b55c024effaf075c847f8e6d9e2f5b66a7eaf24b67e962b00f6dfd4431dc8d76"
+    },
+    {
+      "old": "experiments/manipulation4d/emit_body_window.py",
+      "new": "src/arenalab_workbench/emit_body_window.py",
+      "baseline_sha256": "8a0ea864a86960b8786cec2b9488e75e5840f14e7f28b5bf1df91152174b9458",
+      "current_sha256": "ef067d2048b992e02912af8689517cb44233a84e30cf7c59280a4014415f8eb1"
+    },
+    {
+      "old": "experiments/manipulation4d/end_effectors.py",
+      "new": "src/arenalab_workbench/end_effectors.py",
+      "baseline_sha256": "97068469fd2b14048f10099e7637e69456309720e262cd09e990d210b194a4b1",
+      "current_sha256": "9e4d2e49e099050120c2bc2a6de12705c7387511a3703868e43ce26f683b3fc2"
+    },
+    {
+      "old": "experiments/manipulation4d/export_scene_cloud.py",
+      "new": "src/arenalab_workbench/export_scene_cloud.py",
+      "baseline_sha256": "93e1b06f61a65b7fd69b8e5f800201e565db27a2f7be5ef052e072dbe115de56",
+      "current_sha256": "a7df70abd2a384975be62050cf6fb7b17d863e2b011c7dd138bd822179462948"
+    },
+    {
+      "old": "experiments/manipulation4d/fill_hardware_mask_gaps.py",
+      "new": "src/arenalab_workbench/fill_hardware_mask_gaps.py",
+      "baseline_sha256": "87f62bd8103232679b32347abfed38ab480238d8541d18b3e46f7d959977849b",
+      "current_sha256": "b015e8744d77512c19b3a638bd6a15ab3e8422a5b13fc39a7e78ce248fe890f2"
+    },
+    {
+      "old": "experiments/manipulation4d/fov_cache.py",
+      "new": "src/arenalab_workbench/fov_cache.py",
+      "baseline_sha256": "1b2b8edd505debedfe17e8c65d7f6c9fd1a06dfe943781e4aeea7c0a7ff65bc0",
+      "current_sha256": "ca69d006d8be61850ffdd4b2fc0447a3119aaf7fd67ef0db69f1a257d966243f"
+    },
+    {
+      "old": "experiments/manipulation4d/full_job.py",
+      "new": "src/arenalab_workbench/full_job.py",
+      "baseline_sha256": "6cef1dff8a193a7ef2713aec4f19546ece818511e205ad7209112ef21e6933fc",
+      "current_sha256": "a91846c4a7afd521fffe296caf0b3311a7a730c9b7e2d853ffeea93948982f71"
+    },
+    {
+      "old": "experiments/manipulation4d/gpu_scheduler.py",
+      "new": "src/arenalab_workbench/gpu_scheduler.py",
+      "baseline_sha256": "fe718e77befae9034efa266a1ef6f5a98fd02c14692575a37b65920978eb38d9",
+      "current_sha256": "1200059daa8e9e3facd403d47b16993a4cbb2ca100c6be4c1e3b76f46356b6f2"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_body.py",
+      "new": "src/arenalab_workbench/gripper_body.py",
+      "baseline_sha256": "af21d15d01a6df462c267f9c59e7603778c2ba65cbd048c30fcd62bf796b459b",
+      "current_sha256": "17377585c5302fc12799bf2a92c0e41db536b6104c17463236c560b29f1e898b"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_camera.py",
+      "new": "src/arenalab_workbench/gripper_camera.py",
+      "baseline_sha256": "ca4ed828d367decca931fe3733476272b7524508fb8a6014e60c9f3b859e25e6",
+      "current_sha256": "a388a1e95d0029389944da4f05d4982f01c74959efc0f93127ce9309d2838277"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_export.py",
+      "new": "src/arenalab_workbench/gripper_export.py",
+      "baseline_sha256": "c818bdb7ee50353fe83d0e09d948e3c85fd4f6aa3ab931e92b29c1dc30a1d360",
+      "current_sha256": "2c3503ae73ba2812450bf90b6b302e87ae2234c4cb6817664ee2b59f9d8d91e8"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_job.py",
+      "new": "src/arenalab_workbench/gripper_job.py",
+      "baseline_sha256": "7e66325dd4987fded5aa393e1e183ca79509dbae451f25a77cae8250a9d3a6c9",
+      "current_sha256": "bbec2b1da5635e79d8bcd1398a65a92cb393486e4281e4b87239260471af003f"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_reference.py",
+      "new": "src/arenalab_workbench/gripper_reference.py",
+      "baseline_sha256": "b140868b9d485a063d6b91fcad574ae268eacbfac0fee9aa646f7dbf623923b2",
+      "current_sha256": "b140868b9d485a063d6b91fcad574ae268eacbfac0fee9aa646f7dbf623923b2"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_render.py",
+      "new": "src/arenalab_workbench/gripper_render.py",
+      "baseline_sha256": "910eab9b08f073f6df25f732d705883b5578a32fe51bc745b9d45f689a374472",
+      "current_sha256": "2cbee2b8fc8fee7a3e6a931ea9e181ee7e146b780c378552a098000fbfaf4c99"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_retarget.py",
+      "new": "src/arenalab_workbench/gripper_retarget.py",
+      "baseline_sha256": "ea503d39bf0f179cf0a5fc40c710b01d1354d0be46e44ba958d795474d85a257",
+      "current_sha256": "ee32aee2f57f747367da96151ca0de070d20bb51bcf6c384ec5e45cb493e38ff"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_scene.py",
+      "new": "src/arenalab_workbench/gripper_scene.py",
+      "baseline_sha256": "127d5a15bfdc3103d772442cf74c509faab9f0e5871d0d411e0b739954cd32df",
+      "current_sha256": "b4123ff4e85c28ab18d83460023fe543dda9a2b30c8b17ad63b0e6388890e8d0"
+    },
+    {
+      "old": "experiments/manipulation4d/gripper_source.py",
+      "new": "src/arenalab_workbench/gripper_source.py",
+      "baseline_sha256": "7624fe32eec5e2f6377c19b54a26b7f1834aa0e50e4b476fba7a9ff5226311b9",
+      "current_sha256": "3f18ce38b6d75ae494abc4445035737c2f3b6fd75c65de336d800387eb493f53"
+    },
+    {
+      "old": "experiments/manipulation4d/hand_uploads.py",
+      "new": "src/arenalab_workbench/hand_uploads.py",
+      "baseline_sha256": "ee14a803c742103dc84dab9ac0681646f58fe760e87cb11ec854617e6dcec75f",
+      "current_sha256": "ee14a803c742103dc84dab9ac0681646f58fe760e87cb11ec854617e6dcec75f"
+    },
+    {
+      "old": "experiments/manipulation4d/integrate_isaac_nav.py",
+      "new": "src/arenalab_workbench/integrate_isaac_nav.py",
+      "baseline_sha256": "2e64cd5c161a8fe26f270c96b5dfe558ca1ff5e802eebf0a3be8b0899405c136",
+      "current_sha256": "2e64cd5c161a8fe26f270c96b5dfe558ca1ff5e802eebf0a3be8b0899405c136"
+    },
+    {
+      "old": "experiments/manipulation4d/job_status.py",
+      "new": "src/arenalab_workbench/job_status.py",
+      "baseline_sha256": "d8d789074cc88c83310fef213ba0ef2778ccad26fedfb69285ceec2292c9f8b1",
+      "current_sha256": "ead08d71c3f918d535f1ca06ca07c1f34f5c64412cb1157bd0816441fcf8f040"
+    },
+    {
+      "old": "experiments/manipulation4d/mobile_render_input.py",
+      "new": "src/arenalab_workbench/mobile_render_input.py",
+      "baseline_sha256": "26a8c1c61a2371d9ad4c3456a8c2209df50f3f149858dc105a1dea37aeff797b",
+      "current_sha256": "3a25412ef23134fdf71edcda36bf7dcc49448e3c95eeb5a6259dccf26c420424"
+    },
+    {
+      "old": "experiments/manipulation4d/mobile_render_job.py",
+      "new": "src/arenalab_workbench/mobile_render_job.py",
+      "baseline_sha256": "abaaff80709360587a262e1bae1d44c9b29c70b475f2d94c93244d98886cc626",
+      "current_sha256": "3e5ee27313b223f2c4f4f181e4b91dbc4b18615b898ab8ecaf9fd2b1ca502a38"
+    },
+    {
+      "old": "experiments/manipulation4d/nymeria_body.py",
+      "new": "src/arenalab_workbench/nymeria_body.py",
+      "baseline_sha256": "7c365309a4e80d2fabcfc79a092129941c6c2eb66abf8de17d37c782e733503a",
+      "current_sha256": "8f5ae81102019a7daba8897a77ebf55975d1ac05f0ec53406ab568fb17ced4bc"
+    },
+    {
+      "old": "experiments/manipulation4d/nymeria_camera.py",
+      "new": "src/arenalab_workbench/nymeria_camera.py",
+      "baseline_sha256": "de2b7ffcc86ce2f482130043e57e86b5857d3bbb35542e11bc71b5210b038b39",
+      "current_sha256": "724f5a5a3696c769af6db51e60f242098ebd60bc3b1c71869c147ee4ec930ec8"
+    },
+    {
+      "old": "experiments/manipulation4d/perception_complete.py",
+      "new": "src/arenalab_workbench/perception_complete.py",
+      "baseline_sha256": "6b0e1d512773faec6e0cbfdcc3a80a36b4af6d2e5b94b38d53fba8390c02b40b",
+      "current_sha256": "3224a43bcf1d65673ce9a7847060fa16b9baface55e061e89866af40e6a28c98"
+    },
+    {
+      "old": "experiments/manipulation4d/prebuild_smpl.py",
+      "new": "src/arenalab_workbench/prebuild_smpl.py",
+      "baseline_sha256": "1b2f9d22bb146b7e40b957e701d9700944440ca3ea6e7a21efe90dc2411ca894",
+      "current_sha256": "a88328bc4b2737ebb41fd8e1e7063e1854fd1b81dc8c32fa94ee71a15f33e139"
+    },
+    {
+      "old": "experiments/manipulation4d/prepare_nymeria_alignment.py",
+      "new": "src/arenalab_workbench/prepare_nymeria_alignment.py",
+      "baseline_sha256": "424b3957fba436cd9be4b6d8555b36009d0522137775e4169250d32f2a90b1c8",
+      "current_sha256": "28526b7e477512b16a6f5055457a0606a2f48d9f15384d671bf301fbabdd4e4b"
+    },
+    {
+      "old": "experiments/manipulation4d/prepare_nymeria_lens.py",
+      "new": "src/arenalab_workbench/prepare_nymeria_lens.py",
+      "baseline_sha256": "861a05e433e7c5aa07cf8c44ee679ae2462d4b301c22d75310d60ec1a18739ef",
+      "current_sha256": "ee08ea257bd988dba5476b1a14e40ae8b141a23a056c039355d7f94d4c22eae0"
+    },
+    {
+      "old": "experiments/manipulation4d/progressive_job.py",
+      "new": "src/arenalab_workbench/progressive_job.py",
+      "baseline_sha256": "0f971523985a3cfdc43d0d5898ea8e7ca8dcfbbb9d68fa83906a6002a817756c",
+      "current_sha256": "1e9eca8fb07e87123fc3bb1a1ac7bdb3c652777b080145a37d5d7506a18f34b5"
+    },
+    {
+      "old": "experiments/manipulation4d/propagate_capture_hardware.py",
+      "new": "src/arenalab_workbench/propagate_capture_hardware.py",
+      "baseline_sha256": "b5c8a67195ed87eb3ffc97a4299973f999a16f61e0c4848b0ac5453376efa971",
+      "current_sha256": "22b1e441b66857b071d8fa7dbbdb9a3c4af694bf4342b2544855b6b7f137a3f5"
+    },
+    {
+      "old": "experiments/manipulation4d/proximity_recording.py",
+      "new": "src/arenalab_workbench/proximity_recording.py",
+      "baseline_sha256": "d7e6f3c511f86d6399c914a98f8e391855098e6519deeb0fe12da4a3a75cbb8d",
+      "current_sha256": "30be368737e3f16c081f7576168460ee4b35facc5d9b295f1eec11dd193ca47a"
+    },
+    {
+      "old": "experiments/manipulation4d/recorded_camera_distortion.py",
+      "new": "src/arenalab_workbench/recorded_camera_distortion.py",
+      "baseline_sha256": "7055427b0337fc2a4f71717c61d8ed965bafef9f1f7065894cb71a0a48c76b3d",
+      "current_sha256": "7055427b0337fc2a4f71717c61d8ed965bafef9f1f7065894cb71a0a48c76b3d"
+    },
+    {
+      "old": "experiments/manipulation4d/refinement_runtime.py",
+      "new": "src/arenalab_workbench/refinement_runtime.py",
+      "baseline_sha256": "85b1237460e86f1d9fa8da5bd9291827a547a7f1b9cd251553913810d8cfeaa3",
+      "current_sha256": "ff2d5c24bef2745a66514f9d9a3d65bdb6bc4004830bdb57e388074e4e06a9ae"
+    },
+    {
+      "old": "experiments/manipulation4d/refine_operation.py",
+      "new": "src/arenalab_workbench/refine_operation.py",
+      "baseline_sha256": "b355ca3dc4d658d5411ff7e46268bd0851ce9c5566ab0bd160d4e79bd6a33fa0",
+      "current_sha256": "4659efce66f0ac162fc3f5065b5e5e8aa32421042a28119a893349f562333101"
+    },
+    {
+      "old": "experiments/manipulation4d/render_recording.py",
+      "new": "src/arenalab_workbench/render_recording.py",
+      "baseline_sha256": "4defe58216ca650bed676fe0aac9ed8a91e56e32b624fe9b33c622aaaee74a70",
+      "current_sha256": "bc1df21076e367c2d3a9aec74db59f50a3ec6da2d5cad36ff85dfaf7fb7de47c"
+    },
+    {
+      "old": "experiments/manipulation4d/retarget_robot.py",
+      "new": "src/arenalab_workbench/retarget_robot.py",
+      "baseline_sha256": "5f42224b2f34e648ea418d2ef3814ce20bfb955c99a9c96610b34f5a80651e6b",
+      "current_sha256": "d0f423aed901cd3508649089b7c1da8ce64c14550841c119aa3c738011376831"
+    },
+    {
+      "old": "experiments/manipulation4d/robot_preview.py",
+      "new": "src/arenalab_workbench/robot_preview.py",
+      "baseline_sha256": "306c132c42ec083ced6e0e1c7fcc7ef4cc4d59db8b404d0255201b6d7895d0b0",
+      "current_sha256": "28e2dde309aab72979abacce3bfb9c3faaeccbc505e3530953bdc9ce229e37e5"
+    },
+    {
+      "old": "experiments/manipulation4d/run_egoallo.py",
+      "new": "src/arenalab_workbench/run_egoallo.py",
+      "baseline_sha256": "05fb9814a111488a26afd75d609da6e12fcc51a655bd4c3122f358c51186b35e",
+      "current_sha256": "418aa6f8639ca0e4296d7bab752c56ddc374bf1568440c89a8718d2f32931272"
+    },
+    {
+      "old": "experiments/manipulation4d/run_egoallo_windowed.py",
+      "new": "src/arenalab_workbench/run_egoallo_windowed.py",
+      "baseline_sha256": "bc83441a58c9f2bf60a6e9a5b8a288742bf60a9349d892b4265a241f55f9b96f",
+      "current_sha256": "5cd954c8a81c9f773f8ec2a2a8635a9334358e8208efd24106257438ca61b4b3"
+    },
+    {
+      "old": "experiments/manipulation4d/sam_features.py",
+      "new": "src/arenalab_workbench/sam_features.py",
+      "baseline_sha256": "84cf2b2d4755e21f81fd1580ebe8a597806f05e0c08f749c4bfb886128d2c8aa",
+      "current_sha256": "c1cb1bbe486cd4d65c700309b916d26e634f8b33ffef5cc73482bc805d4997e3"
+    },
+    {
+      "old": "experiments/manipulation4d/sam_runtime.py",
+      "new": "src/arenalab_workbench/sam_runtime.py",
+      "baseline_sha256": "00b670e516d09d90e1d4df38221e68400b8560d26469a55de8e4d2d921617a47",
+      "current_sha256": "971442e4aa82525c7a257911bbf52c14d081e13da3d12e2f2fc6077262d3b788"
+    },
+    {
+      "old": "experiments/manipulation4d/scene_inference.py",
+      "new": "src/arenalab_workbench/scene_inference.py",
+      "baseline_sha256": "737bb95dfaba85e32c4125b54cd6243382c147910f0d861f76d8b342b377a873",
+      "current_sha256": "b38ab5eb2c1423cea4aec6fe3d57f943e239a1b2888b9909de468524ee76e5f8"
+    },
+    {
+      "old": "experiments/manipulation4d/scene_job.py",
+      "new": "src/arenalab_workbench/scene_job.py",
+      "baseline_sha256": "e45cff2302542480a241028cc0deec88917e18a30873a1111ce947455e797cf2",
+      "current_sha256": "9c65edf6959ce6c546a8bf61881e7e3c3856160c1d89300b150f3ab03566f243"
+    },
+    {
+      "old": "experiments/manipulation4d/segment_parallel.py",
+      "new": "src/arenalab_workbench/segment_parallel.py",
+      "baseline_sha256": "ecbb81c093cd1b5d4d33fe95498215716468a1e9fb1298a6579cecb43b192754",
+      "current_sha256": "25bc3f2b0741957bc00c2831c6c00606a4448a50cf1aaf9b300d340e9d8397f0"
+    },
+    {
+      "old": "experiments/manipulation4d/segment_scene.py",
+      "new": "src/arenalab_workbench/segment_scene.py",
+      "baseline_sha256": "6368b7cc83802a78d1a417d7f765e26518ab43c45a5f796f7a3c0902eeab9d41",
+      "current_sha256": "7a9b14b1acd05774fd6e37d609ee5ac291828747e178381642fb60b9b7aabe3d"
+    },
+    {
+      "old": "experiments/manipulation4d/serve_workbench.py",
+      "new": "src/arenalab_workbench/serve_workbench.py",
+      "baseline_sha256": "920d057d0c0f99ec3aa440838f46af8f0fb96d6cb9381e27f425e6077738d571",
+      "current_sha256": "5176bab04574b53692615c7fc365806580117a7b8925fe0abcc86eb6577ac5b2"
+    },
+    {
+      "old": "experiments/manipulation4d/smpl_library.py",
+      "new": "src/arenalab_workbench/smpl_library.py",
+      "baseline_sha256": "3c81f2d81a94340001899e47dcf7df566fff77f9ee8a7b24ff9caba116e38065",
+      "current_sha256": "55d170ecd417d6ef21ce17e630d46d44e888d3be76c5e5965d67666607ba343c"
+    },
+    {
+      "old": "experiments/manipulation4d/support_reference.py",
+      "new": "src/arenalab_workbench/support_reference.py",
+      "baseline_sha256": "542040e86be79423896c02d9374e6d7f25cd88b9681d645388a305c66c8dd4c8",
+      "current_sha256": "e5c6a67deed68e36bd7563dad46eac25ceb2f947d7abc0ac27d5ebdf9fa0e65f"
+    },
+    {
+      "old": "experiments/manipulation4d/tracking_recovery.py",
+      "new": "src/arenalab_workbench/tracking_recovery.py",
+      "baseline_sha256": "8de2764b688457321de61f9c43568f354f017b9d849216733c648e1d96a8fbca",
+      "current_sha256": "49a2a550b09569404f45eff5794b2a94b7e8e2defa72319b8fea66a207a56307"
+    },
+    {
+      "old": "experiments/manipulation4d/trajectory_height.py",
+      "new": "src/arenalab_workbench/trajectory_height.py",
+      "baseline_sha256": "ce78dbf84eb50a0372643c05d38348dfd91a751a6c6a390c88c208c3fc9cb729",
+      "current_sha256": "67ce98ef39a2cc740fed2c2390ffa7b83c6f0f2e6745bf1cd7c28b1592a89682"
+    },
+    {
+      "old": "experiments/manipulation4d/transfer_smplx.py",
+      "new": "src/arenalab_workbench/transfer_smplx.py",
+      "baseline_sha256": "3d9e64cd9771c095fa658c145ed2fd3f30d658c1788cd5cc6eba881b34f3c221",
+      "current_sha256": "3d9e64cd9771c095fa658c145ed2fd3f30d658c1788cd5cc6eba881b34f3c221"
+    },
+    {
+      "old": "experiments/manipulation4d/video_io.py",
+      "new": "src/arenalab_workbench/video_io.py",
+      "baseline_sha256": "2cb7514fe08eff5ef6f39c7435a44038127fa043cf92f327629f8405d0024030",
+      "current_sha256": "e86471d63f60eef38c2b808c8f0f8a9a149ead7d4364f24c50e8bfcab25fef43"
+    },
+    {
+      "old": "experiments/manipulation4d/wheeled_body.py",
+      "new": "src/arenalab_workbench/wheeled_body.py",
+      "baseline_sha256": "be67e34b401cb4e3aa9dc8c186de9923d8cc517891bf2a760cef3dcf50834019",
+      "current_sha256": "bf0229b17a1828d8e151a05cc8cd3c812a3b126a630c49ed024d53d284ac4e22"
+    },
+    {
+      "old": "experiments/manipulation4d/wheeled_job.py",
+      "new": "src/arenalab_workbench/wheeled_job.py",
+      "baseline_sha256": "584674b258e06fd8b90f742a38f693e031e79ee41133d1c1f34dce9fb6f1a829",
+      "current_sha256": "c100c982b3bf98b10eb343602a0e3dcf8ae7a86084e1872707152436063dabcd"
+    },
+    {
+      "old": "experiments/manipulation4d/wheeled_prior.py",
+      "new": "src/arenalab_workbench/wheeled_prior.py",
+      "baseline_sha256": "0a37a6e2148457a7f6da31afb8088249f676b6cfcc61d41c3d6cf3286c3aa6fe",
+      "current_sha256": "636ba293c59f8875e3f137a36f5a34c862002b011e3406b7753711ceda3c2968"
+    },
+    {
+      "old": "experiments/manipulation4d/window_guidance.py",
+      "new": "src/arenalab_workbench/window_guidance.py",
+      "baseline_sha256": "11dbd2e238cc4900992ad0b872c4218b94d8274e41549ec576b6aa56d8c1d3d2",
+      "current_sha256": "11dbd2e238cc4900992ad0b872c4218b94d8274e41549ec576b6aa56d8c1d3d2"
+    },
+    {
+      "old": "experiments/manipulation4d/window_plan.py",
+      "new": "src/arenalab_workbench/window_plan.py",
+      "baseline_sha256": "d511bf07703c0a00435a6911b803f831f2553d9deeb885927bd211413c245cac",
+      "current_sha256": "c0f2feee185ff618730690b4bbc2f46c0d51d502b8f2376a7dad83ed11c7106f"
+    },
+    {
+      "old": "experiments/manipulation4d/window_robot_stream.py",
+      "new": "src/arenalab_workbench/window_robot_stream.py",
+      "baseline_sha256": "f6df2f62339ace265f52cef282750c9de510fe0db300df27f2f26501a79212b4",
+      "current_sha256": "b305d0cc954a5b6924acb2152471476e2743a9ef21a3ab89f16c28fccbe5155e"
+    },
+    {
+      "old": "experiments/manipulation4d/window_sampling.py",
+      "new": "src/arenalab_workbench/window_sampling.py",
+      "baseline_sha256": "24d01a2ef931f1af17d493c1f22f621d1c2bc007184cd1e819302bf8f641934a",
+      "current_sha256": "65c77aa5831d89e84b043517313e36739350d2ce23d5cef8cbad3d0f025ddee9"
+    },
+    {
+      "old": "experiments/manipulation4d/workbench_api.py",
+      "new": "src/arenalab_workbench/workbench_api.py",
+      "baseline_sha256": "ffbf919f4a6fe087a1d0d2f8e89d4ebe7f8aaba54d71681d47481563b39a7870",
+      "current_sha256": "739a2d274678a4f67c3f92c58ba9887274cc5b87919f708073f87833e5e10ac9"
+    },
+    {
+      "old": "experiments/manipulation4d/dataset_io/export.py",
+      "new": "src/arenalab_workbench/dataset_io/export.py",
+      "baseline_sha256": "f4db31fd920484d366e96989de4c12b413a81da06694bf8e48c180c070acd989",
+      "current_sha256": "0222043c8427baa440b1b70b647bd0dc1250ae6010f886b4531d479376e01357"
+    },
+    {
+      "old": "experiments/manipulation4d/dataset_io/ingest.py",
+      "new": "src/arenalab_workbench/dataset_io/ingest.py",
+      "baseline_sha256": "7b40fee21c51b1aa6e74e633541fd7ed65edb3796f82b3c4189d0ad595c9e18c",
+      "current_sha256": "a4b813182c429dd2468cc261561ae709cd477b8a363f73eedb465f735c8bfee3"
+    },
+    {
+      "old": "experiments/manipulation4d/dataset_io/pack_recording.py",
+      "new": "src/arenalab_workbench/dataset_io/pack_recording.py",
+      "baseline_sha256": "bc50c2130d3bed2e33e1322faba114370f4de8f814b0ca8b11863578df6e3921",
+      "current_sha256": "bc50c2130d3bed2e33e1322faba114370f4de8f814b0ca8b11863578df6e3921"
+    },
+    {
+      "old": "experiments/manipulation4d/dataset_io/portable_reader.py",
+      "new": "src/arenalab_workbench/dataset_io/portable_reader.py",
+      "baseline_sha256": "f267b35311b058c961c28d5d69939c51d0dd22bd26ffb58fa65e71facec9997e",
+      "current_sha256": "f267b35311b058c961c28d5d69939c51d0dd22bd26ffb58fa65e71facec9997e"
+    },
+    {
+      "old": "experiments/manipulation4d/dataset_io/routes.py",
+      "new": "src/arenalab_workbench/dataset_io/routes.py",
+      "baseline_sha256": "7163d6c49bb02917ef8fe3ef8802014e7b4b5daf0bd5b8da407d16c135cbd8e4",
+      "current_sha256": "4947d69bd80d02ed87e523a67add6085f1ed37955dd0bb2f048820913cebeeef"
+    },
+    {
+      "old": "experiments/manipulation4d/dataset_io/storage.py",
+      "new": "src/arenalab_workbench/dataset_io/storage.py",
+      "baseline_sha256": "0dae38da9dd43b400e8f463081afe785b08a67db372c3b9279ca222b43ca4fbb",
+      "current_sha256": "40f096dfca9ad669b72e189fad7a3c350608b2890793818a2b87dc1e0deed8eb"
+    },
+    {
+      "old": "experiments/manipulation4d/dataset_io/worker.py",
+      "new": "src/arenalab_workbench/dataset_io/worker.py",
+      "baseline_sha256": "03fa676add66a4e4f79ceb3f9cba312b7ca6356b8095b0f65f3a3c26104bc633",
+      "current_sha256": "03fa676add66a4e4f79ceb3f9cba312b7ca6356b8095b0f65f3a3c26104bc633"
+    },
+    {
+      "old": "experiments/manipulation4d/dataset_io/__init__.py",
+      "new": "src/arenalab_workbench/dataset_io/__init__.py",
+      "baseline_sha256": "cd0163715e8df10840b766e3199e6cdc151c6df55277683891870288f379991e",
+      "current_sha256": "4f07f2e97fc028311e1e34104b5e4af69ae453fffb1bd9a467d236c37ea05154"
+    },
+    {
+      "old": "experiments/ego_fullbody/body_frames.py",
+      "new": "src/arenalab_workbench/body_frames.py",
+      "baseline_sha256": "a0e6124841c561933d0787278549a391444abc9f83dcf89bd90c539ddecce587",
+      "current_sha256": "a0e6124841c561933d0787278549a391444abc9f83dcf89bd90c539ddecce587"
+    },
+    {
+      "old": "experiments/manipulation4d/test_discovery_output.py",
+      "new": "tests/workbench/test_discovery_output.py",
+      "baseline_sha256": "6c03d084e45c867e6e421d17ed5011d1ba6a649837668fed1a2b82f34e3e8b1f",
+      "current_sha256": "6281cd9462989cbe44eee4cd33b5f14eab5de2138f4ef2e959f1c32da66f29b8"
+    },
+    {
+      "old": "experiments/manipulation4d/test_full_job.py",
+      "new": "tests/workbench/test_full_job.py",
+      "baseline_sha256": "1796a33432241c17b83ed3fb7b294bb1158a5902ffb02dda437100eb1cd9b7c4",
+      "current_sha256": "ce3a2432b2b339a2a670644ff9e2397fc228c22e2cbd34c512b20d1589f9f673"
+    },
+    {
+      "old": "experiments/manipulation4d/test_hand_uploads.py",
+      "new": "tests/workbench/test_hand_uploads.py",
+      "baseline_sha256": "06754739d5ebdd6f7ccaa05861c9b2d59137bdaf4c04bc345e2083d873248b65",
+      "current_sha256": "e77813a3525fbddc80489e1cf0a31f1883a9e8736802a4d5cfde29abcd02cf66"
+    },
+    {
+      "old": "experiments/manipulation4d/test_job_status.py",
+      "new": "tests/workbench/test_job_status.py",
+      "baseline_sha256": "a5eeeba2dd28b932ec9595f7f8632f1a694dbe7fd138255911d4183b1fbeaeeb",
+      "current_sha256": "3c877c288fd6ccc170693c95427d4ab703144faf0d119541860e2e9dceb9fbb7"
+    },
+    {
+      "old": "experiments/manipulation4d/test_scene_cache.py",
+      "new": "tests/workbench/test_scene_cache.py",
+      "baseline_sha256": "bbfad95c60b89402b240faa570572e15445993f82f6a643ff7038194479b6ca4",
+      "current_sha256": "69bfadbbcd7cf1ba39b4294913035f456542ab394874d9d25d268baf8a2cfdc1"
+    },
+    {
+      "old": "experiments/manipulation4d/test_scene_export.py",
+      "new": "tests/workbench/test_scene_export.py",
+      "baseline_sha256": "e714dc7bb762cf8b82ec42de187f9bf04ba5ad876ba07c07eae440e82f5c7b0e",
+      "current_sha256": "2d47cd0995b27b96e696d9f4e068b1a9cbb9fce7494eb7bd8bc1d54581d8b489"
+    },
+    {
+      "old": "experiments/manipulation4d/test_smpl_library.py",
+      "new": "tests/workbench/test_smpl_library.py",
+      "baseline_sha256": "e3472ce7a47b9b009f4b3d6f5bba6fb2103ea405b2d6e16b27f609a23b455203",
+      "current_sha256": "daeff9613c164608c180e41086018d8e1ad9e04ce31dd0f2d7a2751bd827b566"
+    },
+    {
+      "old": "experiments/manipulation4d/test_source_contract.py",
+      "new": "tests/workbench/test_source_contract.py",
+      "baseline_sha256": "a7c6a0b7263683c8e4014cd5a7312ba7055f194e6c6d5ca365f84df61d4a5a66",
+      "current_sha256": "1dd400ac68b7c150fce57dbc4d8e0d6bf4ac2ec1812151dd97d5fa2f63aaea1a"
+    },
+    {
+      "old": "experiments/manipulation4d/test_support_reference.py",
+      "new": "tests/workbench/test_support_reference.py",
+      "baseline_sha256": "227f11bc85adae54f2323f2d3485dc5913e49ab8bdea47468f746b2bf0077e63",
+      "current_sha256": "958a12e2559904a1dc0dd9e533676348f0beadc22ea0a35f70f0b3cf376540b6"
+    },
+    {
+      "old": "experiments/manipulation4d/test_window_plan.py",
+      "new": "tests/workbench/test_window_plan.py",
+      "baseline_sha256": "ef01969d197915ba574e2222e3d7c494a0d28f850bc8d83fe6512919618daad7",
+      "current_sha256": "a64cd9e2996a2dac2d3788278514714e0a793e67a1767b53df5236d93ecf1d86"
+    },
+    {
+      "old": "experiments/manipulation4d/EGOALLO_LICENSE",
+      "new": "third_party/licenses/EGOALLO_LICENSE",
+      "baseline_sha256": "1470480384dd9bcd98241f67ca5ef49f4c546ea9e9ac4dedf1cc27eec466c093",
+      "current_sha256": "1470480384dd9bcd98241f67ca5ef49f4c546ea9e9ac4dedf1cc27eec466c093"
+    },
+    {
+      "old": "experiments/manipulation4d/SMPL_LIBRARY.md",
+      "new": "docs/smpl-library.md",
+      "baseline_sha256": "24c34d1b96c072a5c96bfc83f207b5a63e088938a99af2ced911050c6684225b",
+      "current_sha256": "199c4831490626720dc24d3f4b7a5e09af61d48bbbdeba7a2bdca5e05546aede"
+    }
+  ],
+  "retired": [
+    "experiments/ego_fullbody/README.md",
+    "experiments/ego_fullbody/assemble_review.py",
+    "experiments/ego_fullbody/assemble_torso_review.py",
+    "experiments/ego_fullbody/build_wuji_urdf.py",
+    "experiments/ego_fullbody/check_merged_frames.py",
+    "experiments/ego_fullbody/collect_results.py",
+    "experiments/ego_fullbody/diagnose_knees.py",
+    "experiments/ego_fullbody/diagnose_reach.py",
+    "experiments/ego_fullbody/export_wuji_robot.py",
+    "experiments/ego_fullbody/inspect_acceleration.py",
+    "experiments/ego_fullbody/inspect_body_dofs.py",
+    "experiments/ego_fullbody/inspect_torso_tree.py",
+    "experiments/ego_fullbody/inspect_video_hands.py",
+    "experiments/ego_fullbody/pilot-input-provenance.json",
+    "experiments/ego_fullbody/plot_review.py",
+    "experiments/ego_fullbody/prepare_nymeria.py",
+    "experiments/ego_fullbody/prepare_robot_jobs.py",
+    "experiments/ego_fullbody/refine_observed.py",
+    "experiments/ego_fullbody/render_human.py",
+    "experiments/ego_fullbody/render_robot.py",
+    "experiments/ego_fullbody/run_ablation.py",
+    "experiments/ego_fullbody/run_egoallo.py",
+    "experiments/ego_fullbody/summarize_ablation.py",
+    "experiments/ego_fullbody/summarize_posture.py",
+    "experiments/ego_fullbody/transfer_smplx.py",
+    "experiments/ego_fullbody/validate_all_chests.py",
+    "experiments/ego_fullbody/validate_foot_prior.py",
+    "experiments/ego_fullbody/validate_native_chest.py",
+    "experiments/ego_fullbody/validate_observed.py",
+    "experiments/ego_fullbody/validate_results.py",
+    "experiments/ego_fullbody/validate_torso.py",
+    "experiments/ego_fullbody/video_hands/README.md",
+    "experiments/ego_fullbody/video_hands/apply_video_fingers.py",
+    "experiments/ego_fullbody/video_hands/export_video_wuji_robot.py",
+    "experiments/ego_fullbody/video_hands/reconstruct_video_hands.py",
+    "experiments/ego_fullbody/video_hands/render_video_human.py",
+    "experiments/ego_fullbody/video_hands/render_video_robot.py",
+    "experiments/ego_fullbody/video_hands/render_wuji_closeup.py",
+    "experiments/ego_fullbody/video_hands/select_reviewed_hands.py",
+    "experiments/ego_fullbody/video_hands/validate_video_hands.py",
+    "experiments/manipulation4d/README.md",
+    "experiments/manipulation4d/anchor_scene_depth.py",
+    "experiments/manipulation4d/annotate_scene.py",
+    "experiments/manipulation4d/audit_cloud_visibility.py",
+    "experiments/manipulation4d/audit_hand_motion.py",
+    "experiments/manipulation4d/audit_multiview_geometry.py",
+    "experiments/manipulation4d/audit_object_shapes.py",
+    "experiments/manipulation4d/build_spatial_memory.py",
+    "experiments/manipulation4d/calibrate_recorded_projection.py",
+    "experiments/manipulation4d/calibrate_scene_depth.py",
+    "experiments/manipulation4d/check_depth_anchors.py",
+    "experiments/manipulation4d/choose_clear_keyframes.py",
+    "experiments/manipulation4d/estimate_contact.py",
+    "experiments/manipulation4d/estimate_digit_contact.py",
+    "experiments/manipulation4d/estimate_finger_proximity.py",
+    "experiments/manipulation4d/estimate_video_contact.py",
+    "experiments/manipulation4d/fit_complete_assets.py",
+    "experiments/manipulation4d/mobile_gripper_job.py",
+    "experiments/manipulation4d/pack_object_surfaces.py",
+    "experiments/manipulation4d/pack_pilot.py",
+    "experiments/manipulation4d/prepare_complete_assets.py",
+    "experiments/manipulation4d/prepare_objects.py",
+    "experiments/manipulation4d/rebuild_scene_surface.py",
+    "experiments/manipulation4d/reconstruct_multiview_depth.py",
+    "experiments/manipulation4d/reconstruct_objects.py",
+    "experiments/manipulation4d/reconstruct_static_scene.py",
+    "experiments/manipulation4d/refresh_canonical_scenes.py",
+    "experiments/manipulation4d/render_hand_patch.py",
+    "experiments/manipulation4d/render_robot_view.py",
+    "experiments/manipulation4d/requirements-scene-surface.txt",
+    "experiments/manipulation4d/scene_surface.py",
+    "experiments/manipulation4d/track_objects.py",
+    "experiments/manipulation4d/umi_height.py",
+    "experiments/manipulation4d/validate_complete_assets.py",
+    "experiments/manipulation4d/validate_pilot.py",
+    "experiments/manipulation4d/validate_reconstruction.py"
+  ],
+  "validation": {
+    "linux_pytest": {
+      "passed": 96,
+      "skipped_private_fixture_checks": 2
+    },
+    "private_fixture_checks": {
+      "passed": 2
+    },
+    "frontend": {
+      "tests_passed": 10,
+      "typescript_vite_build": "passed"
+    },
+    "wheel_build": "passed, production package and EgoAllo license included",
+    "api_smoke": "isolated workspace; robots and library HTTP 200",
+    "source_math": "10 numerical module AST comparisons identical after import/docstring normalization",
+    "full_model_inference_rerun": false,
+    "production_service_changed": false
+  },
+  "changes": [
+    "Retired experiment trees; production modules moved to src/arenalab_workbench",
+    "Read-only registries separated from API and compute",
+    "Deployment paths centralized; snapshot subprocess imports repaired",
+    "Obsolete mesh/fusion rendering removed, current-frame clouds and instance boxes retained",
+    "Current Workbench checks collected under tests/workbench",
+    "Viewer cache hashes conversion dependencies instead of all src modules"
+  ],
+  "summary": {
+    "migrated_paths": 92,
+    "retired_experiment_files": 76,
+    "production_python_modules": 86
+  }
+}

@@ -1,17 +1,15 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import type {SceneAsset,Motion,ObjectFrame,SurfaceFrame,CompleteFrame} from './types';
+import type {SceneAsset,Motion} from './types';
 import {TraceGlyph} from './trace-glyph';
 
 export class Workspace {
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(43,1,.01,50);
  renderer=new THREE.WebGLRenderer({antialias:true});controls:OrbitControls;loader=new GLTFLoader();
  grid=new THREE.GridHelper(12,48,0x395745,0x20382b);root=new THREE.Group();robot?:THREE.Group;geoms=new Map<number,THREE.Object3D>();motion?:Motion;asset?:SceneAsset;
- completeRows:{kind:string;fps:number;frames:CompleteFrame[];nodes:Map<number,THREE.Object3D>;boxes:Map<number,THREE.Box3Helper>}[]=[];
- objectRows:{node:THREE.Object3D;box:THREE.Box3Helper;frames:ObjectFrame[];label:number;surface?:{node:THREE.Mesh;buffer:ArrayBuffer;frames:SurfaceFrame[];fps:number;frame:number;all:boolean;boxes:THREE.Box3Helper[]}}[]=[];
  cloud?:THREE.Points;cloudBuffer?:ArrayBuffer;cloudGeometry?:THREE.BufferGeometry;cloudMaterial?:THREE.ShaderMaterial;cloudFrame=-1;
- paths:TraceGlyph[]=[];errors:THREE.LineSegments[]=[];showCloud=true;showObjects=true;showCompletion=false;showBoxes=true;showTraces=true;showRobot=true;segments=false;orbit=false;
+ paths:TraceGlyph[]=[];errors:THREE.LineSegments[]=[];showCloud=true;showBoxes=true;showTraces=true;showRobot=true;segments=false;orbit=false;
  serial=0;robotSerial=0;currentTime=0;
  instanceBoxes=new Map<string,THREE.Box3Helper>();
  constructor(public host:HTMLElement){
@@ -24,35 +22,15 @@ export class Workspace {
   new ResizeObserver(()=>{const w=host.clientWidth,h=host.clientHeight;if(w<1||h<1)return;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}).observe(host);
  }
  async load(asset:SceneAsset){
-  const token=++this.serial;this.asset=asset;const ground=asset.geometry.ground as {height_m?:number}|undefined;this.grid.position.y=ground?.height_m??0;this.motion=undefined;this.geoms.clear();this.objectRows=[];this.completeRows=[];this.paths=[];this.errors=[];
+  const token=++this.serial;this.asset=asset;const ground=asset.geometry.ground as {height_m?:number}|undefined;this.grid.position.y=ground?.height_m??0;this.motion=undefined;this.geoms.clear();this.paths=[];this.errors=[];
   this.root.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Points||o instanceof THREE.Line||o instanceof THREE.LineSegments){o.geometry.dispose();const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}});this.root.clear();this.showRobot=true;this.showCloud=true;this.instanceBoxes.clear();this.robot=undefined;this.cloudFrame=-1;this.cloud=undefined;this.cloudBuffer=undefined;
   if(asset.cloud){
    const response=await fetch(asset.cloud.url);if(!response.ok)throw new Error('Point-cloud stream unavailable');const buffer=await response.arrayBuffer();if(token!==this.serial)return;
    this.cloudBuffer=buffer;const count=Math.max(...asset.cloud.frames.map(f=>f.count));const geometry=new THREE.BufferGeometry();
    geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(count*3),3));geometry.setAttribute('color',new THREE.BufferAttribute(new Float32Array(count*3),3));geometry.setAttribute('label',new THREE.BufferAttribute(new Float32Array(count),1));
-   const material=new THREE.ShaderMaterial({uniforms:{pointSize:{value:1.5*this.renderer.getPixelRatio()},segments:{value:false},hidden:{value:new THREE.Vector4(-1,-1,-1,-1)}},vertexShader:`attribute vec3 color;attribute float label;varying vec3 vColor;varying float vLabel;uniform float pointSize;void main(){vColor=color;vLabel=label;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);gl_PointSize=pointSize*(label>.5?1.8:1.);}`,fragmentShader:`varying vec3 vColor;varying float vLabel;uniform bool segments;uniform vec4 hidden;void main(){if(any(lessThan(abs(vec4(vLabel)-hidden),vec4(.1))))discard;if(length(gl_PointCoord-vec2(.5))>.5)discard;vec3 c=vColor;if(segments&&vLabel>.5)c=vec3(.65)+.35*cos(6.2831853*(fract(vLabel*.61803398875)+vec3(0.,.333333,.666667)));gl_FragColor=vec4(c,1.0);}`});
+   const material=new THREE.ShaderMaterial({uniforms:{pointSize:{value:1.5*this.renderer.getPixelRatio()},segments:{value:false}},vertexShader:`attribute vec3 color;attribute float label;varying vec3 vColor;varying float vLabel;uniform float pointSize;void main(){vColor=color;vLabel=label;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);gl_PointSize=pointSize*(label>.5?1.8:1.);}`,fragmentShader:`varying vec3 vColor;varying float vLabel;uniform bool segments;void main(){if(length(gl_PointCoord-vec2(.5))>.5)discard;vec3 c=vColor;if(segments&&vLabel>.5)c=vec3(.65)+.35*cos(6.2831853*(fract(vLabel*.61803398875)+vec3(0.,.333333,.666667)));gl_FragColor=vec4(c,1.0);}`});
    this.cloudGeometry=geometry;this.cloudMaterial=material;this.cloud=new THREE.Points(geometry,material);this.cloud.frustumCulled=false;this.root.add(this.cloud);
   }
-  await Promise.all(asset.objects.map(async object=>{
-   const [gltf,frames]=await Promise.all([this.loader.loadAsync(object.mesh_url),fetch(object.track_url).then(r=>r.json())]);if(token!==this.serial)return;
-   gltf.scene.traverse(o=>{if(o instanceof THREE.Mesh){const m=o.material as THREE.MeshStandardMaterial;m.metalness=0;m.roughness=.85;m.side=THREE.DoubleSide;}});
-   const box=new THREE.Box3Helper(new THREE.Box3(),object.semantic_label===1?0xe7b968:0x6ed7d0);this.root.add(gltf.scene,box);
-   let surface;
-   if(object.observed_surface){
-    const response=await fetch(object.observed_surface.url);if(!response.ok)throw new Error('Observed object surfaces unavailable');const buffer=await response.arrayBuffer();if(token!==this.serial)return;
-    const node=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide}));node.frustumCulled=false;this.root.add(node);
-    const boxes=Array.from({length:Math.max(...object.observed_surface.frames.map(row=>row.boxes?.length||0))},()=>new THREE.Box3Helper(new THREE.Box3(),object.semantic_label===1?0xe7b968:0x6ed7d0));boxes.forEach(box=>this.root.add(box));
-    surface={node,buffer,frames:object.observed_surface.frames,fps:object.observed_surface.fps,frame:-1,all:!!object.observed_surface.all_instances,boxes};
-   }
-   this.objectRows.push({node:gltf.scene,box,frames,label:object.semantic_label,surface});
-  }));
-  await Promise.all((asset.completed_assets||[]).map(async row=>{
-   const [gltf,frames]=await Promise.all([this.loader.loadAsync(row.model_url),fetch(row.track_url).then(r=>r.json()) as Promise<CompleteFrame[]>]);if(token!==this.serial)return;
-   gltf.scene.traverse(o=>{if(o instanceof THREE.Mesh){const m=o.material as THREE.MeshStandardMaterial;m.roughness=.8;m.metalness=0;m.side=THREE.DoubleSide;}});
-   const nodes=new Map<number,THREE.Object3D>(),boxes=new Map<number,THREE.Box3Helper>();const ids=new Set(frames.flatMap(frame=>frame.instances.map(instance=>instance.id)));
-   for(const id of ids){const node=gltf.scene.clone(true);node.matrixAutoUpdate=false;node.visible=false;nodes.set(id,node);const box=new THREE.Box3Helper(new THREE.Box3(),0x9dbb83);box.visible=false;boxes.set(id,box);this.root.add(node,box);}
-   this.completeRows.push({kind:row.kind,fps:row.fps,frames,nodes,boxes});
-  }));
   for(const frame of asset.segmented_instances?.frames||[])for(const item of frame.instances)if(!this.instanceBoxes.has(item.id)){const color=new THREE.Color().fromArray([0,1/3,2/3].map(offset=>.65+.35*Math.cos(2*Math.PI*((item.semantic_label*.61803398875)%1+offset))));const box=new THREE.Box3Helper(new THREE.Box3(),color);box.visible=false;this.instanceBoxes.set(item.id,box);this.root.add(box);}
   if(token===this.serial)this.focus(asset.robots.length?'task':'objects');
  }
@@ -72,7 +50,7 @@ export class Workspace {
   if(values?.length){const frame=Math.min(values.length-1,Math.floor(this.currentTime*(this.motion?.fps??30)));center=new THREE.Vector3(...values[frame][0] as [number,number,number]).add(new THREE.Vector3(...values[frame][1] as [number,number,number])).multiplyScalar(.5);}
   if(mode==='hands'&&this.motion){const frame=Math.min(this.motion.frames-1,Math.floor(this.currentTime*this.motion.fps));const hands=this.motion.tracking.actual[frame];center=new THREE.Vector3(...hands[0] as [number,number,number]).add(new THREE.Vector3(...hands[1] as [number,number,number])).multiplyScalar(.5);const span=Math.max(.20,new THREE.Vector3(...hands[0] as [number,number,number]).distanceTo(new THREE.Vector3(...hands[1] as [number,number,number])));this.camera.position.copy(center).add(new THREE.Vector3(-.6,.4,-1).multiplyScalar(span*1.7));}
   else if(mode==='objects'){
-   const bounds=new THREE.Box3();const segmented=this.asset?.segmented_instances;if(segmented){const frame=segmented.frames[Math.min(segmented.frames.length-1,Math.floor(this.currentTime*segmented.fps))];for(const item of frame.instances){bounds.expandByPoint(new THREE.Vector3(...item.bounds[0]));bounds.expandByPoint(new THREE.Vector3(...item.bounds[1]));}}if(this.showCompletion)for(const row of this.completeRows){const f=row.frames[Math.min(row.frames.length-1,Math.floor(this.currentTime*row.fps))];for(const item of f.instances){bounds.expandByPoint(new THREE.Vector3(...item.bounds[0]));bounds.expandByPoint(new THREE.Vector3(...item.bounds[1]));}}if(!this.showCompletion||!this.completeRows.length)for(const object of this.objectRows){const frames=object.surface?.frames||object.frames;const row=frames[Math.min(frames.length-1,Math.floor(this.currentTime*15))];if(row.bounds){bounds.expandByPoint(new THREE.Vector3(...row.bounds[0]));bounds.expandByPoint(new THREE.Vector3(...row.bounds[1]));}}
+   const bounds=new THREE.Box3();const segmented=this.asset?.segmented_instances;if(segmented){const frame=segmented.frames[Math.min(segmented.frames.length-1,Math.floor(this.currentTime*segmented.fps))];for(const item of frame.instances){bounds.expandByPoint(new THREE.Vector3(...item.bounds[0]));bounds.expandByPoint(new THREE.Vector3(...item.bounds[1]));}}
    if(bounds.isEmpty()&&this.asset?.source_camera){
     // With no object mask, start at the recorded camera rather than world origin.
     // This changes the display viewpoint only; source points and poses stay intact.
@@ -100,29 +78,7 @@ export class Workspace {
   }
   this.instanceBoxes.forEach(box=>box.visible=false);const segmented=this.asset?.segmented_instances;
   if(segmented){const row=segmented.frames[Math.min(segmented.frames.length-1,Math.floor(time*segmented.fps))];for(const item of row.instances){const box=this.instanceBoxes.get(item.id);if(!box)continue;box.visible=this.showBoxes;box.box.min.fromArray(item.bounds[0]);box.box.max.fromArray(item.bounds[1]);}}
-  const hidden:number[]=[];
-  for(const object of this.objectRows){const f=object.frames[Math.min(object.frames.length-1,Math.floor(time*15))];object.node.visible=!this.completeRows.length&&this.showObjects&&this.showCompletion&&f.status==='observed'&&!!f.matrix;object.box.visible=!(this.completeRows.length&&this.showCompletion)&&this.showBoxes&&f.status==='observed'&&!!f.bounds;
-   if(f.matrix){object.node.matrixAutoUpdate=false;object.node.matrix.fromArray(f.matrix.flat()).transpose();object.node.matrixWorldNeedsUpdate=true;}
-   if(f.bounds){object.box.box.min.fromArray(f.bounds[0]);object.box.box.max.fromArray(f.bounds[1]);}
-   let observedVisible=false;
-   if(object.surface){const surface=object.surface,index=Math.min(surface.frames.length-1,Math.floor(time*surface.fps)),row=surface.frames[index];
-    observedVisible=this.showObjects&&!this.showCompletion&&row.faces>0;surface.node.visible=observedVisible;
-    if(index!==surface.frame){
-     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(surface.buffer,row.positions,row.vertices*3),3));
-     geometry.setAttribute('color',new THREE.BufferAttribute(new Uint8Array(surface.buffer,row.colors,row.vertices*3),3,true));geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(surface.buffer,row.indices,row.faces*3),1));surface.node.geometry.dispose();surface.node.geometry=geometry;surface.frame=index;
-    }
-    if(!this.showCompletion){object.box.visible=!row.boxes&&this.showBoxes&&!!row.bounds&&row.faces>0;if(row.bounds){object.box.box.min.fromArray(row.bounds[0]);object.box.box.max.fromArray(row.bounds[1]);}}
-    surface.boxes.forEach((box,j)=>{const entry=row.boxes?.[j];box.visible=this.showBoxes&&!this.showCompletion&&!!entry;if(entry){box.box.min.fromArray(entry.bounds[0]);box.box.max.fromArray(entry.bounds[1]);}});
-    if(observedVisible&&surface.all)hidden.push(object.label+2);
-   }
-   if(object.node.visible||observedVisible)hidden.push(object.label);
-  }
-  for(const row of this.completeRows){
-   row.nodes.forEach(node=>node.visible=false);row.boxes.forEach(box=>box.visible=false);
-   const frame=row.frames[Math.min(row.frames.length-1,Math.floor(time*row.fps))];
-   if(this.showCompletion&&this.showObjects){for(const item of frame.instances){const node=row.nodes.get(item.id)!;node.visible=true;node.matrix.fromArray(item.matrix.flat()).transpose();node.matrixWorldNeedsUpdate=true;const box=row.boxes.get(item.id)!;box.visible=this.showBoxes;box.box.min.fromArray(item.bounds[0]);box.box.max.fromArray(item.bounds[1]);}const label=this.asset?.objects.find(o=>o.label===row.kind)?.semantic_label;if(label!==undefined)hidden.push(label);}
-  }
-  if(this.cloud)this.cloud.visible=this.showCloud;if(this.cloudMaterial){this.cloudMaterial.uniforms.segments.value=this.segments;this.cloudMaterial.uniforms.hidden.value.set(hidden[0]??-1,hidden[1]??-1,hidden[2]??-1,hidden[3]??-1);}
+  if(this.cloud)this.cloud.visible=this.showCloud;if(this.cloudMaterial)this.cloudMaterial.uniforms.segments.value=this.segments;
   this.controls.autoRotate=this.orbit;this.controls.autoRotateSpeed=.35;this.controls.update();this.renderer.render(this.scene,this.camera);
   return frame;
  }

@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def test_explicit_gpu_lease_is_not_replaced_by_parent_device(tmp_path, monkeypatch):
-    source=Path(__file__).parents[1]/"experiments/manipulation4d/egoallo_runtime.py"
+    source=Path(__file__).parents[1]/"src/arenalab_workbench/egoallo_runtime.py"
     spec=importlib.util.spec_from_file_location("tested_egoallo_runtime",source)
     runtime=importlib.util.module_from_spec(spec);spec.loader.exec_module(runtime)
     (tmp_path/"deps/jax_plugins").mkdir(parents=True)

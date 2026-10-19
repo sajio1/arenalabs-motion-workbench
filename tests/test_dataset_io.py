@@ -8,16 +8,15 @@ import zipfile
 import numpy as np
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[1] / 'experiments/manipulation4d'))
-from dataset_io import storage
-from dataset_io.ingest import unpack, validate_normalized
+from arenalab_workbench.dataset_io import storage
+from arenalab_workbench.dataset_io.ingest import unpack, validate_normalized
 
 
 @pytest.fixture
 def package(tmp_path):
     root = tmp_path / 'package'
     root.mkdir()
-    subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'color=c=gray:s=64x48:r=30', '-frames:v', '3', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', str(root/'original.mp4')], check=True)
+    subprocess.run([__import__('imageio_ffmpeg').get_ffmpeg_exe(), '-v', 'error', '-f', 'lavfi', '-i', 'color=c=gray:s=64x48:r=30', '-frames:v', '3', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', str(root/'original.mp4')], check=True)
     camera = np.repeat(np.eye(4)[None], 3, 0)
     camera[:, 2, 3] = 1.6
     np.savez(root/'observations.npz', timestamps_s=np.arange(3)/30, wrist_position=np.zeros((3, 2, 3)), camera_to_world=camera, ee_rotation=np.broadcast_to(np.eye(3), (3, 2, 3, 3)), intrinsic=np.array([[50,0,32],[0,50,24],[0,0,1]]))
@@ -60,7 +59,7 @@ def test_workspace_isolation_and_upload(package, tmp_path, monkeypatch):
     from fastapi import FastAPI, Request
     from fastapi.testclient import TestClient
     from fastapi.staticfiles import StaticFiles
-    from dataset_io.routes import attach_dataset_routes, protect_uploaded_assets, require_scene
+    from arenalab_workbench.dataset_io.routes import attach_dataset_routes, protect_uploaded_assets, require_scene
     import threading
     monkeypatch.setattr(storage, 'ROOT', tmp_path/'runtime')
     monkeypatch.setattr(storage, 'STORE', tmp_path/'store')

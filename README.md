@@ -71,15 +71,18 @@ npm run build
 
 These commands install/build the core package and UI. They do **not** download
 weights or prepare a complete cloud installation. Follow the deployment section
-in the [workbench guide](docs/workbench-guide.md); several production worker
-paths still assume the documented Linux layout. This is not yet a portable
+in the [workbench guide](docs/workbench-guide.md); deployment paths are configured centrally in
+`src/arenalab_workbench/settings.py` with environment overrides. This is not yet a portable
 one-command installer or a published Docker image.
+
+See the [cleanup and migration notes](docs/workbench-cleanup.md) for the package
+move, retired implementations and deployment entry-point change.
 
 ## Repository map
 
 | Path | Responsibility |
 |---|---|
-| `experiments/manipulation4d/` | Current workbench coordinator, adapters, human windows, perception, rendering, exports |
+| `src/arenalab_workbench/` | Current workbench coordinator, adapters, human windows, perception, rendering, exports |
 | `src/greenwich_pipelines/input_policy.py` | Shared six-point visibility mask |
 | `src/greenwich_pipelines/frame_cache.py` | Exact-code reuse of streamed AlphaMotion outputs |
 | `src/greenwich_pipelines/pipelines/fullbody/` | Native full-body decoder/projection and original refinement |
@@ -93,8 +96,8 @@ one-command installer or a published Docker image.
 The original standalone Nymeria/Gento CLI adapters remain available for legacy
 experiments; their historical endpoint policies are not the current web
 workbench path. See [legacy runtime notes](docs/legacy-runtime-guide.md).
-Existing research scripts are retained as history, not advertised as extra
-user-facing generation routes.
+Retired reconstruction and video-finger experiments live in Git history; they
+are not shipped as alternative production routes.
 
 ## Models, licensing and data
 

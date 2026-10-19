@@ -5,8 +5,7 @@ from types import SimpleNamespace
 
 import torch
 
-sys.path.insert(0, str(Path(__file__).parents[1] / 'experiments/manipulation4d'))
-from sam_features import ImageFeatureCache, feature_bytes
+from arenalab_workbench.sam_features import ImageFeatureCache, feature_bytes
 
 
 class Nested:

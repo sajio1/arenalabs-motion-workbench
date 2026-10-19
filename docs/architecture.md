@@ -1,28 +1,80 @@
-# 架构与调用边界
+# Production architecture
 
-统一的是组织、配置、生命周期和输出索引，不强行统一不同任务的数学目标。
+The production application is `arenalab_workbench`. Start it explicitly with
+`arena-workbench --config /path/to/viewer.cloud.json`, or
+`python -m arenalab_workbench`. Importing the entry point does not start a server.
+The native `greenwich-pipelines` command remains a separate, supported batch
+interface; its legacy Nymeria/Gento solvers are not the web human-prior route.
 
-```mermaid
-flowchart LR
-  J[Job JSON] --> C[配置与机械 roster]
-  C --> W[独立 Worker]
-  W --> F[Fullbody: 全身源格式适配]
-  W --> N[Nymeria: 30Hz 四端点与接触]
-  W --> G[Gento: 双腕 TCP 与头参考]
-  F --> M[共享 Greenwich Prime]
-  N --> M
-  G --> M
-  M --> RF[接触100 + 协调100]
-  M --> RN[V3 物理关节/root 求解]
-  M --> RG[混合关节/固定底盘时序求解]
-  RF --> O[原始 prior + 原生结果 + 统一索引]
-  RN --> O
-  RG --> O
-  O --> A[可选自定义验收]
-```
+## Generation flow
 
-新增机器人由 roster 和机械元数据提供，不新增某机器人专属 solver。各任务在隔离进程中执行，避免 Gento 历史模块的路径与状态在并发任务中互相覆盖。文件写入先写临时 JSON 再替换；新任务目录禁止复用。
+1. Dataset adapters normalize the source camera/head and observed end effectors
+   onto a shared 30 Hz clock. EgoDex keeps observed finger landmarks for Wuji;
+   Nymeria requests no dexterous hand. UMI and real robot inputs keep the camera
+   and two gripper housing poses, excluding recorded body/pelvis/leg state.
+2. `body_prior`, `gripper_body`, `body_inference` and `run_egoallo_windowed`
+   produce immutable human assets. EgoAllo keeps 30 sampling rounds, inner and
+   post guidance, GPU JAX and its persistent compilation cache. Fixed windows
+   overlap; padding is excluded from output. Raw priors retain their SHA256.
+3. `window_robot_stream`, `retarget_robot` and `gripper_retarget` consume the
+   six-point conditioning policy: head, pelvis, two hands and two feet.
+   Robot refinement still follows original observed palm/gripper targets.
+   A cached human asset can feed multiple robots without resampling the body.
+4. `scene_job` runs DA3 depth and Qwen discovery/SAM segmentation as independent
+   GPU branches. SAM masks project into DA3 points, retaining semantic labels,
+   instances and 3D boxes. The viewer renders the current source frame only.
+5. Robot FOV rendering/inpainting and optional contact estimates finish their
+   own modalities. `progressive_job` publishes motion, then scene, then FOV and
+   contact readiness; partial perception completion never completes a robot job.
+6. `dataset_io` owns normalized uploads, workspace authorization, immutable
+   exports and portable dataset readers. Ownership guards also protect files.
 
-fullbody 直接调用迁入的 Python backend，移除 PowerShell/local-paths 启动依赖。保留 SDK 格式与数值实现。Nymeria 从实际批处理使用的 target-body completion + V3 physical posture 路线迁入，不混入旧 V22 latent 修订。Gento 从 reuse_wrist_alignment 的真实调用迁入，保留公共 0.10m 目标前移与 0.05m 场景后退，报告这些配准量，不伪称原绝对世界位置。
+`full_job` and `gripper_job` orchestrate these stages. `gpu_scheduler` provides
+cross-process GPU leases and resource locks; model workers run in isolated
+interpreters. `scene_job` snapshots a complete importable worker package into
+its private job, so qualified imports cannot accidentally use live modules.
+The scene cache hashes its relevant workers and configuration, independently
+of robot output. Viewer conversion fingerprints follow conversion dependencies
+and policy files instead of hashing every web/API module in `src`.
 
-仓库内保留推理源码和小型骨架描述器；权重、私有源语料和人形 vendor 大模型资产由配置指向外部。Gento 已使用的 vendor 几何在 assets 内，路径改为相对路径。数据许可证不会因文件整合而改变。
+## Module boundaries
+
+| Module | Responsibility |
+|---|---|
+| `serve_workbench`, `workbench_api`, `dataset_io.routes`, `trajectory_height` | HTTP entry and request validation |
+| `robot_registry`, `gripper_registry`, `height_registry`, `dataset_io.storage` | Shared registries and ownership; no compute-to-API imports |
+| `full_job`, `gripper_job`, `progressive_job`, `scene_job` | Task orchestration, publication and immutable snapshots |
+| `body_*`, `window_*`, `run_egoallo*`, `transfer_smplx` | Human prior and time-aligned window processing |
+| `retarget_robot`, `gripper_retarget`, `refine_operation`, `support_reference` | Shared robot conversion and physical metadata |
+| `scene_inference`, `segment_*`, `sam_*`, `export_scene_cloud` | Current-frame perception |
+| `render_recording`, `gripper_render`, `mobile_render_*` | Robot preview and source-camera composites |
+| `settings` | Deployment paths and subprocess Python paths |
+| `audit_*`, `prebuild_smpl`, `smpl_library`, `prepare_nymeria_*` | Explicit maintenance commands, never automatic on import |
+
+## Deployment configuration
+
+The previous Linux layout remains the default for compatibility. Set
+`ARENA_WORKBENCH_ROOT`, `ARENA_STORE`, `ARENA_CONFIG_DIR`, `ARENA_SOURCE_ROOT`,
+`ARENA_EGOALLO_ROOT`, `ARENA_DA3_ROOT`, `ARENA_SAM_ROOT`, `ARENA_SAM_WEIGHTS`,
+`ARENA_JAX_ROOT`, `ARENA_UMI_CALIBRATION` and the interpreter overrides
+`ARENA_MOTION_PYTHON`, `ARENA_SCENE_PYTHON`, `ARENA_EGOALLO_PYTHON`,
+`ARENA_DA3_PYTHON` as needed. The Linux GPU scheduler uses POSIX locks. Install
+this package in each runtime or supply its `src` directory on `PYTHONPATH`.
+Weights, vendor packages, licensed body templates and private recordings remain
+external; configuring a path never downloads or starts anything.
+
+No archived implementation is imported from `experiments`. Abandoned historical
+background fusion, object mesh completion, WiLoR/video-finger recovery, old
+contact estimators and `/umi-height` were removed. Their versions remain in Git.
+The single production `body_frames` implementation and EgoAllo license were
+preserved. This cleanup changes organization, not model weights or solver math.
+
+## Verification
+
+Run `python -m pytest` from the repository, then `npm run build` and `npm test`
+inside `web`. All maintained Workbench checks live in `tests/workbench`; no
+production test script executes during collection. Linux media tests require
+`ffmpeg` and `ffprobe` on `PATH`. Two private integration checks are opt-in via
+`ARENA_PRIVATE_INTEGRATION=1` on a configured compute host; they require the
+registered source recording and robot assets. Pure unit checks need no weights.
+A working test suite does not certify physical feasibility of robot motion.

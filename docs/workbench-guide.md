@@ -4,7 +4,7 @@ This guide describes the current six-point web pipeline, as inspected on
 2026-10-18. The repository also contains older standalone CLI pipelines and
 research scripts. Their existence does not mean the website uses their old
 endpoint policies. The production entry is
-`experiments/manipulation4d/serve_workbench.py`.
+`src/arenalab_workbench/serve_workbench.py`.
 
 ## 1. What this system produces
 
@@ -249,7 +249,7 @@ not a claim that every worker supports arbitrary relocation:
     runtime-jax061/     isolated CUDA plugins/cuDNN and persistent JAX cache
   da3/venv/             pinned DA3 environment
   manipulation4d/
-    code/manipulation4d/ current workbench modules
+    (production code is installed at /opt/arenalab/src/arenalab_workbench)
     venv/               SAM/Qwen/rendering and dataset packaging runtime
     sam3/               separately installed upstream SAM source
     sam31-weights/      authorized SAM 3.1 weights
@@ -282,7 +282,7 @@ not a claim that every worker supports arbitrary relocation:
    are required; arbitrary URDF upload cannot infer missing physical metadata.
 6. Install the workbench modules and upstream resources at the documented layout,
    or explicitly refactor and test hard-coded paths before relocating them.
-   Search with `rg '/opt/arenalab|/home/ubuntu' experiments/manipulation4d src`.
+   Use the deployment overrides in `settings.py`; individual workers must not add server paths.
 7. Run `serve_workbench.py` using the API environment, bound to loopback. Its
    current config path is `/opt/arenalab/configs/viewer.cloud.json`.
    Manage it with systemd or your own supervisor. Restarting interrupts active

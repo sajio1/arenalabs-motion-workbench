@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "greenwich-motion-pipelines"
 version = "0.1.0"
-description = "Unified full-body, four-endpoint and wheeled-upper-body Greenwich pipelines"
+description = "Multimodal human-to-robot motion generation and workbench"
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.24", "scipy>=1.10"]
 
@@ -16,8 +16,12 @@ dataset = ["pyarrow>=17", "pandas>=2", "opencv-python", "fastapi>=0.115", "pytho
 viewer = ["fastapi>=0.115", "uvicorn>=0.30", "python-multipart>=0.0.18", "mujoco>=3.2", "trimesh", "imageio-ffmpeg"]
 
 [project.scripts]
+arena-workbench = "arenalab_workbench.serve_workbench:main"
 greenwich-pipelines = "greenwich_pipelines.cli:main"
 greenwich-motion-lab = "greenwich_pipelines.viewer.server:main"
+
+[tool.setuptools]
+license-files = ["NOTICE.md", "third_party/licenses/EGOALLO_LICENSE", "third_party/fullbody-sdk/NOTICE.md", "third_party/nymeriaplus/LICENSE"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

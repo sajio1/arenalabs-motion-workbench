@@ -1,8 +1,7 @@
 from pathlib import Path
 import sys
 import pytest
-sys.path.insert(0,str(Path(__file__).parents[1]/'experiments/manipulation4d'))
-from tracking_recovery import propagate_resilient
+from arenalab_workbench.tracking_recovery import propagate_resilient
 
 
 class Predictor:
