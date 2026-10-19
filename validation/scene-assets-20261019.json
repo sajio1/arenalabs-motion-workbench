@@ -1,0 +1,81 @@
+{
+  "status": "experimental_only_not_adopted",
+  "source_frames": 266,
+  "source_seconds": 8.866666666666667,
+  "scene_frames": 133,
+  "scene_fps": 15,
+  "source_camera_export_max_array_difference": 0.0,
+  "permanent_asset_bytes": 7793692,
+  "static_spz_bytes": 447647,
+  "original_video_bytes": 5358928,
+  "object_meshes": 12,
+  "segmentation_ids": 16,
+  "geometry_seconds": 136.98732747510076,
+  "objects_seconds": 9.942209254018962,
+  "splats_worker_seconds": 15.956107537029311,
+  "splats_fit_and_encode_seconds": 7.292865090072155,
+  "splats_gaussians": 34002,
+  "splats_iterations": 1000,
+  "source_render": {
+    "returncode": 0,
+    "seconds": 8.567127003800124
+  },
+  "lower_render": {
+    "returncode": 0,
+    "seconds": 8.366807971149683
+  },
+  "mask_reused": true,
+  "sam_qwen_motion_rerun": false,
+  "contact_excluded": true,
+  "weights_finetuned": false,
+  "main_page_changed": false,
+  "production_cache_modified": false,
+  "validation": {
+    "visual_review": "failed adoption: incomplete objects, alignment errors, lower-camera coverage holes",
+    "metric_pose_ground_truth": false,
+    "customer_urdf_rendering": false,
+    "complete_lerobot_join": false,
+    "hour_long_streaming": false,
+    "genuine_nonoverlap_loop_closure": false
+  },
+  "model_provenance": {
+    "repo": "facebook/map-anything-apache",
+    "revision": "00f9c245bbcb60522d1ed7f9e9d88462c6e3f38a"
+  },
+  "remaining": [
+    "object identity/pose tracking and complete-object reconstruction",
+    "held-out novel-view validation",
+    "streaming host-side geometry for long videos",
+    "full LeRobot join and URDF mesh-pose binding",
+    "scheduled delivery expiry not installed"
+  ],
+  "cpu_regression_tests": "22 passed on final tested snapshot",
+  "local_new_tests": "13 passed on Windows",
+  "parameter_roundtrip": "all archived SMPL-X arrays equal original dtype/shape/values",
+  "deliveries": {
+    "source": {
+      "total_bytes": 19336751,
+      "frames": 133,
+      "point_budget": 4096,
+      "depth_dtype": "uint16"
+    },
+    "lower": {
+      "total_bytes": 17293874,
+      "frames": 133,
+      "point_budget": 4096,
+      "depth_dtype": "uint16"
+    }
+  },
+  "code_snapshot_sha256": "recorded separately: code-v6.tar.gz",
+  "final_render_segmentation": "uint16 per-pixel and per-point instance IDs verified",
+  "final_code_sha256": "e8077f09151836aad3e972353a17a1e0a4be5a345f3c69dae64cd43c7dc3bd42",
+  "core_runtime_versions": [
+    "gsplat==1.5.3",
+    "numpy==1.26.4",
+    "open3d==0.19.0",
+    "pyarrow==25.0.1",
+    "torch==2.7.0",
+    "trimesh==5.1.1",
+    "zarr==2.18.3"
+  ]
+}
