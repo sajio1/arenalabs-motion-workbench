@@ -3,7 +3,7 @@
 The workbench uses one generation path for uploaded recordings and presets:
 observed head + hands/end effectors → windowed EgoAllo/SMPL-X → six-point
 AlphaMotion (pelvis, head, both hands, both feet) → original robot refinement.
-DA3, Qwen/SAM 3.1, FOV compositing and contact estimation remain independent
+Depth inference, Qwen/SAM 3.1, FOV compositing and contact estimation remain independent
 saved stages. Downloading an episode runs no inference.
 
 ## Upload contract
@@ -78,13 +78,18 @@ success. Mixed hinge/slide joint units remain explicit in the extension manifest
 `extensions/arenalabs/` retains the complete playback, robot asset, point cloud,
 semantic instance tracks and boxes, contact/proximity JSON (including nulls,
 evidence and native sampling rate), semantic labels, camera calibration,
-raw DA3 depth/confidence, lossless SAM masks and saved human motion. Model
+native depth/confidence/camera predictions, lossless SAM masks and saved human motion. Model
 templates, licensed checkpoints, credentials and unrelated recordings are
 excluded by an explicit allowlist. Missing stages are declared as missing.
 
 `frame_map.parquet` links 30 Hz frames to actual cloud observations (normally
 15 Hz); no cloud or contact measurements are fabricated between samples.
-Use the included `read_extensions.py` to load native cloud buffers. Masks
+Use the included `read_extensions.py` to load legacy cloud buffers or reconstruct
+points from the new compressed RGB-D bundle. `cloud_at(dataset, frame_index,
+maximum_points=4096)` samples on demand; no neural decoder is needed. New geometry
+uses uint16 mm Zarr, aligned RGB proxy video, RLE labels and camera Parquet.
+Original float32 model depth and calibration predictions remain in `raw/`.
+Masks
 retain their prepared image pixel space and source frame indices; camera and
 display transforms remain in `scene.json`. A 3D box bounds the visible estimated
 surface, not an inferred complete physical asset. Contact estimates are not

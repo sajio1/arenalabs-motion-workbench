@@ -34,8 +34,9 @@ the target robot reuses the saved human prior and scene estimates.
 Video + measured head/camera and bilateral hand/gripper trajectories
     ├── windowed EgoAllo (CUDA PyTorch + CUDA JAX) → SMPL-H → SMPL-X
     │       → six-point AlphaMotion → original robot refinement → joint states
-    └── video frames → DA3 depth + Qwen object proposals → SAM 3.1 masks
-            → current-frame segmented point cloud and 3D visible-surface boxes
+    └── video frames + optical camera poses → MapAnything depth
+            + Qwen object proposals → SAM 3.1 masks
+            → compressed RGB-D + RLE / cameras → on-demand cloud and 3D boxes
 Robot motion + camera + masks + depth → synthetic robot arm/hand FOV composite
 Observed hands + video / object points → contact estimates / proximity indices
 Saved modalities → LeRobot v3 episode + lossless ArenaLabs extension ZIP
@@ -58,13 +59,13 @@ The current browser workspace cookie is not a full account or quota system.
 
 Core Python code requires Python 3.10+ and CUDA for the full-body model. The
 current complete cloud deployment uses separate environments for the API,
-EgoAllo/JAX, DA3 and SAM/Qwen/rendering. Do not install all model dependencies
+EgoAllo/JAX, MapAnything, optional DA3 and SAM/Qwen/rendering. Do not install all model dependencies
 into one environment and assume they are compatible.
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[runtime,viewer,dataset,test]"
+python -m pip install -e ".[runtime,viewer,dataset,geometry,test]"
 python -m greenwich_pipelines list
 cd web
 npm ci

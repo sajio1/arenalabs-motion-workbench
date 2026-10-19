@@ -12,7 +12,7 @@ An input recording becomes a synchronized robot manipulation episode with:
 
 - generated robot joint positions and next-frame kinematic action references;
 - a reconstructed human body prior, reusable across target embodiments;
-- current-frame DA3 point clouds, SAM instance masks and visible-surface boxes;
+- camera-conditioned MapAnything current-frame point clouds, SAM instance masks and visible-surface boxes;
 - task/object semantic annotations proposed by Qwen;
 - the original head/camera video and available wrist videos;
 - a synthetic first-person view with the selected robot's own arms and hands;
@@ -113,8 +113,9 @@ The scene branch can run while body reconstruction runs on another GPU.
 1. Decode source video according to its actual clock. Nymeria rectifies the
    recorded fisheye view before pinhole depth inference and uses calibrated
    head/device/camera transforms.
-2. Run DA3 `depth-anything/DA3NESTED-GIANT-LARGE-1.1` at the current configured
-   resolution. The normal visualization clock is 15 Hz, with source frame ids.
+2. Run MapAnything `facebook/map-anything-apache` in bounded overlapping windows
+   with available optical poses/intrinsics. The geometry clock is 15 Hz, with
+   source frame IDs. DA3 is retained as an explicit comparison backend.
 3. Qwen proposes visible manipulable objects and semantic descriptions. Proposal
    text and evidence are retained. It does not prove an object is correctly named.
 4. SAM 3.1 produces temporal instance masks. Independent category groups can
@@ -130,10 +131,10 @@ old depth layers, reconstruct hidden object backs or display completed object
 meshes. Camera calibration and depth scale are separate sources of error;
 low robot hand-reference error does not establish scene alignment.
 
-Measured-camera clips use calibrated batches with shared anchors. The fallback
-without measured camera poses uses a joint uncalibrated prediction; independent
-unregistered depth batches would introduce inconsistent scale. This fallback
-can consume substantially more memory for long recordings.
+Camera-conditioned clips keep one source-world gauge across windows. Without
+camera poses only one bounded window is supported, avoiding unrelated gauges.
+See [depth/storage contract](point-cloud-direction.md) for calibration limits,
+immutable native predictions and on-demand points from compressed RGB-D.
 
 ## 5. FOV compositing and contact
 
@@ -141,7 +142,7 @@ Native arm membership comes from the robot tree; meshes and playback must bind
 exactly. Dummy original hands are excluded when a replacement hand is attached.
 EGL/OpenGL renders the robot through the source camera. SAM foreground masks
 remove the source human/hardware and retain appropriate object occlusions.
-DA3 supplies estimated scene depth for compositing.
+The shared depth store supplies estimated scene depth for compositing.
 
 The background fill is currently OpenCV **Telea CPU inpainting**, not a learned
 video inpainting network. SAM is the mask provider. Identical source image/mask
@@ -166,7 +167,7 @@ Caches have distinct scopes:
 | Asset | Shared across | Identity/provenance |
 |---|---|---|
 | Human prior | Target robots | Observation/window/floor policy and saved hashes |
-| DA3 / semantic / SAM scene | Target robots | Source frames, model/policy, worker hashes |
+| Depth / semantic / SAM scene | Target robots | Source frames, model/policy, worker hashes |
 | SAM category | Matching frame/category requests | Pixel, prompt, model and worker identity |
 | FOV background fill | Target robots | Exact image/mask bytes and fill implementation |
 | Robot decode | Matching target/frame/code | Model descriptor, codes and time |
@@ -269,7 +270,8 @@ not a claim that every worker supports arbitrary relocation:
 2. Clone the code and install the core package as described in the README.
    Build the frontend with `npm ci && npm run build`; deploy its `dist/` content
    under the configured `/web/` asset route. Preserve runtime logos/navigation assets.
-3. Prepare separate upstream environments for EgoAllo/JAX, DA3 and SAM/Qwen.
+3. Prepare separate upstream environments for EgoAllo/JAX, MapAnything and SAM/Qwen;
+   keep DA3 separately only when using the comparison backend.
    Follow those projects' installation instructions and validate actual CUDA
    execution. The optional dependency groups in this repository are not a
    complete environment lock for every upstream project.

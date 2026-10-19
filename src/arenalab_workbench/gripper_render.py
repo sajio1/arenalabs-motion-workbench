@@ -18,7 +18,8 @@ def run(work,rid,dest):
  playback=json.loads((folder/'playback.json').read_text());selected=json.loads((folder/'render-layout.json').read_text())['arm_and_gripper_geoms'];model=trimesh.load(folder/'model.glb',force='scene')
  # NpzFile does not cache decompressed members: archive['depth'][frame] would
  # inflate the entire sequence on every rendered frame. Keep only needed arrays.
- with np.load(scene_path/'depth.npz') as saved:depth={key:saved[key] for key in ['depth','intrinsics','ids']}
+ from arenalab_workbench.depth_store import load as load_depth
+ depth=load_depth(scene_path)
  with np.load(scene_path/'cameras.npz') as saved:K=saved['intrinsic'];poses=saved['poses']
  n=playback['frames'];p=np.array(playback['positions']);rot=R.from_quat(np.array(playback['quaternions']).reshape(-1,4)).as_matrix().reshape(n,-1,3,3)
  render=pyrender.Scene(bg_color=[0,0,0,0],ambient_light=[.65]*3);nodes=[]
@@ -49,6 +50,8 @@ def run(work,rid,dest):
   observed=cv2.warpPerspective(depth['depth'][di],K@np.linalg.inv(depth['intrinsics'][di]),(960,540));mask=cv2.dilate(human[di].astype('u1'),np.ones((5,5),'u1'));keep=(z>0)&~((observed>.03)&(z>observed+.012)&(mask==0));composite=cv2.cvtColor(inpaint(work,img,mask*255),cv2.COLOR_BGR2RGB);composite[keep]=rgba[keep,:3];writer.append_data(composite);pixels.append(int(keep.sum()))
  writer.close();cap.release();renderer.delete();(dest/(rid+'-arm-view-v1.tmp.mp4')).replace(dest/(rid+'-arm-view-v1.mp4'));from arenalab_workbench.gpu_scheduler import merge_scene
  def update_scene(scene):
+  info=json.loads((scene_path/'depth.json').read_text())
+  scene.setdefault('patch_depth_policy',{})[rid]=info.get('policy',info.get('model','unknown'))
   scene.setdefault('patch_kinds',{})[rid]='estimated_camera_composite' if (scene_path/'camera-calibration.json').exists() else 'source_camera_composite'
   scene.setdefault('patch_videos',{})[rid]='/assets/'+(dest/(rid+'-arm-view-v1.mp4')).relative_to(str(paths.store)).as_posix()
   scene.get('patch_unavailable',{}).pop(rid,None)

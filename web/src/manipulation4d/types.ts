@@ -2,7 +2,7 @@ export type Vec3=[number,number,number];
 export interface CloudFrame {source_frame:number;time:number;count:number;positions:number;colors:number;labels:number;}
 export interface SceneAsset {
  id:string;title:string;dataset:string;end_effector?:string;fps:number;frames:number;duration:number;world:string;
- video:{url:string;start_seconds:number};cloud?:{url:string;frames:CloudFrame[];fps:number};source_hands_url?:string;
+ video:{url:string;start_seconds:number};cloud?:{url?:string;format?:string;geometry_url?:string;frames:CloudFrame[];fps:number};source_hands_url?:string;
  robots:{id:string;encoder_policy?:string;experimental?:boolean;registry_robot_id?:string;label:string;hand:string;model_url:string;playback_url:string;reference:string;quality?:{mean_mm:number;max_mm:number}}[];
  segmented_instances?:{fps:number;categories?:string[];audit_url?:string;frames:{time:number;source_frame:number;instances:{id:string;label:string;semantic_label:number;bounds:[Vec3,Vec3];points?:number}[]}[]};
  semantic:{task:string;objects:string[];provenance:string;model?:string;instruction?:string;phases?:{start_seconds:number;end_seconds:number;label:string}[]};tactile:{status:string;reason?:string;url?:string;proximity_url?:string};

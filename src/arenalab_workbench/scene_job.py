@@ -12,10 +12,10 @@ from arenalab_workbench.gpu_scheduler import run as gpu_run
 
 ROOT=Path(os.environ.get('ARENA_WORKBENCH_ROOT',str(paths.workbench)))
 STORE=paths.store / 'manipulation4d'
-POLICY='scene-cloud-v6-da3-sam31'
+POLICY='scene-cloud-v7-mapanything-rgbd-sam31'
 WORKER_FILES=('scene_inference.py','video_io.py','segment_scene.py','segment_parallel.py','tracking_recovery.py',
               'sam_runtime.py','sam_features.py','export_scene_cloud.py','discovery_output.py',
-              'discover_objects.py','nymeria_camera.py','gpu_scheduler.py')
+              'discover_objects.py','nymeria_camera.py','gpu_scheduler.py','mapanything_depth.py','depth_store.py','scene_geometry.py')
 # Bump POLICY when model versions, reconstruction settings or output semantics
 # change. Exact worker hashes additionally identify each immutable build artifact.
 
@@ -45,14 +45,14 @@ def resolve_clip(scene_id):
     if not source.is_file():raise ValueError('Source motion data is missing')
     return public,row
 def policy_signature(row,source_sha256,video_sha256,policy=POLICY):
-    payload=dict(policy=policy,source_sha256=source_sha256,video_sha256=video_sha256,window=row.get('source_window'),frames=row['frames'],fps=row['fps'],video_start=row['video'].get('start_seconds',0),video_frame_times=row['video'].get('frame_times'))
+    payload=dict(policy=policy,depth_backend=paths.depth_backend,depth_window=paths.depth_window,depth_overlap=paths.depth_overlap,source_sha256=source_sha256,video_sha256=video_sha256,window=row.get('source_window'),frames=row['frames'],fps=row['fps'],video_start=row['video'].get('start_seconds',0),video_frame_times=row['video'].get('frame_times'))
     return hashlib.sha256(json.dumps(payload,sort_keys=True).encode()).hexdigest()
 def policy_key(scene_id):
     _,row=resolve_clip(scene_id)
     return policy_signature(row,digest(row['source']),digest(row['video']['path']))
 def cache_key(scene_id):
     public,row=resolve_clip(scene_id)
-    h=hashlib.sha256(json.dumps(dict(policy=POLICY,id=scene_id,window=row.get('source_window'),video_start=row.get('video',{}).get('start_seconds',0),frames=row['frames']),sort_keys=True).encode())
+    h=hashlib.sha256(json.dumps(dict(policy=POLICY,depth_backend=paths.depth_backend,depth_window=paths.depth_window,depth_overlap=paths.depth_overlap,id=scene_id,window=row.get('source_window'),video_start=row.get('video',{}).get('start_seconds',0),frames=row['frames']),sort_keys=True).encode())
     from greenwich_pipelines.code_identity import dependency_files
     roots=['arenalab_workbench.'+Path(name).stem for name in WORKER_FILES]
     for path in dependency_files(roots,Path(__file__).parent.parent):
@@ -64,7 +64,9 @@ def depth_current(scene):
     geometry=scene.get('geometry',{})
     depth=geometry.get('depth',{})
     from arenalab_workbench.discovery_output import POLICY as discovery_policy
-    return geometry.get('segmentation',{}).get('policy')=='sam31-da3-semantic-v2' and geometry.get('segmentation',{}).get('discovery_policy') in {'qwen-visible-objects-v2',discovery_policy} and isinstance(depth,dict) and depth.get('model')=='depth-anything/DA3NESTED-GIANT-LARGE-1.1' and (scene.get('dataset')!='Nymeria' or geometry.get('lens_calibration',{}).get('policy')=='aria-fisheye624-upright-pinhole-v1' and geometry.get('camera_calibration',{}).get('policy')=='nymeria-official-handeye-v1')
+    from arenalab_workbench.depth_store import MODEL, POLICY as DEPTH_POLICY
+    native=paths.depth_backend=='mapanything'
+    return geometry.get('segmentation',{}).get('policy')==('sam31-depth-semantic-v3' if native else 'sam31-da3-semantic-v2') and geometry.get('segmentation',{}).get('discovery_policy') in {'qwen-visible-objects-v2',discovery_policy} and isinstance(depth,dict) and depth.get('model')==(MODEL if native else 'depth-anything/DA3NESTED-GIANT-LARGE-1.1') and (not native or depth.get('policy')==DEPTH_POLICY and scene.get('cloud',{}).get('format')=='depth-rgb-v1') and (scene.get('dataset')!='Nymeria' or geometry.get('lens_calibration',{}).get('policy')=='aria-fisheye624-upright-pinhole-v1' and geometry.get('camera_calibration',{}).get('policy')=='nymeria-official-handeye-v1')
 
 def refresh_scene(scene_id,status,old_url):
     old_path=paths.store/old_url.removeprefix('/assets/')
@@ -112,10 +114,10 @@ def run(scene_id,status):
         timings[stage]=time.monotonic()-tic
         save(receipt,dict(seconds=timings[stage],worker_code_sha256=manifest['worker_code_sha256']))
         save(status.with_name(status.stem+'-'+stage+'.json'),dict(status='completed',phase=phase,seconds=timings[stage]))
-    save(status,dict(status='running',phase='Parallel DA3 depth and object segmentation',started_at=started_at))
+    save(status,dict(status='running',phase='Parallel depth and object segmentation',started_at=started_at))
     execute('prepare','Preparing source frames')
     with ThreadPoolExecutor(max_workers=2) as branches:
-        depth_future=branches.submit(execute,'depth','DA3 depth reconstruction')
+        depth_future=branches.submit(execute,'depth','Camera-conditioned depth reconstruction')
         execute('discover','Discovering manipulable objects')
         execute('segment','SAM 3.1 object segmentation')
         depth_future.result()

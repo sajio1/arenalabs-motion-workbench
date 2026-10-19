@@ -1,6 +1,6 @@
 """Adapt calibrated EgoDex FOV to the existing native-arm compositor."""
 from pathlib import Path
-import json,os,sys
+import json,os,sys,hashlib
 import h5py,numpy as np
 from arenalab_workbench.scene_job import ROOT,save
 
@@ -9,10 +9,11 @@ def prepare(bodywork,dest):
     source=json.loads((bodywork/'input_manifest.json').read_text())
     if source['dataset']!='EgoDex':raise ValueError('Calibrated source camera is required for this compositor')
     scene=json.loads((dest/'scene.json').read_text());perception=ROOT/'scene-jobs'/scene['geometry']['scene_work']
-    out=bodywork/'mobile-render-input';(out/'scene').mkdir(parents=True,exist_ok=True)
-    for name in ['depth.npz','prompts.json','masks']:
+    key=hashlib.sha256(str(perception.resolve()).encode()+(perception/'depth.json').read_bytes()).hexdigest()[:20]
+    out=bodywork/'mobile-render-input'/key;(out/'scene').mkdir(parents=True,exist_ok=True)
+    for name in ['depth.npz','depth-store.json','depth-runs','depth.json','frames','prompts.json','masks']:
         path=out/'scene'/name
-        if not path.exists():path.symlink_to(perception/name,target_is_directory=(perception/name).is_dir())
+        if (perception/name).exists() and not path.exists():path.symlink_to(perception/name,target_is_directory=(perception/name).is_dir())
     start=int((source.get('source_window') or {}).get('start_frame',0));n=source['frames']
     with h5py.File(source['source']) as f:
         camera=f['transforms/camera'][start:start+n];intrinsic=f['camera/intrinsic'][()]

@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import numpy as np
 from arenalab_workbench.gripper_source import C,save,digest
+from arenalab_workbench.depth_store import load as load_depth
 POLICY='source-camera-depth-v3'
 
 def bind(work,scene):
@@ -10,7 +11,20 @@ def bind(work,scene):
  if (scene/'camera-calibration.json').exists():
   audit=json.loads((scene/'camera-calibration.json').read_text())
   if audit['source_sha256']!=before:raise ValueError('Source camera changed; use a new visual workspace')
-  return
+  return False
+ if (scene/'depth-store.json').exists():
+  prior=load_depth(scene);_,h,w=prior['depth'].shape
+  K=np.median(prior['intrinsics'][:],axis=0)
+  # Undo preprocessing including crop translation; resizing alone loses the center.
+  K=np.median([np.linalg.inv(prior['preprocessing_affine'][i])@prior['intrinsics'][i] for i in range(len(prior['ids']))],axis=0)
+  poses=source['camera'].copy();poses[:,:3,:3]=C@poses[:,:3,:3];poses[:,:3,3]=poses[:,:3,3]@C.T
+  np.savez_compressed(scene/'cameras.npz',poses=poses,intrinsic=K)
+  save(scene/'camera-calibration.json',dict(policy=POLICY,source_sha256=before,source_camera_poses_unchanged=True,
+   intrinsics_estimated=True,estimated=True,intrinsic=K.tolist(),intrinsic_provenance='Median MapAnything estimated intrinsics; exact preprocessing affine undone',
+   extrinsic_provenance='Recorded head device pose with declared optical-axis basis; optical-center extrinsic not independently calibrated',
+   source_trajectory_edited=False,prior_depth_receipt=json.loads((scene/'depth-store.json').read_text())))
+  assert digest(work/'source.npz')==before
+  return True
  original=scene/'depth-camera-prior.npz'
  if not original.exists():(scene/'depth.npz').rename(original);(scene/'depth.json').rename(scene/'depth-camera-prior.json')
  prior=np.load(original);_,h,w=prior['depth'].shape
@@ -20,3 +34,4 @@ def bind(work,scene):
  np.savez_compressed(scene/'cameras.npz',poses=poses,intrinsic=K)
  save(scene/'camera-calibration.json',dict(policy=POLICY,source_sha256=before,source_camera_poses_unchanged=True,intrinsics_estimated=True,estimated=True,intrinsic=K.tolist(),intrinsic_provenance='Median DA3 predicted intrinsics, mapped back to 960x540 inference images',extrinsic_provenance='Recorded head device pose with declared optical-axis basis; optical-center extrinsic not independently calibrated',source_trajectory_edited=False,prior_depth_sha256=digest(original)))
  assert digest(work/'source.npz')==before
+ return True

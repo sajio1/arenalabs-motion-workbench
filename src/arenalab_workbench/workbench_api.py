@@ -37,6 +37,8 @@ def create_api(config_path=None):
     attach_height_routes(app,lock)
     from arenalab_workbench.dataset_io.routes import attach_dataset_routes, require_scene
     attach_dataset_routes(app,lock)
+    from arenalab_workbench.scene_geometry import attach_routes
+    attach_routes(app)
     for path in folder.glob('*/job.json'):
         job=json.loads(path.read_text());state=path.with_name('state.json')
         if state.exists():
@@ -82,7 +84,6 @@ def create_api(config_path=None):
         if not supported(robot):raise HTTPException(409,'Physical end-effector and anatomical metadata is required')
         from arenalab_workbench.gripper_job import sources as gripper_sources,cached as gripper_cached
         gripper_source=scene_id in gripper_sources()
-        catalog=json.loads(paths.store / 'manipulation4d/catalog.json'.read_text())
         entry=public_entry(scene_id)
         if not entry:raise HTTPException(400,'Recording is not connected')
         if entry['dataset']=='UMI' and not variant(scene_id):raise HTTPException(409,'Set the first trajectory height before generating UMI')
@@ -104,7 +105,8 @@ def create_api(config_path=None):
                         work=body_folder(scene_id);valid=valid and report.get('encoder_policy')==ENCODER_POLICY and report.get('support_policy')==SUPPORT_POLICY and report['source_id']==scene_id and bool(report.get('source_hashes')) and all((work/name).exists() and hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in report['source_hashes'].items())
                     except ValueError:valid=False
             from arenalab_workbench.scene_job import depth_current
-            if valid and depth_current(scene) and any(r['id']==robot_id for r in scene['robots']) and (scene.get('patch_videos',{}).get(robot_id) or scene.get('patch_unavailable',{}).get(robot_id)) and (hand_id=='none' or scene.get('tactile',{}).get('url')):
+            from arenalab_workbench.depth_store import fov_current
+            if valid and depth_current(scene) and any(r['id']==robot_id for r in scene['robots']) and fov_current(scene,robot_id) and (hand_id=='none' or scene.get('tactile',{}).get('url')):
                 return dict(status='completed',scene_url=entry['scene_url'],robot_id=robot_id,robot_ready=True)
         with lock:
             for job in jobs.values():

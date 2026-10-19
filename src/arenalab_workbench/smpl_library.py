@@ -54,7 +54,7 @@ def plan():
     from arenalab_workbench.gripper_body import body_path
     from arenalab_workbench.gripper_registry import sources
     from arenalab_workbench.scene_job import resolve_clip
-    catalog = json.loads(paths.store / 'manipulation4d/catalog.json'.read_text())
+    catalog = json.loads((paths.store / 'manipulation4d/catalog.json').read_text())
     grippers = sources(); groups = {}; excluded = []; failed = []
     for entry in catalog:
         sid = entry['id']

@@ -6,7 +6,8 @@ os.environ.setdefault('CUDA_VISIBLE_DEVICES','3')
 # Depth Anything has its existing, pinned environment. Do not blend its Torch /
 # Transformers dependencies with the SAM/Qwen environment.
 if sys.argv[2]=='depth':
-    depth_python=paths.da3_python
+    if paths.depth_backend not in {'mapanything','da3'}:raise ValueError('Unknown depth backend')
+    depth_python=paths.mapanything_python if paths.depth_backend=='mapanything' else paths.da3_python
     if Path(sys.executable).absolute()!=depth_python:
         os.execv(str(depth_python),[str(depth_python),*sys.argv])
 import cv2,h5py,numpy as np
@@ -69,6 +70,10 @@ elif stage=='discover':
     run(work)
 
 elif stage=='depth':
+    if paths.depth_backend=='mapanything':
+        from arenalab_workbench.mapanything_depth import run
+        run(work)
+        raise SystemExit(0)
     import torch
     from depth_anything_3.api import DepthAnything3
     names=sorted((work/'frames').glob('*.jpg'));images=[cv2.cvtColor(cv2.imread(str(p)),cv2.COLOR_BGR2RGB) for p in names]

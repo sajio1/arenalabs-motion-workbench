@@ -9,7 +9,8 @@ def complete_scene():
  source=Path(os.environ['ARENA_SCENE_WORK']);dest=Path(os.environ['ARENA_EXPORT_DIR'])
  from arenalab_workbench.scene_job import depth_current
  current=json.loads((dest/'scene.json').read_text())
- if depth_current(current) and (source/'depth.npz').exists() and (source/'prompts.json').exists():return source
+ from arenalab_workbench.depth_store import exists as depth_exists
+ if depth_current(current) and depth_exists(source) and (source/'prompts.json').exists():return source
  raw=json.loads((source/'discovery-raw.json').read_text())['raw'];start=next(i for i,c in enumerate(raw) if c in '[{');value=json.JSONDecoder().raw_decode(raw[start:])[0];semantic=normalize_discovery(value)
  scene=json.loads((dest/'scene.json').read_text())
  if semantic['objects']==scene['semantic']['objects']:
@@ -17,7 +18,7 @@ def complete_scene():
   return ROOT/'perception-jobs'/repaired if repaired and (ROOT/'perception-jobs'/repaired).exists() else source
  key=hashlib.sha256((source.name+json.dumps(semantic,sort_keys=True)).encode()).hexdigest();work=ROOT/'perception-jobs'/key;work.mkdir(parents=True,exist_ok=True)
  output=paths.store / 'manipulation4d/perception'/key;output.mkdir(parents=True,exist_ok=True)
- for name in ['depth.npz','depth.json','frames','frames.npz','preparation.json','cameras.npz']:
+ for name in ['depth.npz','depth-store.json','depth-runs','depth.json','frames','frames.npz','preparation.json','cameras.npz']:
   if (source/name).exists() and not (work/name).exists():(work/name).symlink_to(source/name,target_is_directory=(source/name).is_dir())
  manifest=json.loads((source/'manifest.json').read_text());manifest.update(destination=str(output),url='/assets/'+output.relative_to(str(paths.store)).as_posix()+'/')
  (work/'manifest.json').write_text(json.dumps(manifest));semantic.update(model=scene['semantic']['model'],provenance='Original VLM category proposals, normalized without manual object labels');(work/'semantic.json').write_text(json.dumps(semantic));prompts=[[f'object-{i+1:02d}',name] for i,name in enumerate(semantic['objects'])]+[['human-hand','hand'],['human-arm','arm']];(work/'prompts.json').write_text(json.dumps(prompts))

@@ -7,7 +7,7 @@ from arenalab_workbench.scene_job import ROOT
 
 def run(gpu):
     code=Path(__file__).parent;out=ROOT/'smpl-prebuild';out.mkdir(exist_ok=True)
-    status=out/'progress.json';catalog=json.loads(paths.store / 'manipulation4d/catalog.json'.read_text())
+    status=out/'progress.json';catalog=json.loads((paths.store / 'manipulation4d/catalog.json').read_text())
     from arenalab_workbench.gripper_registry import sources
     from arenalab_workbench.height_registry import default_id,variant
     from arenalab_workbench.body_prior import folder

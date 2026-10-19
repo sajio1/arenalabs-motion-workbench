@@ -62,7 +62,7 @@ def run(work,rid,dest):
   path=[]
   while b>0:path.append(b);b=int(m.body_parentid[b])
   return path+[0]
- paths=[ancestors(i) for i in wristids];common=next(i for i in paths[0] if i in paths[1]);branches=[p[p.index(common)-1] for p in paths];selected=[i for i,g in enumerate(native) if any(b in ancestors(int(m.geom_bodyid[g])) for b in branches)]+list(range(len(native),len(meshes)))
+ arm_paths=[ancestors(i) for i in wristids];common=next(i for i in arm_paths[0] if i in arm_paths[1]);branches=[p[p.index(common)-1] for p in arm_paths];selected=[i for i,g in enumerate(native) if any(b in ancestors(int(m.geom_bodyid[g])) for b in branches)]+list(range(len(native),len(meshes)))
  save(folder/'render-layout.json',dict(arm_and_gripper_geoms=selected))
  rotation=np.array(rot);payload=dict(fps=30,frames=n,positions=np.array(pos).tolist(),quaternions=R.from_matrix(rotation.reshape(-1,3,3)).as_quat().reshape(n,len(meshes),4).tolist(),tracking=dict(actual=(actual@C.T).tolist(),target=(src['tcp_zup']@C.T).tolist(),error_mm=err.tolist(),orientation_deg=angle.tolist(),reference='Fixed-housing center → '+attach['reference']),joints=dict(names=names,values=joint_values,unit='rad',representation='Native robot + actual gripper linkage angle'))
  save(folder/'playback.json',payload);base='/assets/'+dest.relative_to(str(paths.store)).as_posix();entry=dict(encoder_policy=__import__('greenwich_pipelines.input_policy',fromlist=['POLICY']).POLICY,id=rid,label=attach['label'],hand='robotiq-2f-140',model_url=base+'/robot-'+rid+'/model.glb',playback_url=base+'/robot-'+rid+'/playback.json?v='+digest(folder/'playback.json')[:16],reference='gripper',quality=dict(mean_mm=float(err.mean()),max_mm=float(err.max())))

@@ -91,7 +91,8 @@ def _run(scene_id,robot_id,hand_id,status):
   if script=='render_recording.py':
    manifest=json.loads((destination/'scene.json').read_text())
    render_key=hashlib.sha256((destination/('robot-'+robot_id)/'playback.json').read_bytes()+json.dumps(manifest.get('geometry',{}),sort_keys=True).encode()).hexdigest()
-  if script=='render_recording.py' and not robot_regenerated and (destination/(robot_id+'-arm-view-v1.mp4')).exists() and render_receipt.exists() and json.loads(render_receipt.read_text()).get('key')==render_key and manifest.get('patch_videos',{}).get(robot_id):
+  from arenalab_workbench.depth_store import fov_current
+  if script=='render_recording.py' and not robot_regenerated and (destination/(robot_id+'-arm-view-v1.mp4')).exists() and render_receipt.exists() and json.loads(render_receipt.read_text()).get('key')==render_key and fov_current(manifest,robot_id):
    save(status.with_name(status.stem+'-'+script+'.json'),dict(status='completed',phase=phase,cache_hit=True,seconds=time.time()-stage_started));return
   if script=='contact_recording.py' and (destination/'video-contact.json').exists():return
   save(status.with_name(status.stem+'-'+script+'.json'),dict(status='running',phase=phase,started_at=stage_started))

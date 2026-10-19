@@ -1,4 +1,4 @@
-"""Shared DA3 depth and the existing Qwen/SAM scene stages."""
+"""Camera-conditioned depth and the existing Qwen/SAM scene stages."""
 from arenalab_workbench.settings import paths
 from pathlib import Path
 import os,json,sys,subprocess,shutil
@@ -16,7 +16,15 @@ def run(work,dest):
  if meta.get('height_calibration'):public['title']+=' · '+str(meta['height_calibration']['minimum_height_cm'])+' cm'
  wrist=[dict(side=v['side'],url=url+'videos/'+v['side']+'-clip.mp4',start_seconds=0) for v in meta['wrist_videos']]
  common=dict(**public,fps=30,frames=n,duration=(n-1)/30,world='Source world',robots=[],objects=[],semantic=dict(task=public['title'],objects=[],provenance='Recording annotations'),tactile=dict(status='unavailable',reason='Gripper recording has no measured tactile force; finger estimates do not apply'),wrist_videos=wrist,geometry=dict(source_trajectory_edited=False,ground=dict(height_m=float(src['floor_z']),estimated=True,provenance=meta['floor_provenance']),source_reference=meta['target_reference'],width_provenance=meta['width_provenance']))
- scene=work/('scene-camera-v3' if 'intrinsic' not in src else 'scene');scene.mkdir(exist_ok=True);
+ scene=work/('scene-mapanything-v1' if paths.depth_backend=='mapanything' else ('scene-camera-v3' if 'intrinsic' not in src else 'scene'));scene.mkdir(exist_ok=True);
+ if paths.depth_backend=='mapanything':
+  previous=next((p for p in [work/'scene-camera-v3',work/'scene'] if (p/'preparation.json').exists()),None)
+  if previous:
+   for name in ['frames','frames.npz','preparation.json','masks','prompts.json','semantic.json','cameras.npz','camera-calibration.json','hardware-classification.json','hardware-tracking.json','hardware-flow-audit.json']:
+    old=previous/name;new=scene/name
+    if old.exists() and not new.exists():
+     if old.is_dir():shutil.copytree(old,new)
+     else:shutil.copy2(old,new)
  if scene.name=='scene-camera-v3' and (work/'scene').exists():
   for name in ['frames','frames.npz','preparation.json','masks','prompts.json','semantic.json','depth.npz','depth.json']:
    previous=work/'scene'/name;target=scene/name
@@ -31,7 +39,17 @@ def run(work,dest):
  if not (scene/'preparation.json').exists():stage('scene_inference.py',[str(scene),'prepare'])
  if 'intrinsic' in src:
   camera=src['camera'].copy();camera[:,:3,:3]=C@camera[:,:3,:3];camera[:,:3,3]=camera[:,:3,3]@C.T;image_size=meta.get('camera_image_size',[640,480]);K=np.diag([960/image_size[0],540/image_size[1],1])@src['intrinsic'];np.savez_compressed(scene/'cameras.npz',poses=camera,intrinsic=K)
+ elif paths.depth_backend=='mapanything' and not (scene/'cameras.npz').exists():
+  camera=src['camera'].copy();camera[:,:3,:3]=C@camera[:,:3,:3];camera[:,:3,3]=camera[:,:3,3]@C.T
+  np.savez_compressed(scene/'camera-poses.npz',poses=camera)
  def reconstruct_depth():
+  if paths.depth_backend=='mapanything':
+   from arenalab_workbench.depth_store import current
+   if not current(scene):stage('scene_inference.py',[str(scene),'depth'])
+   if 'intrinsic' not in src:
+    from arenalab_workbench.gripper_camera import bind
+    if bind(work,scene):stage('scene_inference.py',[str(scene),'depth'])
+   return
   # All sources use the same DA3 model. Recorded depth is retained only as an
   # audit artifact; an older cache must not silently bypass this policy.
   if (scene/'depth.npz').exists():
@@ -65,7 +83,7 @@ def run(work,dest):
  if not asset['semantic'].get('task'):asset['semantic'].update(task=common['semantic']['task'],task_provenance='Recording annotation')
  asset['geometry'].update(common['geometry']);asset['geometry']['body_status']='Gripper retargeting';asset['geometry']['visual_policy']='gripper-visual-v4';asset['geometry']['scene_work']=str(scene);asset['geometry']['scene_registration']='source_camera_estimated' if 'intrinsic' not in src else 'recorded';
  if previous_asset.get('geometry',{}).get('source_sha256')==digest(work/'source.npz'):
-  for key in ['robots','patch_videos','patch_kinds','patch_unavailable']:
+  for key in ['robots','patch_videos','patch_kinds','patch_depth_policy','patch_unavailable']:
    if key in previous_asset:asset[key]=previous_asset[key]
  save(dest/'scene.json',asset)
 if __name__=='__main__':run(*sys.argv[1:])

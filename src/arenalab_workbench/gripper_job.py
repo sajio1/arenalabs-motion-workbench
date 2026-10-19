@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from arenalab_workbench.gpu_scheduler import run as gpu_run, resource_lock, merge_scene
 from arenalab_workbench.progressive_job import Progress, initialize, merge_perception
 from arenalab_workbench.scene_job import depth_current
+from arenalab_workbench.depth_store import fov_current
 POLICY='gripper-head-two-ee-smplx-housing-v3'
 from arenalab_workbench.gripper_registry import REGISTRY, sources
 
@@ -19,7 +20,7 @@ def cached(scene_id,rid,scene,require_visual=True):
  if meta['dataset']=='Real robot' and meta.get('adapter_policy')!=REAL_POLICY:return False
  work=Path(row['work']);dest=Path(row['destination']);p=dest/('robot-'+rid)/'validation.json'
  if not p.exists():return False
- report=json.loads(p.read_text());return report.get('encoder_policy')==ENCODER_POLICY and report.get('head_calibration')==json.loads((work/'source.json').read_text()).get('head_calibration') and report.get('policy')==POLICY and report.get('source_sha256')==digest(work/'source.npz') and any(r['id']==rid and r.get('hand')=='robotiq-2f-140' for r in scene['robots']) and (dest/('robot-'+rid)/'model.glb').exists() and (dest/('robot-'+rid)/'playback.json').exists() and (not require_visual or (bool(scene.get('patch_videos',{}).get(rid) or scene.get('patch_unavailable',{}).get(rid)) and scene.get('geometry',{}).get('visual_policy')=='gripper-visual-v4' and depth_current(scene)))
+ report=json.loads(p.read_text());return report.get('encoder_policy')==ENCODER_POLICY and report.get('head_calibration')==json.loads((work/'source.json').read_text()).get('head_calibration') and report.get('policy')==POLICY and report.get('source_sha256')==digest(work/'source.npz') and any(r['id']==rid and r.get('hand')=='robotiq-2f-140' for r in scene['robots']) and (dest/('robot-'+rid)/'model.glb').exists() and (dest/('robot-'+rid)/'playback.json').exists() and (not require_visual or (fov_current(scene,rid) and scene.get('geometry',{}).get('visual_policy')=='gripper-visual-v4' and depth_current(scene)))
 def run(scene_id,rid,hand,status):
  if hand!='robotiq-2f-140':raise ValueError('Gripper source requires a mapped gripper end effector')
  row=sources()[scene_id];work=Path(row['work']);dest=Path(row['destination']);start=time.time();env=os.environ.copy();env.update(CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),PYTHONPATH=paths.pythonpath(),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2');code=Path(__file__).parent
@@ -28,7 +29,6 @@ def run(scene_id,rid,hand,status):
  mobile=robot['kind']=='Wheeled'
  if not mobile:env['ARENA_STREAM_ROBOT_ID']=rid
  from arenalab_workbench.gripper_body import body_path
- catalog=json.loads(paths.store / 'manipulation4d/catalog.json'.read_text())
  from arenalab_workbench.height_registry import public_entry
  public=public_entry(scene_id)
  if public is None:
@@ -50,7 +50,7 @@ def run(scene_id,rid,hand,status):
    scene=json.loads((dest/'scene.json').read_text())
    if scene.get('geometry',{}).get('source_sha256')!=digest(work/'source.npz') or scene.get('geometry',{}).get('visual_policy')!='gripper-visual-v4' or not depth_current(scene):
     staging=dest/'perception-stage'
-    execute(('gripper_scene.py',[str(work),str(staging)],str(paths.scene_python),'DA3 and SAM scene generation'))
+    execute(('gripper_scene.py',[str(work),str(staging)],str(paths.scene_python),'Camera-conditioned depth and SAM scene generation'))
     merge_perception(dest/'scene.json',json.loads((staging/'scene.json').read_text()))
  def execute(task):
   script,args,python,phase=task

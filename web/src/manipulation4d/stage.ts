@@ -3,6 +3,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import type {SceneAsset,Motion} from './types';
 import {TraceGlyph} from './trace-glyph';
+import {decodeDepthPacket,decodePreviewPacket} from './depth-packet.mjs';
 
 export class Workspace {
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(43,1,.01,50);
@@ -11,6 +12,7 @@ export class Workspace {
  cloud?:THREE.Points;cloudBuffer?:ArrayBuffer;cloudGeometry?:THREE.BufferGeometry;cloudMaterial?:THREE.ShaderMaterial;cloudFrame=-1;
  paths:TraceGlyph[]=[];errors:THREE.LineSegments[]=[];showCloud=true;showBoxes=true;showTraces=true;showRobot=true;segments=false;orbit=false;
  serial=0;robotSerial=0;currentTime=0;
+ depthFrames=new Map<number,ReturnType<typeof decodeDepthPacket>>();depthRequests=new Set<number>();sceneUrl='';
  instanceBoxes=new Map<string,THREE.Box3Helper>();
  constructor(public host:HTMLElement){
   host.append(this.renderer.domElement);this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));this.renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -21,18 +23,41 @@ export class Workspace {
   this.controls.addEventListener('start',()=>this.orbit=false);this.camera.position.set(1.5,1.7,2.2);this.controls.target.set(0,1,0);
   new ResizeObserver(()=>{const w=host.clientWidth,h=host.clientHeight;if(w<1||h<1)return;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}).observe(host);
  }
- async load(asset:SceneAsset){
+ async load(asset:SceneAsset,sceneUrl='',initialTime=0){
+  this.currentTime=initialTime;
+  this.sceneUrl=sceneUrl;this.depthFrames.clear();this.depthRequests.clear();
   const token=++this.serial;this.asset=asset;const ground=asset.geometry.ground as {height_m?:number}|undefined;this.grid.position.y=ground?.height_m??0;this.motion=undefined;this.geoms.clear();this.paths=[];this.errors=[];
   this.root.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Points||o instanceof THREE.Line||o instanceof THREE.LineSegments){o.geometry.dispose();const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}});this.root.clear();this.showRobot=true;this.showCloud=true;this.instanceBoxes.clear();this.robot=undefined;this.cloudFrame=-1;this.cloud=undefined;this.cloudBuffer=undefined;
   if(asset.cloud){
-   const response=await fetch(asset.cloud.url);if(!response.ok)throw new Error('Point-cloud stream unavailable');const buffer=await response.arrayBuffer();if(token!==this.serial)return;
-   this.cloudBuffer=buffer;const count=Math.max(...asset.cloud.frames.map(f=>f.count));const geometry=new THREE.BufferGeometry();
+   if(asset.cloud.format!=='depth-rgb-v1'){
+    const response=await fetch(asset.cloud.url!);if(!response.ok)throw new Error('Point-cloud stream unavailable');const buffer=await response.arrayBuffer();if(token!==this.serial)return;this.cloudBuffer=buffer;
+   }
+   const count=asset.cloud.frames.reduce((n,f)=>Math.max(n,f.count),0);const geometry=new THREE.BufferGeometry();
    geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(count*3),3));geometry.setAttribute('color',new THREE.BufferAttribute(new Float32Array(count*3),3));geometry.setAttribute('label',new THREE.BufferAttribute(new Float32Array(count),1));
    const material=new THREE.ShaderMaterial({uniforms:{pointSize:{value:1.5*this.renderer.getPixelRatio()},segments:{value:false}},vertexShader:`attribute vec3 color;attribute float label;varying vec3 vColor;varying float vLabel;uniform float pointSize;void main(){vColor=color;vLabel=label;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);gl_PointSize=pointSize*(label>.5?1.8:1.);}`,fragmentShader:`varying vec3 vColor;varying float vLabel;uniform bool segments;void main(){if(length(gl_PointCoord-vec2(.5))>.5)discard;vec3 c=vColor;if(segments&&vLabel>.5)c=vec3(.65)+.35*cos(6.2831853*(fract(vLabel*.61803398875)+vec3(0.,.333333,.666667)));gl_FragColor=vec4(c,1.0);}`});
    this.cloudGeometry=geometry;this.cloudMaterial=material;this.cloud=new THREE.Points(geometry,material);this.cloud.frustumCulled=false;this.root.add(this.cloud);
+   if(asset.cloud.format==='depth-rgb-v1'){
+    const first=Math.min(asset.cloud.frames.length-1,Math.max(0,Math.floor(initialTime*asset.cloud.fps)));
+    await Promise.all(Array.from({length:Math.min(4,asset.cloud.frames.length-first)},(_,i)=>this.requestDepth(first+i)));
+    if(token!==this.serial)return;
+    if(!this.depthFrames.has(first))throw new Error('Current-frame depth stream unavailable');
+   }
   }
   for(const frame of asset.segmented_instances?.frames||[])for(const item of frame.instances)if(!this.instanceBoxes.has(item.id)){const color=new THREE.Color().fromArray([0,1/3,2/3].map(offset=>.65+.35*Math.cos(2*Math.PI*((item.semantic_label*.61803398875)%1+offset))));const box=new THREE.Box3Helper(new THREE.Box3(),color);box.visible=false;this.instanceBoxes.set(item.id,box);this.root.add(box);}
-  if(token===this.serial)this.focus(asset.robots.length?'task':'objects');
+  if(token===this.serial)this.focus('objects');
+ }
+ async requestDepth(index:number){
+  if(this.depthFrames.has(index)||this.depthRequests.has(index)||this.depthRequests.size>=6||!this.sceneUrl)return;
+  const token=this.serial;this.depthRequests.add(index);
+  try{
+   const query=new URLSearchParams({scene:this.sceneUrl,frame:String(index),rgb:'jpeg'});
+   const response=await fetch('/api/4d/geometry/frame?'+query);if(!response.ok)throw new Error('Depth observation unavailable');
+   const value=await decodePreviewPacket(await response.arrayBuffer());if(token!==this.serial)return;
+   const expected=this.asset?.cloud?.frames[index]?.source_frame;if(value.sourceFrame!==expected)throw new Error('Depth/source clock mismatch');
+   this.depthFrames.set(index,value);
+   while(this.depthFrames.size>12)this.depthFrames.delete(this.depthFrames.keys().next().value!);
+  }catch(error){if(token===this.serial)console.error(error);}
+  finally{if(token===this.serial)this.depthRequests.delete(index);}
  }
  async loadRobot(row:SceneAsset['robots'][number]){
   const token=this.serial,request=++this.robotSerial;const [gltf,motion]=await Promise.all([this.loader.loadAsync(row.model_url),fetch(row.playback_url).then(r=>r.json())]);if(token!==this.serial||request!==this.robotSerial)return;
@@ -75,6 +100,19 @@ export class Workspace {
     for(let j=0;j<rgb.length;j++)c.array[j]=rgb[j]/255;for(let j=0;j<labels.length;j++)l.array[j]=labels[j];p.needsUpdate=c.needsUpdate=l.needsUpdate=true;this.cloudGeometry.setDrawRange(0,f.count);this.cloudFrame=index;
 
    }
+  }
+  if(cloud?.format==='depth-rgb-v1'&&this.cloudGeometry){
+   const index=Math.min(cloud.frames.length-1,Math.max(0,Math.floor(time*cloud.fps)));
+   if(index!==this.cloudFrame){
+    const value=this.depthFrames.get(index);
+    if(value){
+     const p=this.cloudGeometry.getAttribute('position') as THREE.BufferAttribute,c=this.cloudGeometry.getAttribute('color') as THREE.BufferAttribute,l=this.cloudGeometry.getAttribute('label') as THREE.BufferAttribute;
+     (p.array as Float32Array).set(value.xyz);(c.array as Float32Array).set(value.colors);(l.array as Float32Array).set(value.labels);
+     p.needsUpdate=c.needsUpdate=l.needsUpdate=true;this.cloudGeometry.setDrawRange(0,value.count);this.cloudFrame=index;
+    }else this.cloudGeometry.setDrawRange(0,0); // Never show another timestamp's scene.
+    void this.requestDepth(index);
+   }
+   for(let ahead=1;ahead<=6;ahead++)if(index+ahead<cloud.frames.length)void this.requestDepth(index+ahead);
   }
   this.instanceBoxes.forEach(box=>box.visible=false);const segmented=this.asset?.segmented_instances;
   if(segmented){const row=segmented.frames[Math.min(segmented.frames.length-1,Math.floor(time*segmented.fps))];for(const item of row.instances){const box=this.instanceBoxes.get(item.id);if(!box)continue;box.visible=this.showBoxes;box.box.min.fromArray(item.bounds[0]);box.box.max.fromArray(item.bounds[1]);}}

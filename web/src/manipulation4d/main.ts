@@ -93,7 +93,7 @@ async function load(url:string|SceneAsset,preservePlayback=false){
   $<HTMLInputElement>('timeline').max=String(asset.duration);const preview=!asset.cloud&&!asset.robots.length;$('source-preview').hidden=!preview;$('wb-viewport').hidden=preview;document.querySelector<HTMLElement>('.wb-scene-tools')!.hidden=preview;
   const video=$<HTMLVideoElement>('preview-video');if(preview)video.src=asset.video.url;else{video.pause();video.removeAttribute('src');video.load();}
   const segmented=asset.segmented_instances;
-  await stage.load({...asset,segmented_instances:segmented});if(request!==loadSerial)return;
+  await stage.load({...asset,segmented_instances:segmented},typeof url==='string'?url:'',preservePlayback?savedTime:0);if(request!==loadSerial)return;
   if(currentRobot&&selectedHand&&asset.robots.some(r=>r.id===currentRobot&&r.hand===selectedHand))await chooseRobot(currentRobot);
   else{$('scene-status').textContent='Choose a robot and end effector to continue';$('robot-name').textContent='Choose robot';$('joint-select').innerHTML='';$('joint-value').textContent='—';$('joint-note').textContent='Robot output is unavailable for this recording';$('cloud-status').textContent='';for(const id of ['left-error','right-error','left-angle','right-angle'])$(id).textContent='—';for(const id of ['fingertip-error','scene-depth-check'])$(id).textContent='';for(const id of ['joint-chart','error-chart','finger-chart']){const c=$<HTMLCanvasElement>(id);c.getContext('2d')?.clearRect(0,0,c.width,c.height);}patch.pause();patch.removeAttribute('src');patch.load();patch.hidden=true;$('patch-empty').hidden=false;$('patch-empty').textContent='No robot composite generated for this recording';$('patch-label').textContent='NOT GENERATED';}
   if(request!==loadSerial)return;rememberCachedRobots(asset);time=preservePlayback?Math.min(savedTime,asset.duration):0;playing=preservePlayback?savedPlaying:true;$('wb-loading').hidden=true;renderLibrary();
@@ -102,7 +102,7 @@ async function load(url:string|SceneAsset,preservePlayback=false){
 function renderObjectTags(){const categories=asset.segmented_instances?.categories||[];$('object-tags').innerHTML=categories.map(o=>`<span>${escape(o)} <small>Segmented cloud</small></span>`).join('');}
 
 interface RobotOption{id:string;label:string;experimental?:boolean;kind?:string;supported?:boolean;reason?:string;conversion_ready?:boolean;report?:{message?:string};}
-function sourceHand(dataset:string){return asset?.end_effector || dataset==='Nymeria'?'none':['UMI','Real robot'].includes(dataset)?'robotiq-2f-140':'wuji';}
+function sourceHand(dataset:string){return asset?.end_effector || (dataset==='Nymeria'?'none':['UMI','Real robot'].includes(dataset)?'robotiq-2f-140':'wuji');}
 interface HandOption{id:string;label:string;status:string;supported:boolean;report?:{message?:string;required?:string[]};}
 let robotOptions:RobotOption[]=[],handOptions:HandOption[]=[];let pickerToken=0;
 async function refreshOptions(){

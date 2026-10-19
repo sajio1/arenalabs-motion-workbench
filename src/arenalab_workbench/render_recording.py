@@ -16,7 +16,10 @@ subprocess.run([sys.executable,str(Path(__file__).with_name('audit_recording.py'
 from arenalab_workbench.fov_cache import read_at, inpaint
 from arenalab_workbench.perception_complete import complete_scene
 os.environ['ARENA_SCENE_WORK']=str(complete_scene())
-with np.load(Path(os.environ['ARENA_SCENE_WORK'])/'depth.npz') as saved:depth={k:saved[k] for k in saved.files}
+from arenalab_workbench.depth_store import load as load_depth
+depth=load_depth(Path(os.environ['ARENA_SCENE_WORK']))
+depth_info=json.loads((Path(os.environ['ARENA_SCENE_WORK'])/'depth.json').read_text())
+depth_policy=depth_info.get('policy',depth_info.get('model','unknown'))
 
 ROOT=paths.workbench;EXP=Path(os.environ['ARENA_SOURCE_WORK']);DEST=Path(os.environ.get('ARENA_EXPORT_DIR',str(paths.store / 'manipulation4d/pilot')))
 S=np.array([[1,0,0],[0,0,-1],[0,1,0]],float)
@@ -41,8 +44,8 @@ for robot in [r for r in manifest['robots'] if r['id']==sys.argv[1]]:
     if rowfile is None:raise ValueError(f'Mechanical metadata unavailable for {identifier}')
     row=json.loads(rowfile.read_text())[0];model=mj.MjModel.from_xml_path(row['xml']);ids=list(visual_mesh_geom_ids(model))
     native=[g for g in ids if not any(word in (model.body(int(model.geom_bodyid[g])).name+' '+model.mesh(int(model.geom_dataid[g])).name).lower() for word in ['hand','palm','finger','thumb','dummy'])]
-    paths=[ancestors(model,model.body(row['endpoints'][side+'_wrist']).id) for side in ['left','right']]
-    common=next(body for body in paths[0] if body in paths[1]);branches=[path[path.index(common)-1] for path in paths]
+    arm_paths=[ancestors(model,model.body(row['endpoints'][side+'_wrist']).id) for side in ['left','right']]
+    common=next(body for body in arm_paths[0] if body in arm_paths[1]);branches=[path[path.index(common)-1] for path in arm_paths]
     arm_bodies={body for body in range(model.nbody) if any(branch in ancestors(model,body) for branch in branches)}
     datafile=Path(os.environ['ARENA_REFINED_OUTPUT'])/'robot-render.npz' if os.environ.get('ARENA_REFINED_OUTPUT') else next((p for p in [Path(os.environ.get('ARENA_RETARGET_WORK',str(EXP/'retarget')))/f'operation-accuracy/palm/{identifier}/robot-render.npz',EXP/f'operation-accuracy/palm/{identifier}/{identifier}-render.npz',EXP/f'retarget/operation-accuracy/palm/{identifier}/robot-render.npz'] if p.exists()),None)
     if datafile is None:raise ValueError(f'Native visual result unavailable for {identifier}')
@@ -74,8 +77,9 @@ for robot in [r for r in manifest['robots'] if r['id']==sys.argv[1]]:
         if frame in [0,60,120,200]:imageio.imwrite(DEST/f'{identifier}-arm-view-{frame:03d}.jpg',composed)
     writer.close();cap.release();renderer.delete();temporary.replace(DEST/filename)
     patches[identifier]='/assets/'+(DEST/filename).relative_to(str(paths.store)).as_posix()
-    report[identifier]=dict(frames=len(positions),fps=30,native_arm_meshes=sum(i<len(native) for i in selected),hand_meshes=sum(i>=len(native) for i in selected),arm_branches=[model.body(b).name for b in branches],native_mesh_binding_verified=True,robot_pixels_min=min(pixels),robot_pixels_mean=float(np.mean(pixels)),camera='Unchanged source camera poses and intrinsics',human_removal='SAM 3.1 hands plus arms; foreground object masks retained',depth='Recorded DA3 scene estimate',synthetic_inpainting=True,physical_contact_validated=False)
+    report[identifier]=dict(frames=len(positions),fps=30,native_arm_meshes=sum(i<len(native) for i in selected),hand_meshes=sum(i>=len(native) for i in selected),arm_branches=[model.body(b).name for b in branches],native_mesh_binding_verified=True,robot_pixels_min=min(pixels),robot_pixels_mean=float(np.mean(pixels)),camera='Unchanged source camera poses and intrinsics',human_removal='SAM 3.1 hands plus arms; foreground object masks retained',depth='Shared scene depth estimate',synthetic_inpainting=True,physical_contact_validated=False)
     print('ARM_VIEW_READY',identifier,json.dumps(report[identifier]),flush=True)
 from arenalab_workbench.gpu_scheduler import merge_scene
 merge_scene(DEST/'scene.json',lambda manifest:manifest.setdefault('patch_videos',{}).update(patches))
+merge_scene(DEST/'scene.json',lambda manifest:manifest.setdefault('patch_depth_policy',{}).update({key:depth_policy for key in patches}))
 (DEST/'arm-view-validation.json').write_text(json.dumps(report,indent=2))

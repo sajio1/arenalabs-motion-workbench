@@ -14,7 +14,7 @@ import zipfile
 import numpy as np
 from .storage import STORE, within, read, write
 
-VERSION = 'arenalabs-lerobot-v3.0-1'
+VERSION = 'arenalabs-lerobot-v3.0-2-rgbd'
 
 
 def asset_path(url):
@@ -147,12 +147,13 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
             return [portable(v) for v in value]
         if isinstance(value, str) and value.startswith('/assets/'):
             original = asset_path(value)
-            if not original.is_file():
+            if not original.exists():
                 raise ValueError('Referenced modality is missing: ' + original.name)
             if original not in copied:
                 target = extension / 'assets' / (hashlib.sha256(str(original).encode()).hexdigest()[:12] + '-' + original.name)
                 target.parent.mkdir(exist_ok=True)
-                shutil.copyfile(original, target)
+                if original.is_dir():shutil.copytree(original,target)
+                else:shutil.copyfile(original, target)
                 copied[original] = target.relative_to(output).as_posix()
             return copied[original]
         if isinstance(value, str) and value.startswith(('/home/', '/opt/', 'C:\\')):
@@ -163,10 +164,10 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
     native_video=Path(videos[0][1]['path']) if videos[0][1].get('path') else asset_path(videos[0][1]['url'])
     native_target=extension/'assets/original-native.mp4';native_target.parent.mkdir(exist_ok=True);shutil.copyfile(native_video,native_target)
     snapshot['video']=dict(url='videos/observation.images.original/chunk-000/file-000.mp4',start_seconds=0,native_original=native_target.relative_to(output).as_posix(),source_clock=videos[0][1].get('frame_times'),source_start_seconds=videos[0][1].get('start_seconds',0))
-    for field in ['patch_kinds','patch_unavailable','hand_motion_audit_urls']:
+    for field in ['patch_kinds','patch_depth_policy','patch_unavailable','hand_motion_audit_urls']:
         if field in snapshot:snapshot[field]={robot_id:snapshot[field][robot_id]} if robot_id in snapshot[field] else {}
     write(extension / 'scene.json', portable(snapshot))
-    # Full raw masks, DA3 depth/confidence, camera data and human motion stay lossless.
+    # Full raw masks, native depth/camera predictions and human motion stay lossless.
     raw_index = []
     for category, folder in raw_sources:
         folder = Path(folder)
@@ -174,6 +175,18 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
             target=extension/'raw'/category/'lens-rectification.npz';target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(folder,target);raw_index.append(target.relative_to(output).as_posix());continue
         allowed = ['depth.npz', 'depth.json', 'frames.npz', 'cameras.npz', 'camera-intrinsics.npz', 'preparation.json', 'prompts.json', 'semantic.json', 'observations.npz', 'source_hands.npz', 'canonical.npz', 'egoallo_smplh.npz', 'smplx_motion.npz', 'human_validation.json', 'prior-ready.json', 'source.npz', 'source.json', 'input_manifest.json', 'inference_identity.json', 'camera-calibration.json', 'lens-calibration.json', 'lens-rectification.npz', 'motion.npz', 'prime_original.npz', 'tool.npz', 'wuji_angles.npz', 'provenance.json', 'attachment.json', 'hand-mounts.json', 'wheeled-motion.npz', 'unrefined-motion.npz', 'wheeled-validation.json', 'encoder-input.json', 'report.json', 'validation.json']
         paths = [folder / name for name in allowed if (folder / name).is_file()]
+        if (folder/'depth-store.json').is_file():
+            paths.append(folder/'depth-store.json')
+            relative=Path(read(folder/'depth-store.json')['path'])
+            if relative.is_absolute() or '..' in relative.parts:raise ValueError('Invalid depth store path')
+            runs={(folder/relative).parent}
+            calibration=read(folder/'camera-calibration.json') if (folder/'camera-calibration.json').exists() else {}
+            bootstrap=calibration.get('prior_depth_receipt',{}).get('path')
+            if bootstrap:
+                prior=Path(bootstrap)
+                if prior.is_absolute() or '..' in prior.parts:raise ValueError('Invalid calibration prior path')
+                runs.add((folder/prior).parent)
+            for run in sorted(runs):paths += sorted(p for p in run.rglob('*') if p.is_file())
         paths += sorted((folder / 'masks').glob('*-masks.npz'))
         if (folder/'masks/segmentation.json').is_file():paths.append(folder/'masks/segmentation.json')
         for path in paths:

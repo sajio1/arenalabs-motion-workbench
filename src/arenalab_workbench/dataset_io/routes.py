@@ -156,7 +156,7 @@ def attach_dataset_routes(app, lock):
             env['PYTHONPATH'] = paths.pythonpath()
             python = os.environ.get('ARENA_DATASET_PYTHON', str(s.ROOT / 'venv/bin/python'))
             with (directory / 'worker.log').open('w') as log:
-                subprocess.run([python, '-m', 'dataset_io.worker', str(directory / 'request.json')], env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
+                subprocess.run([python, '-m', 'arenalab_workbench.dataset_io.worker', str(directory / 'request.json')], env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
             result = s.read(directory / 'result.json')
             s.write(state, {**result, 'status': 'completed', 'download_url': f'/api/4d/exports/{ident}/download'})
         except Exception:

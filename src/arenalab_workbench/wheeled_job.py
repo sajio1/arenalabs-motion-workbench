@@ -88,7 +88,7 @@ def run(robot,bodywork,dest,hand,gripper_work=None):
         chain=[]
         while b>0:chain.append(b);b=int(model.body_parentid[b])
         return chain+[0]
-    paths=[ancestors(b) for b in ids];common=next(b for b in paths[0] if b in paths[1]);branches=[p[p.index(common)-1] for p in paths]
+    arm_paths=[ancestors(b) for b in ids];common=next(b for b in arm_paths[0] if b in arm_paths[1]);branches=[p[p.index(common)-1] for p in arm_paths]
     selected=[i for i,gid in enumerate(native) if any(b in ancestors(int(model.geom_bodyid[gid])) for b in branches)]+list(range(len(native),len(meshes)))
     save(folder/'render-layout.json',dict(arm_and_gripper_geoms=selected))
     names=[model.joint(j).name for j in range(1,model.njnt)]+joint_names
