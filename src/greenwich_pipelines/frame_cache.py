@@ -27,20 +27,29 @@ def decode_cached(codec,codes,spec,dof,frame_ids,timestamps,cache_dir,chunk=32):
         for p in files:
             with np.load(p) as d:
                 if str(d['target_key'])!=key:continue
-                for j,f in enumerate(d['frame_ids']):
+                # NpzFile is lazy: indexing d[key] repeatedly inflates the whole
+                # compressed member each time, even when selecting one frame.
+                cached={k:d[k] for k in ['frame_ids','timestamps_s','codes',
+                                         'raw_rot6d','decoder_position','model_contact']}
+                for j,f in enumerate(cached['frame_ids']):
                     i=ids.get(int(f))
-                    if i is not None and abs(float(d['timestamps_s'][j])-float(timestamps[i]))<1e-7 and np.array_equal(d['codes'][j],cpu[i]):
-                        saved[i]=tuple(d[k][j].copy() for k in ['raw_rot6d','decoder_position','model_contact'])
-    missing=[i for i in range(n) if i not in saved];parts={}
+                    if i is not None and abs(float(cached['timestamps_s'][j])-float(timestamps[i]))<1e-7 and np.array_equal(cached['codes'][j],cpu[i]):
+                        saved[i]=tuple(cached[k][j].copy() for k in ['raw_rot6d','decoder_position','model_contact'])
+    missing=[i for i in range(n) if i not in saved];parts=[]
     for start in range(0,len(missing),chunk):
         indices=missing[start:start+chunk]
         out=codec.decode_full(codes[indices],spec,dof,contact=True)
-        for j,i in enumerate(indices):parts[i]=tuple(v[j] for v in out)
-    example=next(iter(parts.values()),None)
-    if example is None:example=tuple(torch.as_tensor(a,device=codes.device) for a in saved[0])
+        parts.append(out)
+    example=tuple(v[0] for v in parts[0]) if parts else tuple(torch.as_tensor(a,device=codes.device) for a in saved[0])
     result=[torch.empty((n,*v.shape),dtype=v.dtype,device=codes.device) for v in example]
-    for i,values in saved.items():
-        for out,v in zip(result,values):out[i]=torch.as_tensor(v,device=out.device)
-    for i,values in parts.items():
-        for out,v in zip(result,values):out[i]=v
+    if saved:
+        indices=list(saved)
+        dest=torch.as_tensor(indices,device=codes.device)
+        for k,out in enumerate(result):
+            values=np.stack([saved[i][k] for i in indices])
+            out.index_copy_(0,dest,torch.as_tensor(values,device=out.device))
+    if parts:
+        dest=torch.as_tensor(missing,device=codes.device)
+        for k,out in enumerate(result):
+            out.index_copy_(0,dest,torch.cat([p[k] for p in parts]))
     return (*result,dict(reused_frames=len(saved),decoded_frames=len(missing),frames=n,criterion='Exact integer codes, target descriptor, model config, frame id and timestamp'))
