@@ -14,7 +14,7 @@ import zipfile
 import numpy as np
 from .storage import STORE, within, read, write
 
-VERSION = 'arenalabs-lerobot-v3.0-2-rgbd'
+VERSION = 'arenalabs-lerobot-v3.0-3-isaac-replay'
 
 
 def asset_path(url):
@@ -167,6 +167,8 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
     for field in ['patch_kinds','patch_depth_policy','patch_unavailable','hand_motion_audit_urls']:
         if field in snapshot:snapshot[field]={robot_id:snapshot[field][robot_id]} if robot_id in snapshot[field] else {}
     write(extension / 'scene.json', portable(snapshot))
+    from .replay import build_replay
+    replay = build_replay(asset_path(robot['model_url']), motion, extension/'replay')
     # Full raw masks, native depth/camera predictions and human motion stay lossless.
     raw_index = []
     for category, folder in raw_sources:
@@ -205,7 +207,7 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
         frame_rows.append(dict(frame_index=frame, timestamp=frame / 30, cloud_index=clouds[selected] if selected is not None else None, cloud_source_frame=selected, cloud_observed_this_frame=selected == frame))
     parquet(extension / 'frame_map.parquet', {k: [r[k] for r in frame_rows] for k in frame_rows[0]})
     shutil.copyfile(Path(__file__).with_name('portable_reader.py'), extension/'read_extensions.py')
-    write(extension / 'manifest.json', dict(schema=VERSION, scene_id=scene['id'], robot_id=robot_id, fps=30, frames=n, state_units=motion['joints'].get('units', motion['joints']['unit']), action_semantics='Next-frame retargeted kinematic joint-position reference; final frame repeats. Not measured actuation or executed success.', state_semantics='Generated kinematic playback, not measured robot telemetry', contact_semantics='Retain original status, fps, evidence and nullable per-digit estimates; not measured pressure unless explicitly declared', frame_map='extensions/arenalabs/frame_map.parquet', raw_files=raw_index, missing={k: reason for k, reason in {'point_cloud': None if scene.get('cloud') else 'Not generated', 'inpaint_fov': scene.get('patch_unavailable', {}).get(robot_id,'Not generated') if not scene.get('patch_videos', {}).get(robot_id) else None, 'contact': scene.get('tactile', {}).get('reason') if not scene.get('tactile', {}).get('url') else None}.items() if reason}, source_scene_sha256=digest(scene_path), models_included=False))
+    write(extension / 'manifest.json', dict(schema=VERSION, scene_id=scene['id'], robot_id=robot_id, fps=30, frames=n, state_units=motion['joints'].get('units', motion['joints']['unit']), action_semantics='Next-frame retargeted kinematic joint-position reference; final frame repeats. Not measured actuation or executed success.', state_semantics='Generated kinematic playback, not measured robot telemetry', contact_semantics='Retain original status, fps, evidence and nullable per-digit estimates; not measured pressure unless explicitly declared', frame_map='extensions/arenalabs/frame_map.parquet', raw_files=raw_index, missing={k: reason for k, reason in {'point_cloud': None if scene.get('cloud') else 'Not generated', 'inpaint_fov': scene.get('patch_unavailable', {}).get(robot_id,'Not generated') if not scene.get('patch_videos', {}).get(robot_id) else None, 'contact': scene.get('tactile', {}).get('reason') if not scene.get('tactile', {}).get('url') else None}.items() if reason}, source_scene_sha256=digest(scene_path), models_included=False, robot_visual_asset_included=True, model_weights_included=False, replay=dict(stage='extensions/arenalabs/replay/robot.usda', contract='extensions/arenalabs/replay/replay.json', mode=replay['mode'], physics_articulation=False)))
     hashes = {p.relative_to(output).as_posix(): digest(p) for p in output.rglob('*') if p.is_file()}
     write(output / 'checksums.json', hashes)
     archive = output.with_suffix('.zip')

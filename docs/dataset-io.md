@@ -99,6 +99,35 @@ Every packaged file has a SHA256 entry in `checksums.json`. Exports are immutabl
 CPU jobs; failures retain logs and do not replace earlier outputs. Nothing is
 automatically uploaded to Hugging Face.
 
+## Isaac Sim replay
+
+New exports (`arenalabs-lerobot-v3.0-3-isaac-replay`) include
+`extensions/arenalabs/replay/robot.usda`, a self-contained 30 Hz USD animation.
+Open it in Isaac Sim and press Play, or use the included `isaac_replay.py`
+with Isaac Sim 5.1's `python.sh`. The replay folder README gives GUI and
+headless validation commands. Exporting it is CPU-only and does not rerun any
+motion model. Existing immutable ZIPs are not rewritten; download a new export.
+
+The USD embeds all exported robot meshes, mounted hands/grippers and full
+world motion. It is **kinematic visual replay**, without a PhysX articulation,
+actuator controller or claim of dynamic stability. No URDF import, private
+model path, model weights or network asset is required for this replay.
+For control/simulation, a matching physical robot description, explicit named
+DOF mapping, floating-base convention and a controller remain necessary.
+
+The source playback uses metres, Y-up and global mesh orientations in xyzw.
+The USD applies one right-handed basis rotation `(x,y,z) -> (x,-z,y)` to Z-up;
+USD quaternion tuples use wxyz. World geometry poses must never be interpreted
+as joint-local transforms. `replay.json` records this contract. LeRobot's named
+joint references include passive/coupled/hand joints and are **not qpos**;
+`action[t]` also refers to frame t+1. Use the USD for exact visual replay.
+
+The included Isaac validator compares every mesh transform at every frame to
+the original exported playback, then renders forward/backward timeline seeks.
+It fails if translation or rotation-matrix error exceeds 1e-6, geometry is
+missing, external USD layers are needed, or rendered images are empty. Numeric
+verification is separate from contact/dynamics validation.
+
 ## Code boundaries
 
 - `dataset_io/ingest.py`: archive validation, coordinate/clock checks, adapter preparation.
@@ -106,6 +135,8 @@ automatically uploaded to Hugging Face.
 - `dataset_io/routes.py`: streaming HTTP import, library and asynchronous export endpoints.
 - `dataset_io/export.py`: LeRobot writer and lossless modality packaging.
 - `dataset_io/worker.py`: CPU export process.
+- `dataset_io/replay.py`: self-contained USD geometry and animation writer.
+- `dataset_io/isaac_replay.py`: package-only Isaac player and independent transform/render checks.
 - `web/src/manipulation4d/dataset-io.ts`: upload and download dialogs.
 
 The generation scheduler and solvers are shared with presets. The server needs
