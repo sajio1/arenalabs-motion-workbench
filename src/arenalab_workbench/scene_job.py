@@ -12,10 +12,10 @@ from arenalab_workbench.gpu_scheduler import run as gpu_run
 
 ROOT=Path(os.environ.get('ARENA_WORKBENCH_ROOT',str(paths.workbench)))
 STORE=paths.store / 'manipulation4d'
-POLICY='scene-cloud-v7-mapanything-rgbd-sam31'
+POLICY='scene-cloud-v8-mapanything-hand-registration'
 WORKER_FILES=('scene_inference.py','video_io.py','segment_scene.py','segment_parallel.py','tracking_recovery.py',
               'sam_runtime.py','sam_features.py','export_scene_cloud.py','discovery_output.py',
-              'discover_objects.py','nymeria_camera.py','gpu_scheduler.py','mapanything_depth.py','depth_store.py','scene_geometry.py')
+              'discover_objects.py','nymeria_camera.py','gpu_scheduler.py','mapanything_depth.py','depth_store.py','scene_geometry.py','hand_alignment.py')
 # Bump POLICY when model versions, reconstruction settings or output semantics
 # change. Exact worker hashes additionally identify each immutable build artifact.
 
@@ -60,12 +60,14 @@ def cache_key(scene_id):
     h.update(Path(__file__).read_bytes())
     for name in [row['source'],row['video']['path']]:h.update(digest(name).encode())
     return h.hexdigest()
-def depth_current(scene):
+def depth_current(scene, require_hand=True):
     geometry=scene.get('geometry',{})
     depth=geometry.get('depth',{})
     from arenalab_workbench.discovery_output import POLICY as discovery_policy
     from arenalab_workbench.depth_store import MODEL, POLICY as DEPTH_POLICY
     native=paths.depth_backend=='mapanything'
+    from arenalab_workbench.hand_alignment import POLICY as HAND_POLICY
+    if require_hand and native and geometry.get('hand_alignment',{}).get('policy')!=HAND_POLICY:return False
     return geometry.get('segmentation',{}).get('policy')==('sam31-depth-semantic-v3' if native else 'sam31-da3-semantic-v2') and geometry.get('segmentation',{}).get('discovery_policy') in {'qwen-visible-objects-v2',discovery_policy} and isinstance(depth,dict) and depth.get('model')==(MODEL if native else 'depth-anything/DA3NESTED-GIANT-LARGE-1.1') and (not native or depth.get('policy')==DEPTH_POLICY and scene.get('cloud',{}).get('format')=='depth-rgb-v1') and (scene.get('dataset')!='Nymeria' or geometry.get('lens_calibration',{}).get('policy')=='aria-fisheye624-upright-pinhole-v1' and geometry.get('camera_calibration',{}).get('policy')=='nymeria-official-handeye-v1')
 
 def refresh_scene(scene_id,status,old_url):
@@ -76,7 +78,41 @@ def refresh_scene(scene_id,status,old_url):
     merge_perception(old_path,fresh)
     return old_url
 
+def upgrade_geometry(public,row,status):
+    """Reuse calibrated depth and SAM masks; a display-layer upgrade needs no GPU."""
+    url=public.get('scene_url','')
+    if not url.startswith('/assets/'):return None
+    destination=paths.store/url.removeprefix('/assets/')
+    if not destination.is_file():return None
+    scene=read(destination)
+    if not depth_current(scene,require_hand=False):return None
+    key=scene.get('geometry',{}).get('scene_work')
+    if not key:return None
+    work=Path(key) if Path(key).is_absolute() else ROOT/'scene-jobs'/key
+    if not (work/'manifest.json').is_file():return None
+    manifest=read(work/'manifest.json')
+    if manifest.get('source_sha256')!=digest(row['source']) or manifest.get('video_sha256')!=digest(row['video']['path']):return None
+    if manifest['source'].get('source_window')!=row.get('source_window') or manifest['source']['frames']!=row['frames']:return None
+    from arenalab_workbench.depth_store import current
+    if not current(work) or not (work/'frames').is_dir() or not (work/'prompts.json').is_file():return None
+    if not all((work/'masks'/(prompt[0]+'-masks.npz')).is_file() for prompt in read(work/'prompts.json')):return None
+    started=time.monotonic()
+    save(status,dict(status='running',phase='Aligning cached hand/arm and scene point clouds; no model rerun'))
+    env=os.environ.copy();env.update(PYTHONPATH=paths.pythonpath(),OMP_NUM_THREADS='2')
+    with status.with_name(status.stem+'-hand-alignment.log').open('w') as log:
+        subprocess.run([str(paths.scene_python),str(Path(__file__).with_name('export_scene_cloud.py')),str(work)],env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
+    fresh=read(Path(manifest['destination'])/'scene.json')
+    fresh['geometry']['scene_work']=str(work)
+    fresh['geometry']['hand_alignment_seconds']=time.monotonic()-started
+    from arenalab_workbench.progressive_job import merge_perception
+    merge_perception(destination,fresh)
+    save(status,dict(status='completed',phase='Hand-registered scene ready',scene_url=url,model_cache_hit=True,elapsed_seconds=time.monotonic()-started))
+    return url
+
 def run(scene_id,status):
+    public,row=resolve_clip(scene_id)
+    upgraded=upgrade_geometry(public,row,Path(status))
+    if upgraded:return upgraded
     key=cache_key(scene_id);work=ROOT/'scene-jobs'/key;work.mkdir(parents=True,exist_ok=True)
     public,row=resolve_clip(scene_id);destination=STORE/'generated'/key;destination.mkdir(parents=True,exist_ok=True)
     from arenalab_workbench.dataset_io.storage import mark_private

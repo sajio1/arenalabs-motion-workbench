@@ -19,3 +19,13 @@ test('browser restores exact calibrated points, excludes invalid depth, preserve
 test('truncated packet cannot be presented as a valid observation',()=>{
  assert.throws(()=>decodeDepthPacket(packet().slice(0,-1)),/coverage/);
 });
+
+test('source human cloud uses the same calibrated transform and remains a separate layer',()=>{
+ const value={shape:[1,1],intrinsic:[[1,0,0],[0,1,0],[0,0,1]],camera_to_world:[[.8,0,0,.1],[0,.8,0,.2],[0,0,.8,-.1],[0,0,0,1]],source_frame:4,depth_scale:.001,human_depth_bytes:2};
+ const header=new TextEncoder().encode(JSON.stringify(value)),length=Math.ceil(header.length/4)*4;
+ const buffer=new ArrayBuffer(4+length+8),view=new DataView(buffer),bytes=new Uint8Array(buffer);view.setUint32(0,length,true);bytes.fill(32,4,4+length);bytes.set(header,4);
+ view.setUint16(4+length,0,true);bytes.fill(128,4+length+2,4+length+5);bytes[4+length+5]=0;view.setUint16(4+length+6,1000,true);
+ const decoded=decodeDepthPacket(buffer);assert.equal(decoded.count,0);assert.equal(decoded.human.count,1);assert.equal(decoded.sourceFrame,4);
+ for(const [i,want] of [.1,.2,.7].entries())assert.ok(Math.abs(decoded.human.xyz[i]-want)<1e-6);
+ assert.throws(()=>decodeDepthPacket(buffer.slice(0,-1)),/coverage/);
+});

@@ -31,9 +31,9 @@ def _camera_group(folder, group):
 
 
 @lru_cache(maxsize=8)
-def _depth_array(folder):
+def _depth_array(folder,field='depth_mm'):
     import zarr
-    return zarr.open_group(str(Path(folder)/'depth.zarr'),mode='r')['depth_mm']
+    return zarr.open_group(str(Path(folder)/'depth.zarr'),mode='r')[field]
 
 
 class _ProxyFrames:
@@ -94,14 +94,17 @@ def geometry_frame(folder, index):
     image=_proxy_frames(str(folder)).get(index)
     if image.shape[:2]!=depth.shape:raise ValueError('Geometry RGB/depth pixel-space mismatch')
     return dict(depth_mm=depth,rgb=image,labels=labels,
+        human_depth_mm=np.asarray(_depth_array(str(folder),'human_depth_mm')[index]) if info.get('source_human_layer') else None,
         intrinsic=np.asarray(cameras['intrinsic']).reshape(3,3),
         camera_to_world=np.asarray(cameras['camera_to_world']).reshape(4,4),
         source_frame=int(cameras['source_frame']),timestamp=float(cameras['timestamp_s']),
         display_from_source=np.asarray(info['display_from_source']))
 
 
-def points_from_geometry(value, maximum_points=None):
-    depth=value['depth_mm'].astype('f4')*.001
+def points_from_geometry(value, maximum_points=None, source_human=False):
+    selected_depth=value.get('human_depth_mm') if source_human else value['depth_mm']
+    if selected_depth is None:raise ValueError('Source human point cloud unavailable')
+    depth=selected_depth.astype('f4')*.001
     yy,xx=np.indices(depth.shape);valid=depth>0
     selected=np.flatnonzero(valid)
     if maximum_points is not None and len(selected)>maximum_points:
@@ -110,10 +113,10 @@ def points_from_geometry(value, maximum_points=None):
     transform=value['display_from_source']@value['camera_to_world']
     xyz=(rays*depth.ravel()[selected,None])@transform[:3,:3].T+transform[:3,3]
     return dict(xyz=xyz.astype('f4'),rgb=value['rgb'].reshape(-1,3)[selected],
-        instance_ids=value['labels'].ravel()[selected],source_frame=value['source_frame'],timestamp=value['timestamp'])
+        instance_ids=np.zeros(len(selected),dtype='u2') if source_human else value['labels'].ravel()[selected],source_frame=value['source_frame'],timestamp=value['timestamp'])
 
 
-def cloud_at(dataset, frame_index, maximum_points=None):
+def cloud_at(dataset, frame_index, maximum_points=None, source_human=False):
     root = Path(dataset)
     scene = json.loads((root/'extensions/arenalabs/scene.json').read_text())
     cloud = scene.get('cloud')
@@ -125,7 +128,8 @@ def cloud_at(dataset, frame_index, maximum_points=None):
         raise ValueError('No earlier cloud observation for this frame')
     frame = frames[index]
     if cloud.get('format')=='depth-rgb-v1':
-        return points_from_geometry(geometry_frame(root/cloud['geometry_url'],index),maximum_points)
+        return points_from_geometry(geometry_frame(root/cloud['geometry_url'],index),maximum_points,source_human=source_human)
+    if source_human:raise ValueError('Source human layer unavailable in this legacy export')
     path = root/cloud['url']
     def field(name, dtype, size):
         return np.fromfile(path, dtype=dtype, count=frame['count']*size, offset=frame[name]).reshape(frame['count'],size)

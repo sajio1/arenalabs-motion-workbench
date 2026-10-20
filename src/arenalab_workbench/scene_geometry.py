@@ -26,7 +26,7 @@ def encode_rle(mask):
 
 
 class Writer:
-    def __init__(self, folder, shape, display_from_source):
+    def __init__(self, folder, shape, display_from_source, source_human=False):
         import zarr
         import imageio.v2 as imageio
         self.folder=Path(folder)
@@ -36,21 +36,25 @@ class Writer:
         self.depth=create_array(zarr.open_group(str(self.folder/'depth.zarr'),mode='w'),
             'depth_mm',shape,'<u2')
         self.depth.attrs.update(units='millimetres',invalid_value=0,maximum_rounding_error_m=.0005)
+        self.human_depth=create_array(zarr.open_group(str(self.folder/'depth.zarr'),mode='a'),'human_depth_mm',shape,'<u2') if source_human else None
         self.video=imageio.get_writer(self.folder/'rgb.mp4',fps=15,codec='libx264',
             quality=9,macro_block_size=1,ffmpeg_params=['-threads','2','-pix_fmt','yuv420p'])
         self.masks=(self.folder/'masks.rle.jsonl').open('wb')
         self.rows=[];self.frames=[];self.expected=t;self.display=np.asarray(display_from_source)
 
-    def append(self,index,depth,rgb,intrinsic,extrinsic,semantic,valid,source_frame,affine=None):
+    def append(self,index,depth,rgb,intrinsic,extrinsic,semantic,valid,source_frame,affine=None,human_valid=None):
         if index!=len(self.frames):raise ValueError('Geometry frames must follow the source clock')
         mm=millimetres(depth);mm[~valid]=0
         self.depth[index]=mm
+        if self.human_depth is not None:
+            human_mm=millimetres(depth);human_mm[~np.asarray(human_valid,dtype=bool)]=0
+            self.human_depth[index]=human_mm
         self.video.append_data(np.asarray(rgb,dtype='u1'))
         payload=dict(source_frame=int(source_frame),instances=[dict(label=int(label),rle=encode_rle(semantic==label))
             for label in np.unique(semantic) if label])
         encoded=(json.dumps(payload,separators=(',',':'))+'\n').encode()
         self.frames.append(dict(source_frame=int(source_frame),time=float(source_frame/30),
-            count=int(np.count_nonzero(mm)),positions=0,colors=0,labels=0,
+            count=int(np.count_nonzero(mm)),human_count=int(np.count_nonzero(human_mm)) if self.human_depth is not None else 0,positions=0,colors=0,labels=0,
             mask_offset=self.masks.tell(),mask_bytes=len(encoded)))
         self.masks.write(encoded)
         e=np.eye(4);e[:3]=extrinsic
@@ -69,7 +73,8 @@ class Writer:
             rgb='rgb.mp4',rgb_semantics='Encoded proxy of aligned source RGB; not novel-view synthesis',
             cameras='cameras.parquet',camera_row_group_size=256,masks='masks.rle.jsonl',frames=self.frames,
             display_from_source=self.display.tolist(),point_cloud_stored=False,
-            human_and_hardware_excluded=True,history_fused=False),separators=(',',':')))
+            human_and_hardware_excluded=True,history_fused=False,
+            source_human_layer='depth.zarr/human_depth_mm' if self.human_depth is not None else None),separators=(',',':')))
         return self.frames
 
 
@@ -84,13 +89,15 @@ def frame_packet(folder,index,rgb_encoding='raw'):
     else:raise ValueError('Unknown RGB preview encoding')
     label_bytes=1 if value['labels'].max(initial=0)<256 else 2
     labels=value['labels'].astype('u1' if label_bytes==1 else '<u2').tobytes()
+    human=value.get('human_depth_mm')
+    human_bytes=0 if human is None else human.size*2
     transform=value['display_from_source']@value['camera_to_world']
     header=json.dumps(dict(shape=list(value['depth_mm'].shape),intrinsic=value['intrinsic'].tolist(),
-        camera_to_world=transform.tolist(),source_frame=value['source_frame'],timestamp=value['timestamp'],
-        depth_scale=.001,rgb_encoding=rgb_encoding,rgb_bytes=len(rgb),label_bytes=label_bytes),separators=(',',':')).encode()
+        camera_to_world=transform.tolist(),depth_to_display=transform.tolist(),transform_semantics='Registered depth-to-display affine; physical optical poses remain in camera Parquet',source_frame=value['source_frame'],timestamp=value['timestamp'],
+        depth_scale=.001,rgb_encoding=rgb_encoding,rgb_bytes=len(rgb),label_bytes=label_bytes,human_depth_bytes=human_bytes),separators=(',',':')).encode()
     header+=b' '*((-len(header))%4)
     return b''.join([struct.pack('<I',len(header)),header,value['depth_mm'].astype('<u2').tobytes(),
-        rgb,labels])
+        rgb,labels,b'' if human is None else human.astype('<u2').tobytes()])
 
 
 def attach_routes(app):

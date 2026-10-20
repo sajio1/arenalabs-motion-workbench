@@ -99,6 +99,38 @@ Every packaged file has a SHA256 entry in `checksums.json`. Exports are immutabl
 CPU jobs; failures retain logs and do not replace earlier outputs. Nothing is
 automatically uploaded to Hugging Face.
 
+## Source human cloud and global scene registration
+
+New scene exports retain observed hand/arm pixels as a separate optional
+`human_depth_mm` array in the same RGB-D bundle. Scene depth continues to exclude
+human/capture hardware. `cloud_at(dataset, frame, source_human=True)` returns
+only that reference layer. Default point-cloud and proximity consumers continue
+to see only the scene; source-hand points never become manipulable objects.
+
+A single clip-wide right-handed rigid/similarity registration maps raw estimated
+geometry to observed source hand/arm trajectories. The same transform applies
+to background, object surfaces, 3D boxes and source human points. Robot motion,
+source trajectories, camera measurements, model-native depth and masks remain
+unchanged. `geometry.hand_alignment` reports the matrix, uniform scale, anchor
+provenance, temporal validation split and before/after residuals. Geometry index
+`display_from_source` includes this transform; apply it exactly once. Physical
+camera Parquet poses remain separate. The browser packet's `depth_to_display`
+is the effective affine, potentially including uniform scale, not an optical
+extrinsic calibration.
+
+The source human layer's Display checkbox controls visibility only. Registration
+is computed during geometry export and retained even when this layer is hidden.
+No extra reconstruction or motion solve is required for a visibility change.
+The solve uses confidence-filtered projected observed landmarks on hand/arm
+masks, robust 3D correspondences, and held-out frames. It does not guarantee
+contact or correct nonrigid/local depth errors. When no reliable observed
+correspondences exist, registration is explicitly unavailable/insufficient,
+with an identity transform; the observed human layer can still be viewed.
+UMI gripper/device origins are not silently treated as calibrated human landmarks.
+Raw alignment correspondences and audit JSON are included in the lossless
+extension when available. Existing suitable depth/mask caches are upgraded by
+CPU export, without rerunning MapAnything, SAM or robot motion.
+
 ## Isaac Sim replay
 
 New exports (`arenalabs-lerobot-v3.0-3-isaac-replay`) include

@@ -108,3 +108,24 @@ def test_frame_api_and_private_ownership(geometry,tmp_path,monkeypatch):
     assert client.get('/geometry/frame',params=dict(scene='/assets/scene.json',frame=0)).status_code==200
     assert client.get('/geometry/frame',params=dict(scene='/assets/scene.json',frame=2)).status_code==404
     assert client.get('/geometry/frame',params=dict(scene='/assets/../secret/scene.json',frame=0)).status_code==404
+
+
+def test_source_human_cloud_is_separate_and_shares_whole_scene_transform(tmp_path):
+    pytest.importorskip('zarr');pytest.importorskip('pyarrow');pytest.importorskip('imageio')
+    from arenalab_workbench.scene_geometry import Writer,frame_packet
+    folder=tmp_path/'with-human';shape=(1,16,16)
+    transform=np.eye(4);transform[:3,:3]*=.8;transform[:3,3]=[.1,.2,-.1]
+    k=np.array([[100.,0,8],[0,100.,8],[0,0,1]])
+    human=np.zeros((16,16),bool);human[4:8,4:8]=True
+    writer=Writer(folder,shape,transform,source_human=True)
+    writer.append(0,np.ones((16,16)),np.full((16,16,3),100,dtype='u1'),k,np.eye(4)[:3],np.zeros((16,16),'u2'),~human,0,np.eye(3),human_valid=human)
+    writer.finish()
+    value=geometry_frame(folder,0)
+    scene=points_from_geometry(value);hand=points_from_geometry(value,source_human=True)
+    assert len(scene['xyz'])==240 and len(hand['xyz'])==16
+    assert not scene['instance_ids'].any() and not hand['instance_ids'].any()
+    np.testing.assert_allclose(hand['xyz'][:,2],.7,atol=1e-6)
+    assert not (value['depth_mm']&value['human_depth_mm']).any()
+    packet=frame_packet(folder,0);n=struct.unpack('<I',packet[:4])[0];header=json.loads(packet[4:4+n])
+    assert header['human_depth_bytes']==16*16*2
+    assert len(packet)==4+n+16*16*8

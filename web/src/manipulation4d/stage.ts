@@ -11,6 +11,7 @@ export class Workspace {
  renderer=new THREE.WebGLRenderer({antialias:true});controls:OrbitControls;loader=new GLTFLoader();
  grid=new THREE.GridHelper(12,48,0x395745,0x20382b);root=new THREE.Group();robot?:THREE.Group;geoms=new Map<number,THREE.Object3D>();motion?:Motion;asset?:SceneAsset;
  cloud?:THREE.Points;cloudBuffer?:ArrayBuffer;cloudGeometry?:THREE.BufferGeometry;cloudMaterial?:THREE.ShaderMaterial;cloudFrame=-1;
+ humanCloud?:THREE.Points;humanGeometry?:THREE.BufferGeometry;showHuman=true;
  paths:TraceGlyph[]=[];errors:THREE.LineSegments[]=[];showCloud=true;showBoxes=true;showTraces=true;showRobot=true;segments=false;orbit=false;
  serial=0;robotSerial=0;currentTime=0;
  depthStream?:DepthStream;loaded=false;
@@ -28,7 +29,7 @@ export class Workspace {
   this.currentTime=initialTime;
   this.loaded=false;this.depthStream?.dispose();this.depthStream=undefined;
   const token=++this.serial;this.asset=asset;const ground=asset.geometry.ground as {height_m?:number}|undefined;this.grid.position.y=ground?.height_m??0;this.motion=undefined;this.geoms.clear();this.paths=[];this.errors=[];
-  this.root.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Points||o instanceof THREE.Line||o instanceof THREE.LineSegments){o.geometry.dispose();const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}});this.root.clear();this.showRobot=true;this.showCloud=true;this.instanceBoxes.clear();this.robot=undefined;this.cloudFrame=-1;this.cloud=undefined;this.cloudBuffer=undefined;
+  this.root.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Points||o instanceof THREE.Line||o instanceof THREE.LineSegments){o.geometry.dispose();const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}});this.root.clear();this.showRobot=true;this.showCloud=true;this.instanceBoxes.clear();this.robot=undefined;this.cloudFrame=-1;this.cloud=undefined;this.cloudBuffer=undefined;this.humanCloud=undefined;this.humanGeometry=undefined;
   if(asset.cloud){
    if(asset.cloud.format!=='depth-rgb-v1'){
     const response=await fetch(asset.cloud.url!);if(!response.ok)throw new Error('Point-cloud stream unavailable');const buffer=await response.arrayBuffer();if(token!==this.serial)return;this.cloudBuffer=buffer;
@@ -37,6 +38,11 @@ export class Workspace {
    geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(count*3),3));geometry.setAttribute('color',new THREE.BufferAttribute(new Float32Array(count*3),3));geometry.setAttribute('label',new THREE.BufferAttribute(new Float32Array(count),1));
    const material=new THREE.ShaderMaterial({uniforms:{pointSize:{value:1.5*this.renderer.getPixelRatio()},segments:{value:false}},vertexShader:`attribute vec3 color;attribute float label;varying vec3 vColor;varying float vLabel;uniform float pointSize;void main(){vColor=color;vLabel=label;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);gl_PointSize=pointSize*(label>.5?1.8:1.);}`,fragmentShader:`varying vec3 vColor;varying float vLabel;uniform bool segments;void main(){if(length(gl_PointCoord-vec2(.5))>.5)discard;vec3 c=vColor;if(segments&&vLabel>.5)c=vec3(.65)+.35*cos(6.2831853*(fract(vLabel*.61803398875)+vec3(0.,.333333,.666667)));gl_FragColor=vec4(c,1.0);}`});
    this.cloudGeometry=geometry;this.cloudMaterial=material;this.cloud=new THREE.Points(geometry,material);this.cloud.frustumCulled=false;this.root.add(this.cloud);
+   if(asset.cloud.source_human){
+    const humanCount=Math.max(1,...asset.cloud.frames.map(f=>f.human_count??0));const humanGeometry=new THREE.BufferGeometry();
+    humanGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(humanCount*3),3));humanGeometry.setAttribute('color',new THREE.BufferAttribute(new Float32Array(humanCount*3),3));humanGeometry.setDrawRange(0,0);
+    this.humanGeometry=humanGeometry;this.humanCloud=new THREE.Points(humanGeometry,new THREE.PointsMaterial({size:.004,vertexColors:true,color:0x93e9f5,transparent:true,opacity:.6,depthWrite:false}));this.humanCloud.frustumCulled=false;this.root.add(this.humanCloud);
+   }
    if(asset.cloud.format==='depth-rgb-v1'){
     const first=Math.min(asset.cloud.frames.length-1,Math.max(0,Math.floor(initialTime*asset.cloud.fps)));
     const stream=new DepthStream(asset.cloud.frames.length,async(index:number,signal:AbortSignal)=>{
@@ -57,7 +63,7 @@ export class Workspace {
  canPresent(time:number){
   if(!this.loaded)return false;
   const cloud=this.asset?.cloud;
-  return !this.showCloud||cloud?.format!=='depth-rgb-v1'||!!this.depthStream?.want(this.depthIndex(time));
+  return (!this.showCloud&&(!this.showHuman||!cloud?.source_human))||cloud?.format!=='depth-rgb-v1'||!!this.depthStream?.want(this.depthIndex(time));
  }
  depthIndex(time:number){const cloud=this.asset!.cloud!;return Math.min(cloud.frames.length-1,Math.max(0,Math.floor(time*cloud.fps)));}
  depthError(time:number){return this.depthStream?.errors.get(this.depthIndex(time));}
@@ -111,12 +117,15 @@ export class Workspace {
      const p=this.cloudGeometry.getAttribute('position') as THREE.BufferAttribute,c=this.cloudGeometry.getAttribute('color') as THREE.BufferAttribute,l=this.cloudGeometry.getAttribute('label') as THREE.BufferAttribute;
      (p.array as Float32Array).set(value.xyz);(c.array as Float32Array).set(value.colors);(l.array as Float32Array).set(value.labels);
      p.needsUpdate=c.needsUpdate=l.needsUpdate=true;this.cloudGeometry.setDrawRange(0,value.count);this.cloudFrame=index;
-    }else this.cloudGeometry.setDrawRange(0,0); // Never show another timestamp's scene.
+     if(this.humanGeometry){const human=value.human;const hp=this.humanGeometry.getAttribute('position') as THREE.BufferAttribute,hc=this.humanGeometry.getAttribute('color') as THREE.BufferAttribute;
+      if(human){(hp.array as Float32Array).set(human.xyz);(hc.array as Float32Array).set(human.colors);hp.needsUpdate=hc.needsUpdate=true;this.humanGeometry.setDrawRange(0,human.count);}else this.humanGeometry.setDrawRange(0,0);
+     }
+    }else {this.cloudGeometry.setDrawRange(0,0);this.humanGeometry?.setDrawRange(0,0);} // Never show another timestamp's scene.
    }
   }
   this.instanceBoxes.forEach(box=>box.visible=false);const segmented=this.asset?.segmented_instances;
   if(segmented){const row=segmented.frames[Math.min(segmented.frames.length-1,Math.floor(time*segmented.fps))];for(const item of row.instances){const box=this.instanceBoxes.get(item.id);if(!box)continue;box.visible=this.showBoxes;box.box.min.fromArray(item.bounds[0]);box.box.max.fromArray(item.bounds[1]);}}
-  if(this.cloud)this.cloud.visible=this.showCloud;if(this.cloudMaterial)this.cloudMaterial.uniforms.segments.value=this.segments;
+  if(this.humanCloud)this.humanCloud.visible=this.showHuman;if(this.cloud)this.cloud.visible=this.showCloud;if(this.cloudMaterial)this.cloudMaterial.uniforms.segments.value=this.segments;
   this.controls.autoRotate=this.orbit;this.controls.autoRotateSpeed=.35;this.controls.update();this.renderer.render(this.scene,this.camera);
   return frame;
  }
