@@ -100,6 +100,11 @@ Browser requests use a JPEG colour preview within the packet; depth and labels
 remain lossless. This preview does not replace the original or proxy RGB video.
 The API keeps at most 4 proxy decoders with 24 decoded RGB frames each, avoiding
 reopening a video codec for every observation. Neither cache grows with duration.
+Seeking prioritizes the requested observation and cancels obsolete prefetches.
+Until that observation is ready, the common playback clock holds the last
+coherent video/robot/cloud state and shows a buffering indicator. A failed
+observation exposes an explicit retry instead of issuing repeated requests on
+every animation frame. Late responses cannot refill a disposed recording cache.
 LeRobot exports include the same bundle and a portable `cloud_at()` reader;
 `maximum_points=4096` samples points on request. Geometry retains 15 Hz source
 IDs while robot states and original/FOV videos retain the 30 Hz episode clock.
