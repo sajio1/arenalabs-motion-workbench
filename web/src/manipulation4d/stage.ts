@@ -3,7 +3,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import type {SceneAsset,Motion} from './types';
 import {TraceGlyph} from './trace-glyph';
-import {decodePreviewPacket} from './depth-packet.mjs';
+import {DepthDecoder} from './depth-decoder.mjs';
 import {DepthStream} from './depth-stream.mjs';
 
 export class Workspace {
@@ -14,7 +14,7 @@ export class Workspace {
  humanCloud?:THREE.Points;humanGeometry?:THREE.BufferGeometry;showHuman=true;
  paths:TraceGlyph[]=[];errors:THREE.LineSegments[]=[];showCloud=true;showBoxes=true;showTraces=true;showRobot=true;segments=false;orbit=false;
  serial=0;robotSerial=0;currentTime=0;
- depthStream?:DepthStream;loaded=false;
+ depthStream?:DepthStream;depthDecoder?:DepthDecoder;loaded=false;
  instanceBoxes=new Map<string,THREE.Box3Helper>();
  constructor(public host:HTMLElement){
   host.append(this.renderer.domElement);this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));this.renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -27,7 +27,7 @@ export class Workspace {
  }
  async load(asset:SceneAsset,sceneUrl='',initialTime=0){
   this.currentTime=initialTime;
-  this.loaded=false;this.depthStream?.dispose();this.depthStream=undefined;
+  this.loaded=false;this.depthStream?.dispose();this.depthStream=undefined;this.depthDecoder?.dispose();this.depthDecoder=undefined;
   const token=++this.serial;this.asset=asset;const ground=asset.geometry.ground as {height_m?:number}|undefined;this.grid.position.y=ground?.height_m??0;this.motion=undefined;this.geoms.clear();this.paths=[];this.errors=[];
   this.root.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Points||o instanceof THREE.Line||o instanceof THREE.LineSegments){o.geometry.dispose();const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}});this.root.clear();this.showRobot=true;this.showCloud=true;this.instanceBoxes.clear();this.robot=undefined;this.cloudFrame=-1;this.cloud=undefined;this.cloudBuffer=undefined;this.humanCloud=undefined;this.humanGeometry=undefined;
   if(asset.cloud){
@@ -44,11 +44,12 @@ export class Workspace {
     this.humanGeometry=humanGeometry;this.humanCloud=new THREE.Points(humanGeometry,new THREE.PointsMaterial({size:.004,vertexColors:true,color:0x93e9f5,transparent:true,opacity:.6,depthWrite:false}));this.humanCloud.frustumCulled=false;this.root.add(this.humanCloud);
    }
    if(asset.cloud.format==='depth-rgb-v1'){
+    const decoder=new DepthDecoder();this.depthDecoder=decoder;
     const first=Math.min(asset.cloud.frames.length-1,Math.max(0,Math.floor(initialTime*asset.cloud.fps)));
     const stream=new DepthStream(asset.cloud.frames.length,async(index:number,signal:AbortSignal)=>{
-     const query=new URLSearchParams({scene:sceneUrl,frame:String(index),rgb:'jpeg'});
+     const query=new URLSearchParams({scene:sceneUrl,frame:String(index),rgb:'jpeg',revision:asset.cloud!.geometry_url!});
      const response=await fetch('/api/4d/geometry/frame?'+query,{signal});if(!response.ok)throw new Error('Point-cloud frame unavailable');
-     const value=await decodePreviewPacket(await response.arrayBuffer());
+     const value=await decoder.decode(await response.arrayBuffer(),signal);
      if(value.sourceFrame!==asset.cloud!.frames[index].source_frame)throw new Error('Depth/source clock mismatch');
      return value;
     });this.depthStream=stream;
@@ -60,10 +61,10 @@ export class Workspace {
   for(const frame of asset.segmented_instances?.frames||[])for(const item of frame.instances)if(!this.instanceBoxes.has(item.id)){const color=new THREE.Color().fromArray([0,1/3,2/3].map(offset=>.65+.35*Math.cos(2*Math.PI*((item.semantic_label*.61803398875)%1+offset))));const box=new THREE.Box3Helper(new THREE.Box3(),color);box.visible=false;this.instanceBoxes.set(item.id,box);this.root.add(box);}
   if(token===this.serial){this.loaded=true;this.focus('objects');}
  }
- canPresent(time:number){
+ canPresent(time:number,playing=true,speed=1){
   if(!this.loaded)return false;
   const cloud=this.asset?.cloud;
-  return (!this.showCloud&&(!this.showHuman||!cloud?.source_human))||cloud?.format!=='depth-rgb-v1'||!!this.depthStream?.want(this.depthIndex(time));
+  return (!this.showCloud&&(!this.showHuman||!cloud?.source_human))||cloud?.format!=='depth-rgb-v1'||!!this.depthStream?.ready(this.depthIndex(time),playing,speed);
  }
  depthIndex(time:number){const cloud=this.asset!.cloud!;return Math.min(cloud.frames.length-1,Math.max(0,Math.floor(time*cloud.fps)));}
  depthError(time:number){return this.depthStream?.errors.get(this.depthIndex(time));}

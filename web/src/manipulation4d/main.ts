@@ -36,7 +36,7 @@ document.getElementById('app')!.innerHTML=`
 <div id="wb-loading">Loading synchronized workspace…</div><div id="wb-notice" role="status" hidden></div>`;
 
 const stage=new Workspace($('wb-viewport'));stage.segments=true;let asset:SceneAsset;let library:LibraryClip[]=[];let dataset='EgoDex';let currentRobot='';let selectedHand='';let time=0,playing=false,speed=1,last=performance.now();let loadingToken=0;let loadSerial=0;let previousChart=-1;let contact:{fps:number;likelihood:(number|null)[][][];model?:string;hand_contact?:{state:string;object:string;evidence:string}[][];observations?:{time:number;evidence:string;uncertainty:string}[]} | undefined;
-let displayTime=0,buffering=false;
+let displayTime=0,buffering=false,playbackStarted=false,stallCount=0,stallSeconds=0;
 const source=$<HTMLVideoElement>('source-video'),patch=$<HTMLVideoElement>('patch-video');
 interface HandAudit {source_curl_deg:number[][][];robot_curl_deg:number[][][];finger_motion:{side:string;finger:string;source_curl_range_deg:number;robot_curl_range_deg:number;curl_correlation:number|null;maximum_joint_range_deg:number}[];}
 let proximity:typeof contact;
@@ -98,7 +98,7 @@ async function load(url:string|SceneAsset,preservePlayback=false){
   await stage.load({...asset,segmented_instances:segmented},typeof url==='string'?url:'',preservePlayback?savedTime:0);if(request!==loadSerial)return;
   if(currentRobot&&selectedHand&&asset.robots.some(r=>r.id===currentRobot&&r.hand===selectedHand))await chooseRobot(currentRobot);
   else{$('scene-status').textContent='Choose a robot and end effector to continue';$('robot-name').textContent='Choose robot';$('joint-select').innerHTML='';$('joint-value').textContent='—';$('joint-note').textContent='Robot output is unavailable for this recording';$('cloud-status').textContent='';for(const id of ['left-error','right-error','left-angle','right-angle'])$(id).textContent='—';for(const id of ['fingertip-error'])$(id).textContent='';for(const id of ['joint-chart','error-chart','finger-chart']){const c=$<HTMLCanvasElement>(id);c.getContext('2d')?.clearRect(0,0,c.width,c.height);}patch.pause();patch.removeAttribute('src');patch.load();patch.hidden=true;$('patch-empty').hidden=false;$('patch-empty').textContent='No robot composite generated for this recording';$('patch-label').textContent='NOT GENERATED';}
-  if(request!==loadSerial)return;rememberCachedRobots(asset);time=preservePlayback?Math.min(savedTime,asset.duration):0;displayTime=time;buffering=false;playing=preservePlayback?savedPlaying:true;$('wb-loading').hidden=true;renderLibrary();
+  if(request!==loadSerial)return;rememberCachedRobots(asset);time=preservePlayback?Math.min(savedTime,asset.duration):0;displayTime=time;buffering=false;playbackStarted=false;stallCount=0;stallSeconds=0;playing=preservePlayback?savedPlaying:true;$('wb-loading').hidden=true;renderLibrary();
  }catch(error){if(request!==loadSerial)return;$('wb-loading').textContent=`Scene unavailable: ${(error as Error).message}`;console.error(error);}
 }
 function renderObjectTags(){const categories=asset.segmented_instances?.categories||[];$('object-tags').innerHTML=categories.map(o=>`<span>${escape(o)} <small>Segmented cloud</small></span>`).join('');}
@@ -239,9 +239,11 @@ document.addEventListener('keydown',e=>{if((e.target as HTMLElement).matches('in
 function syncVideo(video:HTMLVideoElement,start:number,position:number,run:boolean){if(!video.src||video.hidden)return;const wanted=position+start;if(!video.seeking&&video.readyState>=1&&Math.abs(video.currentTime-wanted)>(run?.3:.025))video.currentTime=wanted;video.playbackRate=speed;if(run&&video.paused)void video.play().catch(()=>{});else if(!run&&!video.paused)video.pause();}
 function draw(now:number){requestAnimationFrame(draw);const dt=Math.min(.1,(now-last)/1000);last=now;if(!asset)return;
  if(playing&&!buffering){time+=dt*speed;if(time>asset.duration)time=0;}
- buffering=!stage.canPresent(time);if(!buffering)displayTime=time;
+ const wasBuffering=buffering;buffering=!stage.canPresent(time,playing,speed);if(!buffering)displayTime=time;
+ if(playing&&stage.loaded){if(buffering&&playbackStarted){stallSeconds+=dt;if(!wasBuffering)stallCount++;}else if(!buffering)playbackStarted=true;}
  const renderTime=displayTime,run=playing&&!buffering;
  const waiting=$('depth-buffer');waiting.hidden=!buffering||!stage.loaded||(!stage.showCloud&&(!stage.showHuman||!asset.cloud?.source_human))||asset.cloud?.format!=='depth-rgb-v1';
+ waiting.dataset.stalls=String(stallCount);waiting.dataset.stallSeconds=stallSeconds.toFixed(3);waiting.dataset.bufferedFrames=String(stage.depthStream?.buffered()??0);
  if(!waiting.hidden){const error=stage.depthError(time);$('depth-buffer-label').textContent=error?`Point cloud unavailable · ${time.toFixed(2)} s`:`Loading point cloud · ${time.toFixed(2)} s`;$('depth-retry').hidden=!error;waiting.setAttribute('aria-busy',String(!error));}
  const rendered=stage.pose(renderTime);const frame=stage.motion?rendered:Math.min(asset.frames-1,Math.floor(renderTime*asset.fps));$('play').textContent=playing?'Ⅱ':'▶';$('time').textContent=`${renderTime.toFixed(2)} / ${asset.duration.toFixed(2)}`;$<HTMLInputElement>('timeline').value=String(time);$('frame-info').textContent=`${String(frame).padStart(3,'0')} / ${asset.frames-1} · 30 Hz`;
  syncVideo(source,asset.video.start_seconds,renderTime,run);syncVideo($<HTMLVideoElement>('preview-video'),asset.video.start_seconds,renderTime,run);syncVideo(patch,0,renderTime,run);document.querySelectorAll<HTMLVideoElement>('#wrist-videos video').forEach(v=>syncVideo(v,Number(v.dataset.start)||0,renderTime,run));

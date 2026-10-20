@@ -7,6 +7,8 @@ from pathlib import Path
 import json
 import struct
 from functools import lru_cache
+from collections import OrderedDict
+from threading import Lock
 import numpy as np
 from arenalab_workbench.depth_store import create_array, millimetres
 from arenalab_workbench.dataset_io.portable_reader import geometry_frame, points_from_geometry
@@ -100,14 +102,38 @@ def frame_packet(folder,index,rgb_encoding='raw'):
         rgb,labels,b'' if human is None else human.astype('<u2').tobytes()])
 
 
+class PreviewPackets:
+    """Disposable wire-response cache; canonical depth and masks stay untouched."""
+    def __init__(self,maximum_bytes=128*1024*1024):
+        self.maximum_bytes=maximum_bytes;self.bytes=0;self.values=OrderedDict();self.lock=Lock()
+
+    def get(self,folder,index,rgb,compressed):
+        import gzip
+        key=(str(folder),index,rgb,compressed)
+        with self.lock:
+            if key in self.values:
+                self.values.move_to_end(key);return self.values[key]
+        value=frame_packet(folder,index,rgb)
+        if compressed:value=gzip.compress(value,compresslevel=1)
+        with self.lock:
+            if key in self.values:return self.values[key]
+            if len(value)<=self.maximum_bytes:
+                self.values[key]=value;self.bytes+=len(value)
+                while self.bytes>self.maximum_bytes:
+                    _,expired=self.values.popitem(last=False);self.bytes-=len(expired)
+        return value
+
+
+_preview_packets=PreviewPackets()
+
+
 def attach_routes(app):
     from fastapi import Request,HTTPException,Response
     from arenalab_workbench.dataset_io import storage
-    import gzip
     from urllib.parse import urlsplit
 
     @app.get('/geometry/frame')
-    def get_frame(scene: str, frame: int, request: Request,rgb: str='raw'):
+    def get_frame(scene: str, frame: int, request: Request,rgb: str='raw',revision: str=''):
         try:
             parsed=urlsplit(scene)
             if parsed.scheme or parsed.netloc or not parsed.path.startswith('/assets/'):raise ValueError('Local scene required')
@@ -116,13 +142,15 @@ def attach_routes(app):
                 raise ValueError('Scene unavailable')
             stat=path.stat();url=_cloud_reference(str(path),stat.st_mtime_ns,stat.st_size)
             if not url.startswith('/assets/'):raise ValueError('Local geometry required')
+            if revision and revision!=url:raise ValueError('Geometry revision changed; reload scene')
             geometry=storage.within(storage.STORE,url.removeprefix('/assets/'))
             if not storage.permitted(geometry,request.cookies.get(storage.COOKIE)):
                 raise ValueError('Geometry unavailable')
-            packet=frame_packet(geometry,frame,rgb)
+            compressed='gzip' in request.headers.get('accept-encoding','')
+            packet=_preview_packets.get(geometry,frame,rgb,compressed)
         except (ValueError,KeyError,FileNotFoundError,IndexError) as error:
             raise HTTPException(404,'Geometry observation unavailable') from error
-        headers={'Cache-Control':'private, no-store','Vary':'Accept-Encoding, Cookie'}
-        if 'gzip' in request.headers.get('accept-encoding',''):
-            packet=gzip.compress(packet,compresslevel=1);headers['Content-Encoding']='gzip'
+        # Revision is the immutable geometry URL; a new alignment gets a new key.
+        headers={'Cache-Control':'private, max-age=300' if revision else 'private, no-store','Vary':'Accept-Encoding, Cookie'}
+        if compressed:headers['Content-Encoding']='gzip'
         return Response(packet,media_type='application/octet-stream',headers=headers)
