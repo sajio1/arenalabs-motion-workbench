@@ -41,7 +41,7 @@ export class Workspace {
    if(asset.cloud.source_human){
     const humanCount=Math.max(1,...asset.cloud.frames.map(f=>f.human_count??0));const humanGeometry=new THREE.BufferGeometry();
     humanGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(humanCount*3),3));humanGeometry.setAttribute('color',new THREE.BufferAttribute(new Float32Array(humanCount*3),3));humanGeometry.setDrawRange(0,0);
-    this.humanGeometry=humanGeometry;this.humanCloud=new THREE.Points(humanGeometry,new THREE.PointsMaterial({size:.004,vertexColors:true,color:0x93e9f5,transparent:true,opacity:.6,depthWrite:false}));this.humanCloud.frustumCulled=false;this.root.add(this.humanCloud);
+    this.humanGeometry=humanGeometry;this.humanCloud=new THREE.Points(humanGeometry,new THREE.PointsMaterial({size:.004,vertexColors:true}));this.humanCloud.frustumCulled=false;this.root.add(this.humanCloud);
    }
    if(asset.cloud.format==='depth-rgb-v1'){
     const decoder=new DepthDecoder();this.depthDecoder=decoder;
