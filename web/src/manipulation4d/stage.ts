@@ -12,7 +12,7 @@ export class Workspace {
  grid=new THREE.GridHelper(12,48,0x395745,0x20382b);root=new THREE.Group();robot?:THREE.Group;geoms=new Map<number,THREE.Object3D>();motion?:Motion;asset?:SceneAsset;
  cloud?:THREE.Points;cloudBuffer?:ArrayBuffer;cloudGeometry?:THREE.BufferGeometry;cloudMaterial?:THREE.ShaderMaterial;cloudFrame=-1;
  humanCloud?:THREE.Points;humanGeometry?:THREE.BufferGeometry;showHuman=true;
- paths:TraceGlyph[]=[];errors:THREE.LineSegments[]=[];showCloud=true;showBoxes=true;showTraces=true;showRobot=true;segments=false;orbit=false;
+ paths:TraceGlyph[]=[];errors:THREE.LineSegments[]=[];showCloud=true;showBoxes=false;showTraces=true;showRobot=true;segments=false;orbit=false;
  serial=0;robotSerial=0;currentTime=0;
  depthStream?:DepthStream;depthDecoder?:DepthDecoder;loaded=false;
  instanceBoxes=new Map<string,THREE.Box3Helper>();
