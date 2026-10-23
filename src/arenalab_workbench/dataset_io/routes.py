@@ -227,6 +227,25 @@ def attach_dataset_routes(app, lock):
         # Instructions and an executable packer, not fabricated motion data.
         return FileResponse(Path(__file__).with_name('pack_recording.py'), media_type='text/x-python', filename='pack_arenalabs_recording.py')
 
+    @app.post('/source-preview/{scene_id}')
+    def native_source_preview(scene_id: str, request: Request):
+        if not request.cookies.get(s.COOKIE):
+            raise HTTPException(401, 'Initialize a workspace before preparing a source preview')
+        require_scene(scene_id, request)
+        from arenalab_workbench.height_registry import public_entry
+        public = public_entry(scene_id)
+        if public is None:
+            raise HTTPException(404, 'Recording is unavailable in this workspace')
+        from arenalab_workbench.source_identity import registered_source
+        from arenalab_workbench.native_source_preview import source_preview
+        try:
+            _, spec = registered_source(scene_id)
+            if not spec or spec.get('format') != 'robot_joint_state':
+                raise HTTPException(409, 'On-demand source preview requires a native robot recording')
+            return source_preview(scene_id, workspace=public.get('owner'))
+        except (OSError,ValueError,KeyError,RuntimeError) as error:
+            raise HTTPException(409, 'Native source preview is unavailable or failed integrity validation') from error
+
     @app.post('/uploads')
     async def upload(request: Request, file: UploadFile = File(...)):
         token = request.cookies.get(s.COOKIE)

@@ -50,6 +50,7 @@ stages or server paths. Internal service bindings are implementation details.
 | End-effector roster and package ingestion | `GET/POST /end-effectors` |
 | Existing trajectory-height feature | `GET /recordings/{scene_id}/height-preview`, `POST /height-adjustments` |
 | Source video and RGB-D packet | `GET /recordings/{clip_id}/source-video`, `GET /geometry/frame` |
+| On-demand native source FK preview | `POST /recordings/{scene_id}/source-preview` |
 | Preflight | `POST /plans` |
 | Manipulation, Locomotion, dataset export | `POST /runs` |
 | Batch submissions | `POST /batches` |
@@ -271,6 +272,58 @@ commands, contact stability or controller tracking, and does not change
 `physics_status: not_run`. See [native reference usage](native-reference.md).
 
 ## Deployment
+
+Source variants are ordinary, independently registered recordings. A public row
+may include `source_group_id`, `source_variant_id` and `source_variants`, whose
+entries contain the real recording `id`, `label`, `source_family`, optional
+`source_robot_id`, and optional `available`/`reason`. Omitting `available` means
+available. The original human recording keeps its ID; a native variant has its
+own source, objects, clock, generated results and export identity. Selecting a
+variant does not submit a generation run or reuse another variant's results.
+
+For a row with `source_preview_available: true` and no published `source_motion`,
+call `POST /recordings/{id}/source-preview` with the workspace cookie and no body.
+The synchronous response is `{recording_id, source_motion, cache_hit}`. This only
+computes native robot geometry FK and publishes the source's own objects; it does
+not run EgoAllo, AlphaMotion, refinement, or a physics rollout. Existing
+`source_motion` metadata can be displayed directly. Missing or unauthorized
+recordings return 404, a missing workspace returns 401, and unsupported or invalid
+source data returns 409 without exposing server paths. No model/source paths or
+solver parameters are accepted by this operation.
+Preview `source_evidence` and `source_stage` retain the actual supplied provenance
+(for example, an officially retargeted reference). The legacy `retargeted: false`
+and explicit `preview_retargeting_performed: false` describe this preview operation,
+not the history of the supplied source. Native FK does not alter that reference.
+
+Preview cache identity includes source and object bytes, the declared clock and
+source semantics, local robot assets, decoder code and dependency versions. Hits
+verify the cached geometry and published asset hashes. Separate workspace asset
+namespaces preserve private recording access; public recordings use a public
+namespace. At most two FK builds run concurrently per process, with an additional
+cross-process lock preventing duplicate builds of the same source.
+
+An administrator can register rigs usable only as source models in
+`ARENA_SOURCE_ROBOT_REGISTRY` (default `${ARENA_CONFIG_DIR}/source-robots.json`):
+
+```json
+{"schema":"arenalabs.source-robots.v1","robots":[
+  {"id":"hoi_unitree_h2","pipeline_row":{
+    "xml":"/private/local-models/h2.xml","body":"hoi_unitree_h2",
+    "endpoints":{},"palm_frames":{},"semantic_metadata":{}
+  }}
+]}
+```
+
+The abbreviated physical metadata above must be replaced with the validated local
+rig metadata; missing or ambiguous semantics are rejected. Relative XML paths
+resolve against the administrator's registry directory. Source-only IDs do not
+appear in the selectable target robot roster. Existing target robots remain usable
+as sources. Model validation is cached by the exact rig row and its local asset
+hashes, so corpus registration does not repeatedly parse an unchanged rig. This
+configuration is local deployment state; it is not accepted from API requests and
+does not upload customer models to another service. HOI's official rigs use the
+separate IDs `hoi_unitree_g1` and `hoi_unitree_h2`, preserving the existing `g1`
+model binding used by other datasets.
 
 `python -m arena_api.server` attaches `/api/v1` to the existing workbench app.
 `ARENA_API_DATABASE` overrides its SQLite path. `ARENA_OPERATOR_ROOT` locates the

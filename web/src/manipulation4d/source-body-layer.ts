@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import type {SceneAsset} from './types';
 
 /** Source identity comes from provenance, never from dataset labels or target robot. */
-export function sourceMotionDisplay(body:SceneAsset['source_body']|SceneAsset['source_robot']){
+export function sourceMotionDisplay(body:SceneAsset['source_body']|SceneAsset['source_robot'],robotLabel?:string){
  if(body?.source_family==='robot'||body?.source_robot_id)return {
-  label:'Source robot'+(body.source_robot_id?' · '+body.source_robot_id.toUpperCase():''),
+  label:'Source robot'+((body.source_robot_label?.trim()||robotLabel||body.source_robot_id)?' · '+(body.source_robot_label?.trim()||robotLabel||body.source_robot_id?.toUpperCase()):''),
   title:'Show original source robot motion, synchronized with the target robot',
  };
  if(body&&'source_format' in body&&body.source_format==='recorded_skeleton_surface')return {

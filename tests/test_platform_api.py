@@ -58,6 +58,7 @@ def fixtures(tmp_path, database=None):
         return Response(b'PK\x03\x04',media_type='application/zip')
     async def stub(request:Request):return {'path':request.url.path}
     for path,methods in [('/uploads/template',['GET']),('/uploads',['POST']),('/hands',['GET','POST']),
+                         ('/source-preview/{scene_id}',['POST']),
                          ('/trajectory-height/{scene_id}',['GET']),('/trajectory-height',['POST']),('/geometry/frame',['GET'])]:
         workbench.add_api_route(path,stub,methods=methods)
     for path,methods in [('/api/source-video/{clip_id}',['GET']),('/api/robots/{page}',['POST']),
@@ -481,3 +482,32 @@ def test_recording_pagination_search_and_individual_lookup(tmp_path):
     c.cookies.clear()
     assert c.get('/recordings/r1099').status_code==404
     assert c.get('/recordings',params={'dataset':'HiPhi'}).json()['total']==0
+
+
+def test_native_source_preview_alias_requires_workspace_without_submitting_run(tmp_path):
+    client,calls,_,_,app=fixtures(tmp_path)
+    outsider=TestClient(app)
+    assert outsider.post('/recordings/clip/source-preview').status_code==401
+    result=client.post('/recordings/clip/source-preview')
+    assert result.status_code==200 and result.json()['path']=='/recordings/clip/source-preview'
+    assert calls==[]
+
+
+def test_source_variant_metadata_passes_through_and_each_id_dispatches_independently(tmp_path):
+    client,calls,_,_,app=fixtures(tmp_path)
+    variants=[dict(id='clip',label='Human',source_family='smplx'),
+              dict(id='clip--g1',label='G1',source_family='robot',source_robot_id='hoi_unitree_g1'),
+              dict(id='clip--h2',label='H2',source_family='robot',source_robot_id='hoi_unitree_h2')]
+    rows=[dict(id=v['id'],title='Same action',dataset='HOI-Retarget',end_effector='none',
+               source_group_id='clip',source_variant_id=role,source_variants=variants,
+               source_preview_available=role!='human',source_family=v['source_family'])
+          for role,v in zip(('human','g1','h2'),variants)]
+    def library(request:Request,response:Response):return rows
+    app.state.services.library.route.endpoint=library
+    assert client.get('/recordings/clip--h2').json()==rows[2]
+    assert client.get('/recordings').json()['items']==rows
+    human=post(client,spec(recording_id='clip'),key='human')
+    robot=post(client,spec(recording_id='clip--g1'),key='g1')
+    assert human.status_code==robot.status_code==202
+    assert human.json()['id']!=robot.json()['id']
+    assert [c['scene_id'] for c in calls]==['clip','clip--g1']

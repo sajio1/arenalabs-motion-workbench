@@ -22,15 +22,8 @@ def is_robot(spec):
 
 
 def source_robot(spec):
-    from .robot_registry import roster
-    from arenalab_motion.robot_metadata import ensure_robot_metadata
-    identifier = spec.get('robot_id')
-    if not isinstance(identifier, str) or not identifier:
-        raise ValueError('Complete robot motion requires a locally registered source robot_id')
-    row = roster().get(identifier)
-    if row is None:
-        raise ValueError('Source robot is unavailable at this decoding endpoint: ' + identifier)
-    return ensure_robot_metadata(row['pipeline_row'])
+    from .source_robot_registry import validated_source_robot
+    return validated_source_robot(spec.get('robot_id'))
 
 
 def read_state(spec, row=None):
@@ -229,6 +222,7 @@ def prepare_robot_source(spec, output_dir, *, row=None, observed_work=None, sour
             task_reference_evidence='Independent recorded operation targets' if observation_hashes else 'Original robot wrist origins and declared palm axes',
             observed_source_sha256=observation_hashes,source_clock='Original selected 30 Hz samples; no interpolation',model_arrays_exported=False)
         if spec.get('video_role') is not None:provenance['source_video_role']=spec['video_role']
+        if spec.get('source_stage') is not None:provenance['source_stage']=spec['source_stage']
         MotionClip(names,target['spec'].parents,target['spec'].rest_offsets,r_y,p_y*100,times,provenance).save(temp/'canonical.npz')
         provenance.update(native_source_sha256=sha256(temp/'native_source.npz'),
             source_visual_format='rigid-link-poses-v1',source_model_glb_sha256=sha256(temp/'source_robot.glb'),

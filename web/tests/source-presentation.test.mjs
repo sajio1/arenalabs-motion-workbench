@@ -153,3 +153,25 @@ test('missing catalog metadata never relabels a scene intermediate as raw input'
  assert.equal(badges.scene.text,'Scene input: SMPL-H · reconstructed');
  assert.deepEqual(sourceInputBadges(undefined),{raw:{text:'Raw input: Source type unspecified',detail:'The recording does not declare its motion source type.'},scene:undefined});
 });
+
+test('retargeted robot references use their declared display label without ID special cases',()=>{
+ const row={source_family:'robot',source_robot_id:'private-rig-a',source_robot_label:'G1',source_evidence:'retargeted'};
+ assert.equal(recordingSourcePresentation(row).label,'G1 · retargeted reference');
+ assert.equal(recordingSourcePresentation({metadata:row}).label,'G1 · retargeted reference');
+ assert.equal(recordingSourcePresentation({source_motion:{...row,source_robot_label:'H2'}}).label,'H2 · retargeted reference');
+ assert.equal(recordingSourcePresentation({...row,source_robot_label:undefined}).label,'PRIVATE-RIG-A · retargeted reference');
+});
+
+const {sourceRobotDisplayLabel}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('scene robot display names can use matching catalog metadata without changing source binding',()=>{
+ const bound={source_family:'robot',source_robot_id:'private-rig-a',source_sha256:'historical',source_evidence:'retargeted',frames:86,fps:30};
+ const recording={source_family:'robot',source_robot_id:'private-rig-a',source_robot_label:'G1',source_motion:{...bound,source_sha256:'current'}};
+ const scene={source_robot:bound},before=structuredClone(scene);
+ assert.equal(sourceRobotDisplayLabel(bound,recording),'G1');
+ assert.equal(sourceRobotDisplayLabel(bound,{metadata:recording}),'G1');
+ assert.equal(sourceRobotDisplayLabel({...bound,source_robot_label:'Original rig'},recording),'Original rig');
+ assert.equal(sourceRobotDisplayLabel(bound,{...recording,source_robot_id:'different-rig'}),'PRIVATE-RIG-A');
+ assert.equal(recordingSourcePresentation(sceneSourceMetadata(scene,recording)).label,'G1 · retargeted reference');
+ assert.equal(recordingSourcePresentation(sceneSourceMetadata(scene,{...recording,source_robot_id:'different-rig'})).label,'PRIVATE-RIG-A · retargeted reference');
+ assert.deepEqual(scene,before);
+});

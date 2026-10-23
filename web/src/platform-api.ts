@@ -60,6 +60,7 @@ function submissionIdentity(spec:RunSpec){
 export const api={
  session(){return sessionPromise??=(apiJson('/api/v1/sessions',{method:'POST'}).catch(e=>{sessionPromise=undefined;throw e;}));},
  async recording<T>(id:string):Promise<T>{await this.session();return apiJson('/api/v1/recordings/'+encodeURIComponent(id));},
+ async sourcePreview<T>(id:string):Promise<T>{await this.session();return apiJson('/api/v1/recordings/'+encodeURIComponent(id)+'/source-preview',{method:'POST'});},
  async recordingsPage<T>(options:{dataset?:string;q?:string;offset?:number;limit?:number}={},signal?:AbortSignal):Promise<RecordingPage<T>>{
   await this.session();const query=new URLSearchParams({limit:'50'});
   for(const [key,value] of Object.entries(options))if(value!==undefined)query.set(key,String(value));

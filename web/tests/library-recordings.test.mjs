@@ -27,3 +27,8 @@ test('a missing alias target remains visible and repeated exact IDs are deduplic
  assert.deepEqual(uniqueRecordings([missing,first,ready]),[missing,ready]);
  assert.deepEqual(uniqueRecordings([missing,ready,first]),[missing,ready]);
 });
+
+test('human and robot inputs sharing a source group retain independent recording and cache identities',()=>{
+ const clips=['human','g1','h2'].map(role=>({id:'record-'+role,source_group_id:'record-human',source_variant_id:role,title:'Same interaction',scene_url:'/assets/'+role+'/scene.json'}));
+ assert.deepEqual(uniqueRecordings(clips),clips);
+});

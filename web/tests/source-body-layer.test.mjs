@@ -65,3 +65,11 @@ test('missing geometry reports an error and can retry the existing cache',async 
  await assert.rejects(layer.setVisible(true,0),/cache unavailable/);assert.equal(layer.mesh,undefined);
  globalThis.fetch=valid;await layer.setVisible(true,0);assert.equal(layer.mesh.visible,true);assert.equal(calls.length,2);
 });
+
+test('native source layer uses explicit display labels and retains historical ID fallback',()=>{
+ const source={...body,source_family:'robot',source_robot_id:'private-rig-a'};
+ assert.equal(sourceMotionDisplay({...source,source_robot_label:'G1'}).label,'Source robot · G1');
+ assert.equal(sourceMotionDisplay(source,'H2').label,'Source robot · H2');
+ assert.equal(sourceMotionDisplay({...source,source_robot_label:'Original rig'},'G1').label,'Source robot · Original rig');
+ assert.equal(sourceMotionDisplay(source).label,'Source robot · PRIVATE-RIG-A');
+});

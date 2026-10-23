@@ -105,9 +105,16 @@ def _export_robot_preview(source, destination):
     if role is not None and role not in {'recorded', 'preview-only', 'unspecified'}:
         raise ValueError('Unknown source video role')
     # Role is part of this immutable manifest's identity; prior previews remain.
-    identity = hashlib.sha256(json.dumps(dict(motion=sha256(motion),model=sha256(model),
+    identity_fields = dict(motion=sha256(motion),model=sha256(model),
         objects=sha256(source/'objects.npz') if (source/'objects.npz').is_file() else None,
-        video_role=role),sort_keys=True).encode()).hexdigest()
+        video_role=role)
+    source_metadata = {key:provenance[key] for key in ('source_evidence','source_stage')
+                       if provenance.get(key) is not None}
+    if any(not isinstance(value,str) or not value for value in source_metadata.values()):
+        raise ValueError('Native source evidence and stage must be declared strings')
+    # Preserve earlier paths/manifests when neither annotation was supplied.
+    if source_metadata:identity_fields['source_metadata'] = source_metadata
+    identity = hashlib.sha256(json.dumps(identity_fields,sort_keys=True).encode()).hexdigest()
     target = destination/'source-robot'/identity[:24]
     _asset(target)
     model_hash = _immutable_bytes(target/'model.glb',model.read_bytes())
@@ -119,6 +126,8 @@ def _export_robot_preview(source, destination):
         model_sha256=model_hash,playback_sha256=playback_hash,source_sha256=provenance['source_sha256'],
         retargeted=False,source_trajectory_modified=False)
     if role is not None:result['video_role']=role
+    if source_metadata:
+        result.update(source_metadata, preview_retargeting_performed=False)
     if (source/'objects.npz').is_file():
         result['objects'] = _export_objects(source/'objects.npz',target/'objects',times)
     _immutable_bytes(target/'manifest.json',(json.dumps(result,indent=2,allow_nan=False)+'\n').encode())

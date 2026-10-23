@@ -71,6 +71,15 @@ test('plan exposes required scale choice and preserves source policy',async t=>{
  assert.equal(calls.filter(([url])=>url.endsWith('/runs')).length,0);
 });
 
+test('source preview prepares only the selected recording without submitting a target-robot run',async t=>{
+ const calls=[];
+ const {api}=await client(t,async(url,options)=>{calls.push([url,options]);return response(url.endsWith('/sessions')?{}:{recording_id:'original--g1',source_motion:{model_url:'/assets/g1.glb'},cache_hit:true});});
+ const result=await api.sourcePreview('original--g1');
+ assert.deepEqual(calls.map(([url,options])=>[url,options.method]),[['/api/v1/sessions','POST'],['/api/v1/recordings/original--g1/source-preview','POST']]);
+ assert.equal(calls[1][1].body,undefined);assert.equal(result.recording_id,'original--g1');assert.equal(result.source_motion.model_url,'/api/v1/media/g1.glb');
+ assert.equal(calls.some(([url])=>url.endsWith('/runs')||url.endsWith('/plans')),false);
+});
+
 test('scale modes have different identities while reordered retries retain their key',async t=>{
  const keys=[],bodies=[];
  const {api}=await client(t,async(url,options)=>{if(url.endsWith('/sessions'))return response({});keys.push(options.headers['Idempotency-Key']);bodies.push(JSON.parse(options.body));throw new TypeError('Ambiguous network failure');});

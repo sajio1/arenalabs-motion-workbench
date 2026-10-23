@@ -214,6 +214,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
     for old,new,method,tag in [
         ('/uploads/template','/recordings/template','GET','recordings'),
         ('/uploads','/recordings/import','POST','recordings'),
+        ('/source-preview/{scene_id}','/recordings/{scene_id}/source-preview','POST','recordings'),
         ('/robots','/robots','GET','robots'),
         ('/hands','/end-effectors','GET','robots'),
         ('/hands','/end-effectors','POST','robots'),

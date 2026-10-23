@@ -49,3 +49,5 @@ body.workbench4d #joint-state-signals{display:none}
 .wb-depth-buffer button { padding: 5px 9px; font-size: 11px; }
 
 .wb-raw-data .wb-input-source{margin:8px 0 2px;color:#b7cfaa;font-size:10px;line-height:1.5;overflow-wrap:anywhere}#library-list button .wb-input-source,#library-meta .wb-input-source{color:#b7cfaa}
+
+.wb-source-variants{margin-top:10px;padding-top:10px;border-top:1px solid #294431}.wb-source-variants>small{font-size:9px;letter-spacing:.12em;color:#8eab8d}.wb-source-variants>div{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}.wb-source-variants button{flex:1;min-width:54px;padding:7px 10px;border:1px solid #3f5b43;border-radius:5px;background:#12271b;color:#c8ddbf;cursor:pointer}.wb-source-variants button[aria-pressed=true]{background:#354f31;border-color:#a9ca91;color:#e8f3dc;opacity:1}.wb-source-variants button:disabled:not([aria-pressed=true]){opacity:.45;cursor:not-allowed}.wb-source-variants p{margin:6px 0 0;font-size:10px;line-height:1.4;color:#9bb29a}.wb-source-variants [role=status]:empty{display:none}
