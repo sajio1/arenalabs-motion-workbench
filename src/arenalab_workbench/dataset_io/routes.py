@@ -12,7 +12,7 @@ import zipfile
 import numpy as np
 from fastapi import File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from typing import Literal
 from . import storage as s
 from .ingest import MAX_ARCHIVE, unpack, validate_normalized
@@ -22,6 +22,66 @@ class ExportRequest(BaseModel):
     scene_id: str
     robot_id: str
     trajectory_scale: Literal['preserve','match_robot']|None = None
+    output_modalities: list[Literal['trajectory','point_cloud','contact','inpaint_fov']]|None = Field(default=None,min_length=1,max_length=4)
+
+    @model_validator(mode='after')
+    def unique_outputs(self):
+        if self.output_modalities is not None:
+            from arenalab_workbench.output_modalities import OUTPUTS
+            if len(set(self.output_modalities))!=len(self.output_modalities):raise ValueError('Output modalities must be unique')
+            self.output_modalities=[name for name in OUTPUTS if name in self.output_modalities]
+        return self
+
+
+def select_export_scene(body, scene_id, public):
+    """Select the exact generated variant; explicit outputs never fall back."""
+    from .export import asset_path
+    from arenalab_workbench.unified_scene import scene_key
+    from arenalab_workbench.output_modalities import resolve_outputs
+    def rejected(code,message):
+        raise HTTPException(409,dict(code=code,message=message))
+    def modality_error():
+        rejected('OUTPUT_TRAJECTORY_NOT_SELECTED','Robot dataset export requires trajectory among the selected outputs; point-cloud, contact, or FOV-only results are not robot datasets')
+    if body.output_modalities is not None and 'trajectory' not in body.output_modalities:modality_error()
+    public_path=asset_path(public['scene_url']) if public and public.get('scene_url') else None
+    mode=body.trajectory_scale or 'preserve'
+    def selected(scene):
+        return scene.get('output_modalities',scene.get('generation_status',{}).get('output_modalities'))
+    def matching_robot(scene):
+        return any(row.get('id')==body.robot_id and row.get('trajectory_scale',scene.get('generation_status',{}).get('trajectory_scale','preserve'))==mode for row in scene.get('robots',[]))
+    path=None;expected=None
+    if body.trajectory_scale is None and body.output_modalities is None and public_path and public_path.is_file():
+        path=public_path
+    else:
+        expected=body.output_modalities
+        if expected is None:
+            from arenalab_workbench.source_requirements import input_requirements
+            try:expected=resolve_outputs(None,input_requirements(scene_id)['output_capabilities'])['effective_outputs']
+            except (ValueError,OSError):expected=None
+        if expected is not None:
+            if 'trajectory' not in expected:modality_error()
+            candidate=s.STORE/'manipulation4d/unified'/scene_key(scene_id,mode,body.robot_id,expected)/'scene.json'
+            if candidate.is_file():path=candidate
+        if path is None and body.output_modalities is None:
+            # Compatibility applies only to actual pre-selector scenes, with an
+            # exact robot/scale match. Never substitute another selected variant.
+            legacy=s.STORE/'manipulation4d/unified'/scene_key(scene_id,mode,body.robot_id)/'scene.json'
+            for candidate in (legacy,public_path):
+                if candidate is None or not candidate.is_file():continue
+                old=s.read(candidate)
+                if old.get('id')==scene_id and selected(old) is None and matching_robot(old):path=candidate;expected=None;break
+    if path is None:rejected('OUTPUT_VARIANT_UNAVAILABLE','Generate the requested output and trajectory-scale variant before downloading')
+    scene=s.read(path)
+    if scene.get('id')!=scene_id:rejected('OUTPUT_VARIANT_MISMATCH','Generated scene belongs to a different recording')
+    modalities=selected(scene)
+    if modalities is not None and 'trajectory' not in modalities:modality_error()
+    if expected is not None and (modalities is None or set(modalities)!=set(expected)):
+        rejected('OUTPUT_VARIANT_MISMATCH','Generated scene does not match the selected output variant')
+    if modalities is not None and 'output_status' in scene and any(scene['output_status'].get(name)!='completed' for name in modalities):
+        rejected('OUTPUTS_INCOMPLETE','Selected outputs are still being generated')
+    if not any(row.get('id')==body.robot_id and (body.trajectory_scale is None or row.get('trajectory_scale',scene.get('generation_status',{}).get('trajectory_scale','preserve'))==body.trajectory_scale) for row in scene.get('robots',[])):
+        rejected('ROBOT_RESULT_UNAVAILABLE','Generate the selected robot for this variant before downloading')
+    return path,scene
 
 
 def require_scene(scene_id, request):
@@ -191,23 +251,13 @@ def attach_dataset_routes(app, lock):
         sid = default_id(body.scene_id) or body.scene_id
         require_scene(sid, request)
         public = public_entry(sid)
-        if not public or not public.get('scene_url'):
-            raise HTTPException(409, 'Generate a robot result before downloading')
-        from .export import asset_path, collect_raw_sources, collect_video_sources
-        scene_path = asset_path(public['scene_url'])
-        if body.trajectory_scale is not None:
-            from arenalab_workbench.unified_scene import scene_key
-            key=scene_key(sid,body.trajectory_scale,body.robot_id)
-            candidate=s.STORE/'manipulation4d/unified'/key/'scene.json'
-            if candidate.is_file():scene_path=candidate
-            else:raise HTTPException(409,'Generate the requested trajectory scale version before downloading')
-        scene = s.read(scene_path)
+        if not public:raise HTTPException(409, 'Recording is not connected')
+        from .export import collect_raw_sources, collect_video_sources
+        scene_path,scene = select_export_scene(body,sid,public)
         for job in getattr(app.state,'generation_jobs',{}).values():
             if job.get('scene_id')==sid and job.get('robot_id')==body.robot_id:
                 current=s.read(s.ROOT/'queue'/job['id']/'state.json',{})
                 if current.get('status') in {'queued','running'}:raise HTTPException(409,'Generation is still running; download after the remaining modalities finish')
-        if not any(r['id'] == body.robot_id and (body.trajectory_scale is None or r.get('trajectory_scale','preserve')==body.trajectory_scale) for r in scene['robots']):
-            raise HTTPException(409, 'Generate the selected robot first')
         ident = uuid.uuid4().hex
         directory = s.ROOT / 'dataset-exports' / ident
         record = dict(id=ident, owner=s.owner(request.cookies.get(s.COOKIE)), scene_id=sid, robot_id=body.robot_id, scene_path=str(scene_path), raw_sources=collect_raw_sources(sid,scene,body.robot_id), video_sources=collect_video_sources(sid,scene))

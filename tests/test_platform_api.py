@@ -13,12 +13,13 @@ class Generate(BaseModel):
     robot_id:str
     hand_id:str='none'
     trajectory_scale:str|None=None
+    output_modalities:list[str]|None=None
 
 def fixtures(tmp_path, database=None):
     viewer=FastAPI();workbench=FastAPI();calls=[];states={}
     storage=tmp_path/'assets';storage.mkdir(exist_ok=True)
     dest=storage/'scene';dest.mkdir(exist_ok=True)
-    (dest/'scene.json').write_text(json.dumps({'id':'clip','robots':[{'id':'x2'}]}))
+    (dest/'scene.json').write_text(json.dumps({'id':'clip','robots':[{'id':'x2','playback_url':'/assets/scene/robot-x2/playback.json'}]}))
     robot=dest/'robot-x2';robot.mkdir(exist_ok=True)
     (robot/'playback.json').write_text('{"frames":3}')
     @workbench.get('/library')
@@ -304,3 +305,86 @@ def test_export_keeps_saved_scale_selection_without_new_generation_preflight(tmp
     body={'workflow':'export','recording_id':'clip','robot_id':'x2','trajectory_scale':'match_robot'}
     assert c.post('/plans',json=body).json()['executable']
     assert post(c,body).status_code==202 and calls[-1]['trajectory_scale']=='match_robot'
+
+
+def install_output_preflight(app, available=('trajectory','point_cloud','contact','inpaint_fov')):
+    def requirements(scene_id,request,robot_id=None,workflow='manipulation'):
+        from arenalab_workbench.output_modalities import OUTPUTS
+        return {'hand_id':'none','output_capabilities':{'available_outputs':list(available),
+            'outputs':{name:{'available':name in available,'reason':'Registered source' if name in available else 'No registered source RGB/hand stream'} for name in OUTPUTS}}}
+    app.state.services.workbench.state.input_requirements=requirements
+    return requirements
+
+
+@pytest.mark.parametrize('selection',[['trajectory'],['point_cloud'],['contact'],['inpaint_fov'],['point_cloud','contact'],['inpaint_fov','trajectory']])
+def test_output_selection_dispatch_identity_and_progress_retention(tmp_path,selection):
+    c,calls,states,_,app=fixtures(tmp_path);install_output_preflight(app)
+    body=spec(output_modalities=selection)
+    plan=c.post('/plans',json=body).json()
+    assert plan['executable'] and set(plan['outputs']['effective'])==set(selection)
+    result=post(c,body).json();backend=result['backend_job_id']
+    assert set(calls[-1]['output_modalities'])==set(selection)
+    assert result['output_modalities']==plan['outputs']['effective']
+    # Same logical set, different ordering, same idempotency identity.
+    assert post(c,spec(output_modalities=list(reversed(selection)))).json()['id']==result['id']
+    states[backend]={'status':'running','scene_ready':True,'scene_url':'/assets/scene/scene.json','completed_outputs':['point_cloud']}
+    partial=c.get('/jobs/'+result['id']).json()
+    assert partial['result']['effective_outputs']==plan['outputs']['effective']
+    assert partial['result']['dependency_plan']==plan['outputs']['dependencies']
+    states[backend]={'status':'failed','error':'Later stage failed'}
+    failed=c.get('/jobs/'+result['id']).json()
+    assert failed['result']['scene_ready'] and failed['result']['scene_url']=='/assets/scene/scene.json'
+    assert failed['status']=='failed' and failed['result']['completed_outputs']==['point_cloud']
+    assert c.get('/jobs/'+result['id']+'/playback').status_code==200
+
+
+def test_outputs_are_deliverables_not_dependency_expansion(tmp_path):
+    c,calls,_,_,app=fixtures(tmp_path);install_output_preflight(app)
+    fov=c.post('/plans',json=spec(output_modalities=['inpaint_fov'])).json()['outputs']
+    assert fov['effective']==['inpaint_fov'] and fov['dependencies']['retarget'] and fov['dependencies']['scene']
+    contact=c.post('/plans',json=spec(output_modalities=['contact'])).json()['outputs']
+    assert contact['dependencies']['contact'] and not contact['dependencies']['body'] and not contact['dependencies']['retarget']
+    assert not contact['dependencies']['scene'] and not contact['dependencies']['proximity']
+    assert not calls
+
+
+def test_unavailable_outputs_and_invalid_selections_do_not_dispatch(tmp_path):
+    c,calls,_,_,app=fixtures(tmp_path);install_output_preflight(app,('trajectory',))
+    plan=c.post('/plans',json=spec(output_modalities=['inpaint_fov'])).json()
+    assert not plan['executable'] and plan['outputs']['unavailable']==['inpaint_fov']
+    reject=post(c,spec(output_modalities=['inpaint_fov']))
+    assert reject.status_code==409 and reject.json()['detail']['code']=='OUTPUT_MODALITY_UNAVAILABLE'
+    for value in [[],['trajectory','trajectory'],['unknown']]:
+        assert post(c,spec(output_modalities=value)).status_code==422
+    assert not calls
+    default=post(c,key='default').json()
+    assert default['result']['requested_outputs'] is None and default['output_modalities']==['trajectory']
+    assert calls[-1]['output_modalities'] is None
+
+
+def test_output_variants_have_distinct_identity_and_export_keeps_variant(tmp_path):
+    c,calls,_,_,app=fixtures(tmp_path);install_output_preflight(app)
+    one=post(c,spec(output_modalities=['trajectory']))
+    assert one.status_code==202
+    assert post(c,spec(output_modalities=['point_cloud'])).status_code==409
+    exported=post(c,dict(workflow='export',recording_id='clip',robot_id='x2',output_modalities=['point_cloud','trajectory']),key='export-output').json()
+    assert exported['workflow']=='export' and calls[-1]['output_modalities']==['trajectory','point_cloud']
+    plan=c.post('/plans',json=dict(workflow='export',recording_id='clip',robot_id='x2',output_modalities=['trajectory'])).json()
+    assert plan['outputs']['dependencies']=={} and 'existing generation variant' in plan['outputs']['semantics']
+
+
+def test_artifacts_follow_public_urls_and_hide_internal_trajectory(tmp_path):
+    c,_,states,store,app=fixtures(tmp_path);install_output_preflight(app)
+    internal=store/'private-dependency';internal.mkdir();(internal/'playback.json').write_text('{}');(internal/'validation.json').write_text('{}')
+    cloud=store/'points.bin';cloud.write_bytes(b'cloud')
+    manifest={'id':'clip','robots':[{'id':'x2','playback_url':'/assets/private-dependency/playback.json'}],
+              'cloud':{'url':'/assets/points.bin'}}
+    (store/'scene/scene.json').write_text(json.dumps(manifest))
+    for outputs in [['point_cloud'],['trajectory']]:
+        job=post(c,spec(output_modalities=outputs),key=outputs[0]).json();states[job['backend_job_id']]={'status':'completed','scene_url':'/assets/scene/scene.json'}
+        artifacts=c.get('/jobs/'+job['id']+'/artifacts').json()['items'];kinds={a['kind'] for a in artifacts}
+        if outputs==['point_cloud']:assert kinds=={'playback_manifest','point_cloud'}
+        else:
+            assert kinds=={'playback_manifest','robot_motion','quality_report'}
+            motion=next(a for a in artifacts if a['kind']=='robot_motion')
+            assert c.get(motion['download_url'].removeprefix('/api/v1')).content==b'{}'

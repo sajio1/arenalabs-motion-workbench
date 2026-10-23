@@ -48,3 +48,22 @@ def test_cli_explicit_scale_reaches_the_same_sdk(monkeypatch,capsys):
     cli.main()
     assert seen==[dict(workflow='manipulation',recording_id='clip',robot_id='r',hand_id='none',trajectory_scale='match_robot',idempotency_key='same-key')]
     assert 'one' in capsys.readouterr().out
+
+
+def test_sdk_cli_outputs_preserve_selection(monkeypatch,capsys):
+    import json,sys
+    import arena_api.__main__ as cli
+    captured=[]
+    def handler(request):
+        captured.append(json.loads(request.content));return httpx.Response(200,json={'id':'chosen'})
+    with ArenaClient('http://example.test',transport=httpx.MockTransport(handler)) as client:
+        client.run(idempotency_key='outputs',workflow='manipulation',recording_id='clip',robot_id='r',hand_id='none',output_modalities=['trajectory'])
+    assert captured[0]['output_modalities']==['trajectory']
+    class Client:
+        def __init__(self,*a,**kw):pass
+        def __enter__(self):return self
+        def __exit__(self,*a):pass
+        def run(self,**spec):captured.append(spec);return {'id':'chosen'}
+    monkeypatch.setattr(cli,'ArenaClient',Client);monkeypatch.setenv('ARENA_WORKSPACE_TOKEN','owner')
+    monkeypatch.setattr(sys,'argv',['arena-api','run','--workflow','manipulation','--recording','clip','--robot','r','--hand','none','--outputs','contact','point_cloud','--key','chosen'])
+    cli.main();assert captured[-1]['output_modalities']==['contact','point_cloud']

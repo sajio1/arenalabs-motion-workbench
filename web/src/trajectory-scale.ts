@@ -1,5 +1,6 @@
 /** Size decisions precede submission; both viewers use the same API preflight. */
 import {api,type RunSpec,type RunPlan,type TrajectoryScale} from './platform-api';
+import {chooseOutputModalities} from './output-selector';
 
 let dialogQueue:Promise<unknown>=Promise.resolve();
 function prompt(plan:RunPlan,label:string):Promise<TrajectoryScale>{
@@ -27,12 +28,17 @@ function prompt(plan:RunPlan,label:string):Promise<TrajectoryScale>{
 }
 
 export async function prepareRun(spec:RunSpec,label:string):Promise<RunSpec>{
- const plan=await api.plan(spec);
+ let plan=await api.plan(spec);
+ if(spec.workflow!=='export'&&spec.output_modalities==null){
+  const choice=dialogQueue.then(()=>chooseOutputModalities(plan,label));dialogQueue=choice.catch(()=>{});
+  spec={...spec,output_modalities:await choice};plan=await api.plan(spec);
+ }
+ if(plan.outputs?.error)throw new Error(plan.outputs.error);
  if(plan.required_choice==='trajectory_scale'||plan.policy.scale_choice_required){
   const choice=dialogQueue.then(()=>prompt(plan,label));dialogQueue=choice.catch(()=>{});
   const selected={...spec,trajectory_scale:await choice};
   const checked=await api.plan(selected);
-  if(!checked.executable)throw new Error(checked.policy.morphology?.reason||'This size choice is not available for the current source.');
+  if(!checked.executable)throw new Error(checked.outputs?.error||checked.policy.morphology?.reason||'This size choice is not available for the current source.');
   return selected;
  }
  if(!plan.executable)throw new Error(plan.policy.morphology?.reason||'This recording is not ready for generation.');

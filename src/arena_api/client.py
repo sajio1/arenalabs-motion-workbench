@@ -40,7 +40,11 @@ class ArenaClient:
         return self.request('POST','plans',json=spec)
 
     def run(self,*,idempotency_key,**spec):
-        """Keep the key across retries, including the identical trajectory_scale.
+        """Keep the key across retries, including identical scale and output set.
+
+        output_modalities selects trajectory, point_cloud, contact, inpaint_fov.
+        Omit it for all applicable outputs. Plans expose source availability and
+        internal dependencies. Export uses the selection as saved-variant identity.
 
         Changing scale mode requires a new key. No hidden retry, scaling,
         solver-tolerance override or new workspace is performed.

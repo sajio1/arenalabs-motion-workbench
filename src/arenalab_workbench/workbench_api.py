@@ -23,12 +23,14 @@ class Generate(BaseModel):
     robot_id:str
     hand_id:str='wuji'
     trajectory_scale:Literal['preserve','match_robot']|None=None
+    output_modalities:list[Literal['trajectory','point_cloud','contact','inpaint_fov']]|None=None
 
 class Reconstruct(BaseModel):
     scene_id:str
     robot_id:str='h2'
     hand_id:str='wuji'
     trajectory_scale:Literal['preserve','match_robot']|None=None
+    output_modalities:list[Literal['trajectory','point_cloud','contact','inpaint_fov']]|None=None
 
 def create_api(config_path=None):
     from arenalab_workbench.robot_registry import roster as load_roster
@@ -54,6 +56,7 @@ def create_api(config_path=None):
         destination=folder/job['id'];state=destination/'state.json'
         save(state,dict(status='running',phase='Starting retargeting'))
         env=os.environ.copy();env.update(ARENA_JOB_ID=job['id'],ARENA_TRAJECTORY_SCALE=job.get('trajectory_scale','preserve'),ARENA_VIEWER_CONFIG=str(config_path),ARENA_GPU_POOL=os.environ.get('ARENA_GPU_POOL','0,1,2,3'),CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2',PYTHONPATH=paths.pythonpath())
+        if job.get('output_modalities') is not None:env['ARENA_OUTPUT_MODALITIES']=json.dumps(job['output_modalities'])
         try:
             with (destination/'worker.log').open('w') as log:
                 result=subprocess.run([sys.executable,str(Path(__file__).with_name('full_job.py')),job['scene_id'],job['robot_id'],job['hand_id'],'--status',str(state)],env=env,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
@@ -80,39 +83,40 @@ def create_api(config_path=None):
     @app.get('/robots')
     def robots():
         return [dict(id=r['id'],label=r['label'],kind=r['kind'],model_url=r.get('model_url'),supported=supported(r),experimental=r['kind']=='Wheeled',reason=None if supported(r) else 'Physical end-effector and anatomical metadata is required') for r in roster().values()]
-    def enqueue(scene_id,robot_id,hand_id,trajectory_scale=None):
+    def enqueue(scene_id,robot_id,hand_id,trajectory_scale=None,output_modalities=None):
         from arenalab_workbench.height_registry import default_id,variant,public_entry
         scene_id=default_id(scene_id) or scene_id
         robot=roster().get(robot_id)
         if not robot:raise HTTPException(400,'Robot is unavailable')
         if not supported(robot):raise HTTPException(409,'Physical end-effector and anatomical metadata is required')
-        from arenalab_workbench.gripper_job import sources as gripper_sources,cached as gripper_cached
-        gripper_source=scene_id in gripper_sources()
         entry=public_entry(scene_id)
         if not entry:raise HTTPException(400,'Recording is not connected')
         if entry['dataset']=='UMI' and not variant(scene_id):raise HTTPException(409,'Set the first trajectory height before generating UMI')
         from arenalab_workbench.source_requirements import resolve_scale
         preflight=input_requirements(scene_id,robot_id,config_path)
+        from arenalab_workbench.output_modalities import resolve_outputs
+        try:outputs=resolve_outputs(output_modalities,preflight['output_capabilities'])['effective_outputs']
+        except ValueError as error:raise HTTPException(409,str(error)) from error
         try:trajectory_scale=resolve_scale(trajectory_scale,preflight)
         except ValueError as error:raise HTTPException(409,str(error)) from error
         expected_hand=preflight['hand_id']
         if hand_id!=expected_hand:raise HTTPException(409,'This source requires '+expected_hand)
         with lock:
             for job in jobs.values():
-                if job.get('kind')=='full' and job['scene_id']==scene_id and job.get('robot_id')==robot_id and job.get('hand_id')==hand_id and job.get('trajectory_scale','preserve')==trajectory_scale:
+                if job.get('kind')=='full' and job['scene_id']==scene_id and job.get('robot_id')==robot_id and job.get('hand_id')==hand_id and job.get('trajectory_scale','preserve')==trajectory_scale and job.get('output_modalities')==outputs:
                     current=view(job)
                     if current['status'] in {'queued','running'}:return current
-            job=dict(id=uuid.uuid4().hex[:16],kind='full',scene_id=scene_id,robot_id=robot_id,hand_id=hand_id,trajectory_scale=trajectory_scale,created_at=time.time());jobs[job['id']]=job
+            job=dict(id=uuid.uuid4().hex[:16],kind='full',scene_id=scene_id,robot_id=robot_id,hand_id=hand_id,trajectory_scale=trajectory_scale,output_modalities=outputs,created_at=time.time());jobs[job['id']]=job
             save(folder/job['id']/'job.json',job);save(folder/job['id']/'state.json',dict(status='queued',phase='Waiting for GPU'))
             pool.submit(execute,job);return view(job)
     @app.post('/reconstruct')
     def reconstruct(body:Reconstruct,request:Request):
         require_scene(body.scene_id,request)
-        return enqueue(body.scene_id,body.robot_id,body.hand_id,body.trajectory_scale)
+        return enqueue(body.scene_id,body.robot_id,body.hand_id,body.trajectory_scale,body.output_modalities)
     @app.post('/generate')
     def generate(body:Generate,request:Request):
         require_scene(body.scene_id,request)
-        return enqueue(body.scene_id,body.robot_id,body.hand_id,body.trajectory_scale)
+        return enqueue(body.scene_id,body.robot_id,body.hand_id,body.trajectory_scale,body.output_modalities)
     @app.get('/jobs/{job_id}')
     def status(job_id:str,request:Request):
         with lock:

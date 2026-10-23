@@ -1,4 +1,4 @@
-# Unified motion API 1.2
+# Unified motion API 1.3
 
 The website, Python SDK, CLI and `/api/v1` use the same workflow contract. Provided full-body motion enters the unified body retargeter directly. When no full-body motion is provided, synchronized head and two wrist observations feed native SMPL-H reconstruction through EgoAllo. Neither source completion nor solver tolerance is a public user override.
 
@@ -37,6 +37,29 @@ arena-api run --workflow locomotion --recording recording-id --robot robot-id --
 ```
 
 Export does not initiate a new size decision or reconstruction. Its optional `trajectory_scale` selects the saved generated variant. The manipulation viewer supplies the mode of the currently displayed robot result.
+
+## Select generated outputs
+
+After robot selection, the website presents a multi-select with **Select all available**. `/plans`, `/runs`, the SDK and CLI accept `output_modalities`, a nonempty unique list of `trajectory`, `point_cloud`, `contact`, and `inpaint_fov`. Omission retains the legacy behavior of generating all applicable outputs. A changed set is a changed request and needs a new idempotency key; ordering does not change request identity.
+
+| Selected output | Required computation |
+| --- | --- |
+| `trajectory` | Supplied body or native SMPL-H recovery, followed by the existing unified refinement and robot export |
+| `point_cloud` | Registered-camera perception; no robot refinement. Explicit `match_robot` also prepares the source body to estimate the common scene scale |
+| `contact` | Observed hand stream and source-video contact estimation; no body recovery or robot refinement. Geometry proximity is optional when geometry is already available |
+| `inpaint_fov` | Robot trajectory, scene geometry and the supported FOV compositor as internal dependencies |
+
+Plans expose `outputs.requested`, `effective`, `dependencies`, and `available` (each entry has `id`, `available`, `reason`). Availability is derived from registered input files and calibration. A public simulation preview is not a source camera. Contact currently requires observed 21-landmark hands and camera input; gripper contact is unavailable. FOV currently supports the observed-hand and registered-gripper renderers. Motion-only HiPhi and GRAIL sources therefore offer trajectory generation only. Locomotion's motion viewer also offers trajectory only.
+
+```json
+{"workflow":"manipulation","recording_id":"recording-id","robot_id":"robot-id","trajectory_scale":"preserve","output_modalities":["trajectory","contact"]}
+```
+
+The equivalent CLI flag is `--outputs trajectory contact`. Python calls accept `output_modalities=["trajectory", "contact"]` with the same contract. All selections share reusable source, motion and perception artifacts; selected public scene manifests have separate identities.
+
+Unavailable explicit choices produce a non-executable plan and HTTP 409 `OUTPUT_MODALITY_UNAVAILABLE` on `/runs`; empty, unknown and duplicate choices are invalid. Workers revalidate capability before starting. The public scene records `output_modalities`, `completed_outputs`, and `output_status`, and publishes only requested results. Intermediate dependencies remain reusable worker artifacts; generating FOV alone does not advertise trajectory or point cloud as selected outputs. Completion means that the requested set is ready, not that all four modalities ran.
+
+Export's optional `output_modalities` selects the saved scene variant, just like `trajectory_scale`; it never starts reconstruction or filters an unrelated variant. Robot dataset export requires a selected, completed trajectory. Point-cloud/contact/FOV-only scenes remain viewable but are not robot-trajectory datasets.
 
 ## Result and display boundary
 

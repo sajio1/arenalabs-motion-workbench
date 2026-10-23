@@ -7,7 +7,7 @@ from typing import Literal
 from fastapi import FastAPI,HTTPException,UploadFile,File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pydantic import BaseModel,ConfigDict
+from pydantic import BaseModel,ConfigDict,Field
 from .export import array_json,robot_model,motion_payload,join_playback_segments
 from .uploads import unpack_robot,MAX_BYTES
 from .ingest import ingest_humanoid
@@ -63,6 +63,7 @@ class Conversion(BaseModel):
     clip_id:str
     robot_id:str
     trajectory_scale:Literal['preserve','match_robot']|None=None
+    output_modalities:list[Literal['trajectory']]|None=Field(default=None,min_length=1,max_length=1)
 
 class PhysicalMetadata(BaseModel):
     endpoints:dict[str,str]
@@ -147,7 +148,7 @@ def create_app(config_path):
             folder=storage/'jobs'/jobid;folder.mkdir(parents=True)
             environment['ARENA_TRAJECTORY_SCALE']=job['trajectory_scale']
             environment['ARENA_MOTION_BACKEND']='gpu_hybrid'
-            spec=dict(clip=clip,robot=robot,trajectory_scale=job['trajectory_scale'],runtime=config['runtime'],output=str(folder/'output'))
+            spec=dict(clip=clip,robot=robot,trajectory_scale=job['trajectory_scale'],output_modalities=['trajectory'],runtime=config['runtime'],output=str(folder/'output'))
             array_json(folder/'request.json',spec)
             with (folder/'run.log').open('w',encoding='utf-8') as log:
                 result=run_conversion([sys.executable,'-m','arenalab_workbench.unified_conversion','--request',str(folder/'request.json')],stdout=log,stderr=subprocess.STDOUT,cwd=root,env=environment)
@@ -163,7 +164,7 @@ def create_app(config_path):
             with lock:
                 if job['trajectory_scale']=='preserve':clip.setdefault('cache',{})[robot['id']]=url
                 mode_cache[(clip['id'],robot['id'],job['trajectory_scale'])]=dict(url=url,signature=job['signature'])
-                job.update(status='completed',url=url,**{k:report[k] for k in ('source_policy','source_policy_version','motion_policy_version','solver_status','solver_converged','quality_status') if k in report})
+                job.update(status='completed',url=url,completed_outputs=['trajectory'],**{k:report[k] for k in ('source_policy','source_policy_version','motion_policy_version','solver_status','solver_converged','quality_status') if k in report})
                 saved_conversions[f"{clip['id']}:{robot['id']}:{job['trajectory_scale']}"]=dict(clip_id=clip['id'],robot_id=robot['id'],trajectory_scale=job['trajectory_scale'],signature=job['signature'],url=url)
                 array_json(conversion_registry,saved_conversions)
         except Exception as exc:
@@ -184,11 +185,11 @@ def create_app(config_path):
         signature=conversion_signature(clip,robot,mode,config.get('runtime'))
         cached=mode_cache.get((clip['id'],robot['id'],mode))
         if cached and cached['signature']==signature and (storage/cached['url'].removeprefix('/assets/')).is_file():
-            return dict(status='completed',url=cached['url'],cached=True,trajectory_scale=mode,**{k:requirements[k] for k in ('source_policy','source_policy_version','motion_policy_version') if k in requirements})
+            return dict(status='completed',url=cached['url'],cached=True,trajectory_scale=mode,output_modalities=['trajectory'],effective_outputs=['trajectory'],completed_outputs=['trajectory'],**{k:requirements[k] for k in ('source_policy','source_policy_version','motion_policy_version') if k in requirements})
         with lock:
             existing=next((j for j in jobs.values() if j['clip_id']==clip['id'] and j['robot_id']==robot['id'] and j['trajectory_scale']==mode and j['signature']==signature and j['status'] in {'queued','running'}),None)
             if existing:return job_view(existing)
-            jid=uuid.uuid4().hex[:16];job=dict(id=jid,status='queued',clip_id=clip['id'],robot_id=robot['id'],trajectory_scale=mode,signature=signature,
+            jid=uuid.uuid4().hex[:16];job=dict(id=jid,status='queued',clip_id=clip['id'],robot_id=robot['id'],trajectory_scale=mode,signature=signature,output_modalities=['trajectory'],effective_outputs=['trajectory'],
                                             **{k:requirements[k] for k in ('source_policy','source_policy_version','motion_policy_version') if k in requirements});jobs[jid]=job
         pool.submit(convert_task,jid,clip,robot)
         with lock:return job_view(job)

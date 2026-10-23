@@ -14,6 +14,8 @@ def main():
         p.add_argument('--recording',required=True);p.add_argument('--robot',required=True);p.add_argument('--hand')
         p.add_argument('--trajectory-scale',choices=['preserve','match_robot'],
                        help='Explicitly preserve source metres or normalize interaction size to the robot')
+        p.add_argument('--outputs',nargs='+',choices=['trajectory','point_cloud','contact','inpaint_fov'],
+                       help='Selected outputs; omitted selects all applicable. For export, identifies an existing generation variant.')
         if name=='run':p.add_argument('--key',required=True)
     args=parser.parse_args()
     with ArenaClient(args.url,workspace_token=os.environ.get('ARENA_WORKSPACE_TOKEN')) as client:
@@ -23,6 +25,7 @@ def main():
             spec=dict(workflow=args.workflow,recording_id=args.recording,robot_id=args.robot)
             if args.hand is not None:spec['hand_id']=args.hand
             if args.trajectory_scale is not None:spec['trajectory_scale']=args.trajectory_scale
+            if args.outputs is not None:spec['output_modalities']=args.outputs
             result=client.plan(**spec) if args.command=='plan' else client.run(idempotency_key=args.key,**spec)
         elif args.command=='recordings':result=client.recordings(args.workflow,limit=args.limit)
         elif args.command=='job':result=client.job(args.id)

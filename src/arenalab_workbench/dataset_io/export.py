@@ -86,6 +86,13 @@ def video_stats(path,n):
 def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=None):
     scene_path, output = Path(scene_path), Path(output)
     scene = read(scene_path)
+    selected=scene.get('output_modalities',scene.get('generation_status',{}).get('output_modalities'))
+    if selected is not None:
+        if 'trajectory' not in selected:raise ValueError('OUTPUT_TRAJECTORY_NOT_SELECTED: robot dataset export requires selected trajectory')
+        # An internal FOV dependency must not leak unselected point-cloud/contact
+        # artifacts into a portable dataset, even if an old worker manifest kept it.
+        from arenalab_workbench.job_outputs import filtered_scene, STAGES
+        scene=filtered_scene(scene,{'effective_outputs':selected},{STAGES[name]:True for name in selected})
     robot = next((r for r in scene['robots'] if r['id'] == robot_id), None)
     if robot is None:
         raise ValueError('Generate the selected robot before exporting')
@@ -112,8 +119,9 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
     statistics={k:stats(v) for k,v in arrays.items()}
     episode = dict(episode_index=[0], tasks=[[task]], length=[n], dataset_from_index=[0], dataset_to_index=[n], **{'data/chunk_index': [0], 'data/file_index': [0], 'meta/episodes/chunk_index': [0], 'meta/episodes/file_index': [0]})
     video_sources=video_sources or {}
-    videos = [('original', video_sources.get('original',scene['video']))]
-    videos += [(f'wrist_{v["side"]}', v) for v in scene.get('wrist_videos', [])]
+    original_video=video_sources.get('original',scene.get('video'))
+    videos = [('original', original_video)] if original_video else []
+    videos += [(f'wrist_{v["side"]}', v) for v in scene.get('wrist_videos', []) if v]
     if scene.get('patch_videos', {}).get(robot_id):
         videos.append(('inpaint', dict(url=scene['patch_videos'][robot_id], start_seconds=0)))
 
@@ -161,9 +169,11 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
         return value
 
     snapshot = {**scene, 'robots': [robot], 'patch_videos': {robot_id: scene.get('patch_videos', {}).get(robot_id)} if scene.get('patch_videos', {}).get(robot_id) else {}}
-    native_video=Path(videos[0][1]['path']) if videos[0][1].get('path') else asset_path(videos[0][1]['url'])
-    native_target=extension/'assets/original-native.mp4';native_target.parent.mkdir(exist_ok=True);shutil.copyfile(native_video,native_target)
-    snapshot['video']=dict(url='videos/observation.images.original/chunk-000/file-000.mp4',start_seconds=0,native_original=native_target.relative_to(output).as_posix(),source_clock=videos[0][1].get('frame_times'),source_start_seconds=videos[0][1].get('start_seconds',0))
+    if original_video:
+        native_video=Path(original_video['path']) if original_video.get('path') else asset_path(original_video['url'])
+        native_target=extension/'assets/original-native.mp4';native_target.parent.mkdir(exist_ok=True);shutil.copyfile(native_video,native_target)
+        snapshot['video']=dict(url='videos/observation.images.original/chunk-000/file-000.mp4',start_seconds=0,native_original=native_target.relative_to(output).as_posix(),source_clock=original_video.get('frame_times'),source_start_seconds=original_video.get('start_seconds',0))
+    else:snapshot['video']=None
     for field in ['patch_kinds','patch_depth_policy','patch_unavailable','hand_motion_audit_urls']:
         if field in snapshot:snapshot[field]={robot_id:snapshot[field][robot_id]} if robot_id in snapshot[field] else {}
     write(extension / 'scene.json', portable(snapshot))
@@ -172,6 +182,7 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
     # Full raw masks, native depth/camera predictions and human motion stay lossless.
     raw_index = []
     for category, folder in raw_sources:
+        if selected is not None and 'point_cloud' not in selected and category in {'perception','calibration'}:continue
         folder = Path(folder)
         if folder.is_file():
             target=extension/'raw'/category/'lens-rectification.npz';target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(folder,target);raw_index.append(target.relative_to(output).as_posix());continue
@@ -263,4 +274,4 @@ def collect_video_sources(scene_id,scene):
         return {'original':dict(path=meta['head_video'],start_seconds=meta.get('start_seconds',0))}
     from arenalab_workbench.scene_job import resolve_clip
     _,row=resolve_clip(scene_id)
-    return {'original':dict(row['video'])}
+    return {'original':dict(row['video'])} if row.get('video') else {}

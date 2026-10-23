@@ -2,6 +2,9 @@
 from typing import Literal, Any
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+OutputModality = Literal['trajectory', 'point_cloud', 'contact', 'inpaint_fov']
+OUTPUT_MODALITIES = ('trajectory', 'point_cloud', 'contact', 'inpaint_fov')
+
 class Contract(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
@@ -13,9 +16,15 @@ class RunRequest(Contract):
     trajectory_scale: Literal['preserve', 'match_robot'] | None = Field(
         default=None, description='Preserve source metres or explicitly normalize the interaction to the robot. '
         'An omitted choice never enables scaling; a known large mismatch requires a choice before generation.')
+    output_modalities: list[OutputModality] | None = Field(default=None, min_length=1, max_length=4,
+        description='Selected deliverables; omission selects all applicable outputs. For export, identifies the existing generation variant without rerunning stages.')
 
     @model_validator(mode='after')
     def explicit_selection(self):
+        if self.output_modalities is not None:
+            if len(set(self.output_modalities)) != len(self.output_modalities):
+                raise ValueError('output_modalities must be unique')
+            self.output_modalities = [m for m in OUTPUT_MODALITIES if m in self.output_modalities]
         if self.workflow == 'manipulation' and self.hand_id is None:
             raise ValueError('Select hand_id explicitly, including "none"')
         if self.workflow != 'manipulation' and self.hand_id is not None:
@@ -39,6 +48,7 @@ class JobView(Contract):
     events_url: str
     physics_status: str = 'not_run'
     trajectory_scale: Literal['preserve', 'match_robot'] | None = None
+    output_modalities: list[OutputModality] | None = None
 
 class PlanView(Contract):
     executable: bool
@@ -49,3 +59,4 @@ class PlanView(Contract):
     limitations: list[str]
     required_choice: Literal['trajectory_scale'] | None = None
     choices: list[str] = Field(default_factory=list)
+    outputs: dict[str, Any] = Field(default_factory=dict)

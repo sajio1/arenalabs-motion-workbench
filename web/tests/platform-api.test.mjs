@@ -98,3 +98,18 @@ test('expired session response resets the session promise without silent resubmi
  await assert.rejects(api.start(spec),/Workspace expired/);assert.equal(runs,1);
  await api.start(spec);assert.equal(sessions,2);assert.equal(runs,2);
 });
+
+test('output sets preserve retry identity, distinct subsets do not collide',async t=>{
+ const keys=[],bodies=[];
+ const {api}=await client(t,async(url,options)=>{if(url.endsWith('/sessions'))return response({});keys.push(options.headers['Idempotency-Key']);bodies.push(JSON.parse(options.body));throw new TypeError('Ambiguous network failure');});
+ await assert.rejects(api.start({...spec,output_modalities:['trajectory','point_cloud']}));
+ await assert.rejects(api.start({...spec,output_modalities:['point_cloud','trajectory']}));
+ await assert.rejects(api.start({...spec,output_modalities:['contact']}));
+ assert.equal(keys[0],keys[1]);assert.notEqual(keys[0],keys[2]);assert.deepEqual(bodies[2].output_modalities,['contact']);
+});
+
+test('partial contact or cloud outputs remain discoverable after another stage fails',async t=>{
+ const {api,hasPublishedOutputs}=await client(t,async()=>response({id:'part',status:'failed',error:{detail:'FOV failed'},result:{scene_ready:true,completed_outputs:['point_cloud'],effective_outputs:['point_cloud','inpaint_fov'],scene_url:'/assets/scene.json'}}));
+ const job=await api.job('part');assert.equal(job.status,'failed');assert.equal(hasPublishedOutputs(job),true);assert.equal(job.scene_url,'/api/v1/media/scene.json');assert.deepEqual(job.completed_outputs,['point_cloud']);
+ assert.equal(hasPublishedOutputs({contact_ready:true}),true);assert.equal(hasPublishedOutputs({completed_outputs:['contact']}),true);assert.equal(hasPublishedOutputs({}),false);
+});

@@ -58,13 +58,16 @@ def sanitize(value):
              'seconds','elapsed_seconds','body_ready','scene_ready','fov_ready','contact_ready',
              'sha256','format','robot_motion','revision','warnings','progress',
              'trajectory_scale','source_policy','source_policy_version','motion_policy_version',
-             'scale_factor','solver_status','solver_converged','quality_status'}
+             'scale_factor','solver_status','solver_converged','quality_status',
+             'output_modalities','requested_outputs','effective_outputs','output_status',
+             'completed_outputs','dependency_plan','outputs_ready','partial_result'}
     return {k:v for k,v in value.items() if k in allowed}
 
 def request_spec(body):
     """Keep pre-upgrade idempotency identities when the new optional field is absent."""
     value=body.model_dump()
-    if value.get('trajectory_scale') is None:value.pop('trajectory_scale',None)
+    for name in ('trajectory_scale','output_modalities'):
+        if value.get(name) is None:value.pop(name,None)
     return value
 
 def preflight_policy(requirements, body):
@@ -93,6 +96,28 @@ def preflight_policy(requirements, body):
             'scale_estimate_unavailable':unavailable,'trajectory_scale':resolved,
             'scale_semantics':'match_robot normalizes the interaction; it does not preserve original object dimensions'}
 
+def output_plan(requirements, body):
+    from arenalab_workbench.output_modalities import resolve_outputs, plan_outputs
+    from .contracts import OUTPUT_MODALITIES
+    if body.workflow=='export':
+        return dict(requested=body.output_modalities,effective=body.output_modalities,dependencies={},available=[],unavailable=[],defaulted=body.output_modalities is None,error=None,
+                    semantics='Select an existing generation variant; no new stage execution')
+    caps=(requirements or {}).get('output_capabilities')
+    if body.workflow=='locomotion' or caps is None:
+        caps={'available_outputs':['trajectory'],'outputs':{m:{'available':m=='trajectory',
+              'reason':None if m=='trajectory' else 'This workflow has no source-backed implementation for this output'} for m in OUTPUT_MODALITIES}}
+    available=[dict(id=m,available=bool(caps.get('outputs',{}).get(m,{}).get('available')),
+                    reason=caps.get('outputs',{}).get(m,{}).get('reason')) for m in OUTPUT_MODALITIES]
+    unavailable=[m for m in body.output_modalities or [] if not next(a['available'] for a in available if a['id']==m)]
+    error=None
+    try:resolved=resolve_outputs(body.output_modalities,caps)
+    except ValueError as exc:
+        error=str(exc);resolved=dict(requested_outputs=body.output_modalities,effective_outputs=[],defaulted=body.output_modalities is None)
+    effective=resolved['effective_outputs']
+    dependencies=plan_outputs(effective,trajectory_scale=body.trajectory_scale or 'preserve',point_cloud_available=False) if effective else {}
+    return dict(requested=resolved['requested_outputs'],effective=effective,dependencies=dependencies,
+                available=available,unavailable=unavailable,defaulted=resolved['defaulted'],error=error)
+
 def public_job(row):
     result=json.loads(row['result'])
     if json.loads(row['request'])['workflow']=='export' and row['status']=='succeeded':
@@ -102,6 +127,7 @@ def public_job(row):
                    result=result,error=json.loads(row['error']) if row['error'] else None,
                    cache_hit=bool(result.get('cache_hit') or result.get('cached')),
                    trajectory_scale=result.get('trajectory_scale',json.loads(row['request']).get('trajectory_scale')),
+                   output_modalities=result.get('effective_outputs',result.get('output_modalities',json.loads(row['request']).get('output_modalities'))),
                    status_url=PREFIX+'/jobs/'+row['id'],events_url=PREFIX+'/jobs/'+row['id']+'/events')
 
 def create_api(viewer, workbench, *, storage, database, operator_root=None, bridge=None):
@@ -155,6 +181,8 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
     def capabilities():
         return {'api_version':__version__,'workflows':OPERATIONS,'body_model':'source-provided-or-native-smplh',
                 'generated_body_model':'native-smplh','provided_body_families':['smpl','smplh','smplx'],
+                'output_modalities':{'choices':['trajectory','point_cloud','contact','inpaint_fov'],
+                                     'omitted':'all applicable source-backed outputs','dependencies':'Plans distinguish deliverables from internal stage dependencies'},
                 'fps':30,'foot_objective':'soft guide; reasonable grounding; residual sliding accepted',
                 'source_policy':'auto-provided-fullbody-or-egoallo-three-point',
                 'trajectory_scale':{'choices':['preserve','match_robot'],'omitted':'preserve unless a known large mismatch requires an explicit choice',
@@ -162,7 +190,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
                 'refinement':'GPU hybrid; fixed common policy; no public hand-tolerance override',
                 'recalibration_ui':False,'live_physics_rollout':False,
                 'independent_stage_execution':False,
-                'stage_access':'Existing numerical stages execute inside the established workflow. Result modalities are separately readable.',
+                'stage_access':'Selected output sets choose the required stages. Raw numerical-stage APIs are not exposed.',
                 'cancellation':'Not available in the current schedulers; API explicitly rejects it.',
                 'resource_scope':'Workspace-owned recordings/jobs/exports; robot and hand registries retain current shared scope.',
                 'recovery':'Persisted API identity. Legacy worker restart may interrupt jobs; no blind resubmission.',
@@ -229,15 +257,21 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
                 raise HTTPException(409,'Source requires hand_id='+expected)
             if requirements and requirements.get('requires_initial_height'):
                 raise HTTPException(409,'Set the first trajectory height before generating UMI')
-        return source,robot,preflight_policy(requirements,body)
+        policy=preflight_policy(requirements,body);policy['outputs']=output_plan(requirements,body)
+        return source,robot,policy
 
     @app.post('/plans',response_model=PlanView,tags=['workflows'])
     async def plan(body:RunRequest,request:Request):
         source,robot,policy=await check(body,request)
         policy['refiner_signature']=robot.get('refiner_signature')
         required=policy['scale_choice_required']
-        return PlanView(executable=not (required or policy['scale_estimate_unavailable']),request=body,operation=body.workflow,stages=OPERATIONS[body.workflow]['stages'],
+        stage_labels={'source_observations':'Registered source observations','body':'Provided full body or three-point EgoAllo SMPL-H',
+                      'retarget':'Unified GPU motion refinement','scene':'Registered-camera point cloud',
+                      'contact':'Source-video contact estimates','render':'Inpainted first-person robot view','proximity':'Optional available-geometry proximity'}
+        stages=OPERATIONS[body.workflow]['stages'] if body.workflow=='export' else [label for stage,label in stage_labels.items() if policy['outputs']['dependencies'].get(stage)]
+        return PlanView(executable=not (required or policy['scale_estimate_unavailable'] or policy['outputs']['error']),request=body,operation=body.workflow,stages=stages,
                         policy=policy,required_choice='trajectory_scale' if required else None,
+                        outputs=policy['outputs'],
                         choices=['preserve','match_robot'] if required else [],
                         limitations=['Metadata preflight only; worker validates numerical inputs and route.',
                                      'No implicit standalone reconstruction, physics rollout or new calibration.',
@@ -259,7 +293,9 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
         error={'code':'BACKEND_FAILED','detail':raw.get('error','Current workflow did not complete')} if status in {'failed','interrupted'} else None
         # Worker progress often omits immutable submission metadata.
         previous=json.loads(row['result'])
-        retained={k:v for k,v in previous.items() if k in {'trajectory_scale','source_policy','source_policy_version','motion_policy_version'}}
+        retained={k:v for k,v in previous.items() if k in {'trajectory_scale','source_policy','source_policy_version','motion_policy_version',
+            'output_modalities','requested_outputs','effective_outputs','dependency_plan','scene_url','url','revision',
+            'robot_ready','scene_ready','contact_ready','fov_ready','output_status','completed_outputs'}}
         return registry.update(row['id'],status=status,result={**retained,**sanitize(raw)},error=error)
 
     async def submit(body,request,key):
@@ -272,6 +308,9 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
         if body.workflow=='manipulation':payload['hand_id']=body.hand_id
         try:
             _,_,policy=await check(body,request)
+            if policy['outputs']['error']:
+                raise HTTPException(409,{'code':'OUTPUT_MODALITY_UNAVAILABLE','message':'Some selected outputs are not supported by this source.',
+                                         'field':'output_modalities','outputs':policy['outputs']})
             if policy['scale_choice_required']:
                 raise HTTPException(409,{'code':'SCALE_CHOICE_REQUIRED','message':'Choose preserve or match_robot for this source and robot.',
                                          'field':'trajectory_scale','choices':['preserve','match_robot'],'morphology':policy['morphology']})
@@ -279,6 +318,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
                 raise HTTPException(409,{'code':'SCALE_ESTIMATE_UNAVAILABLE','message':'Robot matching is unavailable until a source/robot size estimate exists. Preserve keeps source metres.',
                                          'field':'trajectory_scale','morphology':policy['morphology']})
             if policy['trajectory_scale'] is not None:payload['trajectory_scale']=policy['trajectory_scale']
+            if body.output_modalities is not None:payload['output_modalities']=body.output_modalities
             raw=await services.submit(body.workflow,request,payload)
         except HTTPException as exc:
             registry.update(row['id'],status='failed',error={'code':'SUBMISSION_REJECTED','http_status':exc.status_code,'detail':exc.detail})
@@ -289,6 +329,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
             registry.update(row['id'],status='outcome_unknown',error={'code':'DISPATCH_OUTCOME_UNKNOWN','detail':'Inspect backend before resubmitting'})
             raise HTTPException(502,'Submission outcome unknown; query this idempotency key again')
         result={k:policy[k] for k in ('trajectory_scale','source_policy','source_policy_version','motion_policy_version')}
+        result.update(requested_outputs=policy['outputs']['requested'],effective_outputs=policy['outputs']['effective'],dependency_plan=policy['outputs']['dependencies'])
         result.update(sanitize(raw))
         status='succeeded' if raw.get('status')=='completed' else raw.get('status','queued')
         backend_id=raw.get('id')
@@ -413,17 +454,30 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
     async def artifacts(ident:str,request:Request):
         row,path,manifest=await result_manifest(ident,request)
         spec=json.loads(row['request']);files=[(path,'playback_manifest')]
-        folder=path.parent/('robot-'+spec['robot_id'])
-        for name,kind in [('playback.json','robot_motion'),('model.glb','robot_visual'),('validation.json','quality_report')]:
-            candidate=folder/name
-            if candidate.is_file():files.append((candidate,kind))
+        selected=spec.get('output_modalities')
+        if selected is None:selected=json.loads(row['result']).get('effective_outputs')
+        if selected is None:selected=['trajectory','point_cloud','contact','inpaint_fov']
         # Public asset references only, never internal model or source filesystem paths.
-        for robot in manifest.get('robots',[]):
-            if robot.get('id')==spec['robot_id']:
-                for key,value in robot.items():
+        for robot in manifest.get('robots',[]) if 'trajectory' in selected else []:
+            if robot.get('id')==spec['robot_id'] or robot.get('registry_robot_id')==spec['robot_id']:
+                for key,kind in [('playback_url','robot_motion'),('model_url','robot_visual')]:
+                    value=robot.get(key)
                     if isinstance(value,str) and value.startswith('/assets/'):
                         candidate=safe_asset(storage,value)
-                        if candidate.is_file():files.append((candidate,key))
+                        if candidate.is_file():files.append((candidate,kind))
+                        if key=='playback_url' and candidate.with_name('validation.json').is_file():
+                            files.append((candidate.with_name('validation.json'),'quality_report'))
+        def add_references(value,kind):
+            if isinstance(value,str) and value.startswith('/assets/'):
+                candidate=safe_asset(storage,value)
+                if candidate.is_file():files.append((candidate,kind))
+            elif isinstance(value,dict):
+                for nested in value.values():add_references(nested,kind)
+        if 'point_cloud' in selected:
+            add_references(manifest.get('cloud'),'point_cloud')
+            add_references((manifest.get('segmented_instances') or {}).get('audit_url'),'point_cloud_audit')
+        if 'contact' in selected:add_references(manifest.get('tactile'),'contact')
+        if 'inpaint_fov' in selected:add_references((manifest.get('patch_videos') or {}).get(spec['robot_id']),'inpaint_fov')
         items=[];seen=set()
         for candidate,kind in files:
             if candidate in seen:continue

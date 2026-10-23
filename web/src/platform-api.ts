@@ -1,9 +1,14 @@
 /** Shared browser client. UI modules never submit to a worker-specific endpoint. */
 export type TrajectoryScale='preserve'|'match_robot';
-export type RunSpec={workflow:'manipulation'|'locomotion'|'export';recording_id:string;robot_id:string;hand_id?:string;trajectory_scale?:TrajectoryScale|null};
-export type RunPlan={executable:boolean;required_choice?:'trajectory_scale'|null;choices:string[];policy:{trajectory_scale?:TrajectoryScale|null;scale_choice_required?:boolean;scale_estimate_unavailable?:boolean;source_policy?:string;source_policy_version?:string|null;morphology?:{available:boolean;source_height_m?:number;target_height_m?:number;scale_factor?:number;large_mismatch?:boolean;reason?:string}}};
+export type OutputModality='trajectory'|'point_cloud'|'contact'|'inpaint_fov';
+export type OutputPlan={requested:OutputModality[]|null;effective:OutputModality[]|null;available:{id:OutputModality;available:boolean;reason?:string|null}[];dependencies:Record<string,unknown>;error?:string|null;unavailable:OutputModality[];defaulted:boolean};
+export type RunSpec={workflow:'manipulation'|'locomotion'|'export';recording_id:string;robot_id:string;hand_id?:string;trajectory_scale?:TrajectoryScale|null;output_modalities?:OutputModality[]|null};
+export type RunPlan={executable:boolean;required_choice?:'trajectory_scale'|null;choices:string[];outputs:OutputPlan;policy:{trajectory_scale?:TrajectoryScale|null;scale_choice_required?:boolean;scale_estimate_unavailable?:boolean;source_policy?:string;source_policy_version?:string|null;morphology?:{available:boolean;source_height_m?:number;target_height_m?:number;scale_factor?:number;large_mismatch?:boolean;reason?:string}}};
 type Job={id:string;status:string;result:Record<string,any>;error?:{detail?:string;code?:string}|null};
-export type UiJob={id:string;status:'queued'|'running'|'completed'|'failed';error?:string;[key:string]:any};
+export type UiJob={id:string;status:'queued'|'running'|'completed'|'failed';error?:string;robot_ready?:boolean;scene_ready?:boolean;contact_ready?:boolean;fov_ready?:boolean;completed_outputs?:string[];[key:string]:any};
+export function hasPublishedOutputs(job:{robot_ready?:boolean;scene_ready?:boolean;contact_ready?:boolean;fov_ready?:boolean;completed_outputs?:string[]}){
+ return !!(job.robot_ready||job.scene_ready||job.contact_ready||job.fov_ready||job.completed_outputs?.length);
+}
 
 export function mediaUrl(url:string):string{
  if(url.startsWith('/assets/'))return '/api/v1/media/'+url.slice('/assets/'.length);
@@ -41,7 +46,7 @@ let sessionPromise:Promise<unknown>|undefined;
 const pending=new Map<string,{key:string;promise?:Promise<UiJob>}>();
 function submissionIdentity(spec:RunSpec){
  // Property order must not change a retry key; scale choices must change it.
- return JSON.stringify(Object.fromEntries(Object.entries(spec).filter(([,v])=>v!==undefined&&v!==null).sort(([a],[b])=>a.localeCompare(b))));
+ return JSON.stringify(Object.fromEntries(Object.entries(spec).filter(([,v])=>v!==undefined&&v!==null).map(([k,v])=>[k,k==='output_modalities'&&Array.isArray(v)?[...v].sort():v]).sort(([a],[b])=>String(a).localeCompare(String(b)))));
 }
 export const api={
  session(){return sessionPromise??=(apiJson('/api/v1/sessions',{method:'POST'}).catch(e=>{sessionPromise=undefined;throw e;}));},
