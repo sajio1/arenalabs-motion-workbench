@@ -20,7 +20,7 @@ export class Workspace {
  instanceBoxes=new Map<string,THREE.Box3Helper>();
  sourceRoot=new THREE.Group();sourceTransform={scale:1,offset:[0,0,0]};
  sourceBasis=sourceDisplayBasis();
- sourceBody?:THREE.Mesh;sourceBodyVertices?:Float32Array;sourceBodyFrame=-1;
+ sourceObjectFrame=-1;
  sourceObjectsRoot=new THREE.Group();sourceObjects:{node:THREE.Group;position:number[][];quaternion_xyzw:number[][]}[]=[];
  constructor(public host:HTMLElement){
   host.append(this.renderer.domElement);this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));this.renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -39,26 +39,20 @@ export class Workspace {
   this.sourceBasis=sourceDisplayBasis(asset.source_world_to_display);this.sourceTransform=sourceDisplayTransform(asset.source_transform,this.sourceBasis);this.sourceRoot=new THREE.Group();
   this.sourceRoot.scale.setScalar(this.sourceTransform.scale);this.sourceRoot.position.fromArray(this.sourceTransform.offset);this.root.add(this.sourceRoot);
   this.grid.position.y=transformSourcePoint([0,ground?.height_m??0,0],this.sourceTransform)[1];
-  this.sourceBody=undefined;this.sourceBodyVertices=undefined;this.sourceBodyFrame=-1;
+  this.sourceObjectFrame=-1;
   this.sourceObjectsRoot=new THREE.Group();const basis=this.sourceBasis;const rotation=new THREE.Matrix4().set(basis[0][0],basis[0][1],basis[0][2],0,basis[1][0],basis[1][1],basis[1][2],0,basis[2][0],basis[2][1],basis[2][2],0,0,0,0,1);this.sourceObjectsRoot.quaternion.setFromRotationMatrix(rotation);this.sourceRoot.add(this.sourceObjectsRoot);this.sourceObjects=[];
-  if(asset.source_body){
+  // Legacy scenes nest tracked objects under source_body. Keep their animation,
+  // but never load or render the internal body reconstruction in the workspace.
+  if(asset.source_body?.objects?.length){
    const body=asset.source_body;
-   if(body.world_up!=='z'||![body.frames,body.vertex_count,body.face_count].every(v=>Number.isSafeInteger(v)&&v>0))throw new Error('Invalid source-body geometry metadata');
-   const buffers=await Promise.all([body.vertices_url,body.faces_url].map(async url=>{const response=await fetch(url);if(!response.ok)throw new Error('Source-body geometry unavailable');return response.arrayBuffer();}));
-   if(token!==this.serial)return;
-   if(buffers[0].byteLength!==body.frames*body.vertex_count*3*4||buffers[1].byteLength!==body.face_count*3*4)throw new Error('Source-body geometry size mismatch');
-   const faces=new Uint32Array(buffers[1]);if(faces.some(v=>v>=body.vertex_count))throw new Error('Source-body mesh index is out of range');
-   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(body.vertex_count*3),3));geometry.setIndex(new THREE.BufferAttribute(faces,1));
-   this.sourceBodyVertices=new Float32Array(buffers[0]);
-   this.sourceBody=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0xa6cbd7,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide,roughness:.7}));
-   this.sourceBody.frustumCulled=false;this.sourceRoot.add(this.sourceBody);
-   for(const object of body.objects??[]){
+   if(!Number.isSafeInteger(body.frames)||body.frames<1||!Number.isFinite(body.fps??asset.fps)||(body.fps??asset.fps)<=0)throw new Error('Invalid source-object clock');
+   for(const object of body.objects!){
     const [gltf,animation]=await Promise.all([this.loader.loadAsync(object.mesh_url),fetch(object.poses_url).then(async response=>{if(!response.ok)throw new Error('Source-object motion unavailable');return response.json();})]);
     if(token!==this.serial)return;
-    if(object.world_up!=='z'||animation.world_up!=='z'||animation.position?.length!==body.frames||animation.quaternion_xyzw?.length!==body.frames)throw new Error('Source-object/body clock mismatch');
+    if(object.world_up!=='z'||animation.world_up!=='z'||animation.position?.length!==body.frames||animation.quaternion_xyzw?.length!==body.frames)throw new Error('Source-object clock mismatch');
     const node=new THREE.Group();node.add(gltf.scene);this.sourceObjectsRoot.add(node);this.sourceObjects.push({node,position:animation.position,quaternion_xyzw:animation.quaternion_xyzw});
    }
-   this.updateSourceBody(initialTime);
+   this.updateSourceObjects(initialTime);
   }
   if(asset.cloud){
    if(asset.cloud.format!=='depth-rgb-v1'){
@@ -98,15 +92,13 @@ export class Workspace {
  }
  depthIndex(time:number){const cloud=this.asset!.cloud!;return Math.min(cloud.frames.length-1,Math.max(0,Math.floor(time*cloud.fps)));}
  depthError(time:number){return this.depthStream?.errors.get(this.depthIndex(time));}
- updateSourceBody(time:number){
-  const body=this.asset?.source_body;if(!body||!this.sourceBody||!this.sourceBodyVertices)return;
+ updateSourceObjects(time:number){
+  this.sourceObjectsRoot.visible=this.showCloud;
+  const body=this.asset?.source_body;if(!body||!this.sourceObjects.length)return;
   const frame=Math.min(body.frames-1,Math.max(0,Math.floor(time*(body.fps??this.asset!.fps))));
-  this.sourceBody.visible=this.showHuman;this.sourceObjectsRoot.visible=this.showCloud;if(frame===this.sourceBodyFrame)return;
+  if(frame===this.sourceObjectFrame)return;
   for(const object of this.sourceObjects){object.node.position.fromArray(object.position[frame]);object.node.quaternion.fromArray(object.quaternion_xyzw[frame]);}
-  const position=this.sourceBody.geometry.getAttribute('position') as THREE.BufferAttribute;
-  const input=this.sourceBodyVertices.subarray(frame*body.vertex_count*3,(frame+1)*body.vertex_count*3),output=position.array;
-  const b=this.sourceBasis;for(let i=0;i<input.length;i+=3)for(let j=0;j<3;j++)output[i+j]=b[j][0]*input[i]+b[j][1]*input[i+1]+b[j][2]*input[i+2];
-  position.needsUpdate=true;this.sourceBody.geometry.computeVertexNormals();this.sourceBodyFrame=frame;
+  this.sourceObjectFrame=frame;
  }
  async loadRobot(row:SceneAsset['robots'][number]){
   const token=this.serial,request=++this.robotSerial;const [gltf,motion]=await Promise.all([this.loader.loadAsync(row.model_url),fetch(row.playback_url).then(r=>r.json())]);if(token!==this.serial||request!==this.robotSerial)return;
@@ -126,7 +118,6 @@ export class Workspace {
   else if(mode==='objects'){
    const bounds=new THREE.Box3();const segmented=this.asset?.segmented_instances;if(segmented){const frame=segmented.frames[Math.min(segmented.frames.length-1,Math.floor(this.currentTime*segmented.fps))];for(const item of frame.instances){bounds.expandByPoint(new THREE.Vector3().fromArray(transformSourcePoint(item.bounds[0],this.sourceTransform)));bounds.expandByPoint(new THREE.Vector3().fromArray(transformSourcePoint(item.bounds[1],this.sourceTransform)));}}
    if(bounds.isEmpty()&&this.sourceObjects.length){this.sourceRoot.updateMatrixWorld(true);bounds.setFromObject(this.sourceObjectsRoot);}
-   if(bounds.isEmpty()&&this.sourceBody){this.sourceBody.geometry.computeBoundingBox();this.sourceRoot.updateMatrixWorld(true);bounds.setFromObject(this.sourceBody);}
    if(bounds.isEmpty()&&this.asset?.source_camera){
     // With no object mask, start at the recorded camera rather than world origin.
     // This changes the display viewpoint only; source points and poses stay intact.
@@ -139,7 +130,7 @@ export class Workspace {
  }
  pose(time:number){
   this.grid.visible=true;this.currentTime=time;const motion=this.motion;const frame=motion?Math.min(motion.frames-1,Math.floor(time*motion.fps)):0;
-  this.updateSourceBody(time);
+  this.updateSourceObjects(time);
   if(motion){for(const [i,node] of this.geoms){node.position.fromArray(motion.positions[frame][i]);node.quaternion.fromArray(motion.quaternions[frame][i]);}if(this.robot)this.robot.visible=this.showRobot;
    for(let side=0;side<2;side++){
     const points=motion.tracking.actual.slice(frame,Math.min(motion.frames,frame+21)).map(f=>f[side]);this.paths[side].update(points);this.paths[side].visible=this.showTraces;
