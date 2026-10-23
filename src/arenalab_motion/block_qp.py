@@ -19,11 +19,13 @@ def lu_solve(rhs,factor):
     return torch.linalg.lu_solve(factor[0],factor[1],rhs)
 
 class BlockCR:
-    """Batched SPD block-tridiagonal factor/solve, logarithmic time levels.
+    """Batched symmetric block-tridiagonal factor/solve, logarithmic levels.
 
     A [batch,n,d,d], U [batch,n-1,d,d]. Factor each odd diagonal in
     parallel, eliminate into even neighbours, recursively solve Schur system.
-    Numeric factors are reusable across every ADMM RHS of this SQP step.
+    Numeric factors are reusable across RHS solves. Cholesky is the legacy
+    default; pivoted LU also accepts nonsingular Schur blocks whose numerical
+    positive definiteness was lost to roundoff, without changing coefficients.
     """
     def __init__(self, A, U, factorization='cholesky'):
         if factorization not in {'cholesky','pivoted_lu'}:
