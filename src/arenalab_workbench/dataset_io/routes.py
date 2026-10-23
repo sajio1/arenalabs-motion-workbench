@@ -37,6 +37,7 @@ def select_export_scene(body, scene_id, public):
     """Select the exact generated variant; explicit outputs never fall back."""
     from .export import asset_path
     from arenalab_workbench.unified_scene import scene_key
+    from arenalab_workbench.source_identity import registered_source
     from arenalab_workbench.output_modalities import resolve_outputs
     def rejected(code,message):
         raise HTTPException(409,dict(code=code,message=message))
@@ -70,6 +71,15 @@ def select_export_scene(body, scene_id, public):
                 if candidate is None or not candidate.is_file():continue
                 old=s.read(candidate)
                 if old.get('id')==scene_id and selected(old) is None and matching_robot(old):path=candidate;expected=None;break
+        if path is None and expected is not None and public_path and public_path.is_file():
+            # An older decoder can have a different key for the same supplied
+            # source. Only the exact requested variant is eligible, and its
+            # producing source receipt must still pass the check below.
+            old=s.read(public_path)
+            if (old.get('id')==scene_id and matching_robot(old)
+                    and set(selected(old) or [])==set(expected)):
+                _,supplied=registered_source(scene_id)
+                if supplied is not None:path=public_path
     if path is None:rejected('OUTPUT_VARIANT_UNAVAILABLE','Generate the requested output and trajectory-scale variant before downloading')
     scene=s.read(path)
     if scene.get('id')!=scene_id:rejected('OUTPUT_VARIANT_MISMATCH','Generated scene belongs to a different recording')
@@ -81,6 +91,22 @@ def select_export_scene(body, scene_id, public):
         rejected('OUTPUTS_INCOMPLETE','Selected outputs are still being generated')
     if not any(row.get('id')==body.robot_id and (body.trajectory_scale is None or row.get('trajectory_scale',scene.get('generation_status',{}).get('trajectory_scale','preserve'))==body.trajectory_scale) for row in scene.get('robots',[])):
         rejected('ROBOT_RESULT_UNAVAILABLE','Generate the selected robot for this variant before downloading')
+    # A stale catalog pointer is not an identity check. In particular, a saved
+    # human-source result cannot become the default native-robot export merely
+    # because the replacement keeps its recording ID and target robot.
+    try:
+        source_row, supplied = registered_source(scene_id)
+        if supplied is not None:
+            robot = next(row for row in scene['robots'] if row.get('id') == body.robot_id)
+            actual_mode = body.trajectory_scale or robot.get('trajectory_scale',scene.get('generation_status',{}).get('trajectory_scale','preserve'))
+            current = s.STORE/'manipulation4d/unified'/scene_key(scene_id,actual_mode,body.robot_id,modalities)/'scene.json'
+            if path.resolve() != current.resolve():
+                # Old code can generate a different scene key for identical
+                # inputs. Compare its bound input receipt, not the code hash.
+                from .source_binding import verify_saved_source
+                verify_saved_source(robot,supplied,source_row)
+    except (OSError,ValueError,KeyError,TypeError) as error:
+        raise HTTPException(409,dict(code='SOURCE_REVISION_MISMATCH',message='Saved results do not verify against the current source; generate the current source before downloading')) from error
     return path,scene
 
 

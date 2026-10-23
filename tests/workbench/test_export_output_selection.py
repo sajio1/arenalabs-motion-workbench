@@ -1,5 +1,6 @@
 """Export selects immutable deliverables, including video-free robot datasets."""
 import json
+import hashlib
 from pathlib import Path
 from unittest.mock import patch
 import numpy as np
@@ -57,6 +58,88 @@ def test_legacy_fallback_requires_matching_scale_robot_and_no_selected_variant(i
     current,_=fixture_scene(isolated_store,['trajectory','point_cloud'])
     selected,_=routes.select_export_scene(routes.ExportRequest(scene_id='clip',robot_id='g1',trajectory_scale='preserve'),'clip',public)
     assert selected==current
+
+
+@pytest.mark.parametrize('selectors', [{}, {'trajectory_scale':'preserve'}])
+def test_complete_source_cannot_export_stale_public_result(isolated_store, monkeypatch, selectors):
+    from arenalab_workbench import source_identity
+    # The original result remains a valid historical artifact. Replacing the
+    # registered source cannot make it the new recording's current result.
+    path,_=fixture_scene(isolated_store,legacy=True,public=True)
+    before=path.read_bytes()
+    monkeypatch.setattr(source_identity,'registered_source',lambda *a,**k: ({}, {'format':'robot_joint_state'}))
+    monkeypatch.setattr('arenalab_workbench.unified_scene.scene_key',lambda *a,**k:'current-native-source')
+    with pytest.raises(HTTPException) as exc:
+        routes.select_export_scene(routes.ExportRequest(scene_id='clip',robot_id='g1',**selectors),
+                                   'clip',{'scene_url':'/assets/legacy/scene.json'})
+    assert exc.value.detail['code']=='SOURCE_REVISION_MISMATCH'
+    assert path.read_bytes()==before
+
+
+def test_default_complete_source_export_accepts_current_scaled_variant(isolated_store, monkeypatch):
+    from arenalab_workbench import source_identity
+    path,_=fixture_scene(isolated_store,['trajectory'],mode='match_robot')
+    key=path.parent.name
+    monkeypatch.setattr(source_identity,'registered_source',lambda *a,**k: ({}, {'format':'robot_joint_state'}))
+    checked=[]
+    def current_key(scene_id,mode,robot_id,outputs):
+        checked.append((scene_id,mode,robot_id,outputs));return key
+    monkeypatch.setattr('arenalab_workbench.unified_scene.scene_key',current_key)
+    result,_=routes.select_export_scene(routes.ExportRequest(scene_id='clip',robot_id='g1'),
+                                       'clip',{'scene_url':'/assets/'+path.relative_to(isolated_store).as_posix()})
+    assert result==path and checked==[('clip','match_robot','g1',['trajectory'])]
+
+
+def historical_source_binding(root):
+    """A real saved input receipt from an earlier decoder version, without FK."""
+    source=root/'original.npz'
+    times=np.arange(3)/30
+    np.savez(source,poses=np.zeros((3,165)),timestamps_s=times)
+    objects=root/'objects.npz';np.savez(objects,timestamps_s=times,position=np.zeros((3,3)))
+    digest=lambda path:hashlib.sha256(path.read_bytes()).hexdigest()
+    spec=dict(path=str(source),format='smpl_parameters',family='smplx',world_up='z',units='m',
+              floor_z_m=0.,objects_path=str(objects),sha256=digest(source))
+    row=dict(source=str(source),frames=3,fps=30.)
+    work=root/'old-source-work';work.mkdir()
+    saved=dict(source_sha256=digest(source),source_spec={k:v for k,v in spec.items() if k!='path'},frames=3,
+               decoder_version='old-code-version')
+    (work/'input_manifest.json').write_text(json.dumps(saved))
+    np.savez(work/'native_source.npz',timestamps_s=times,source_frame_indices=np.arange(3))
+    (work/'objects.npz').write_bytes(objects.read_bytes())
+    robot_folder=root/'historical-robot';robot_folder.mkdir()
+    validation=dict(source_work=str(work),source_hashes={name:digest(work/name) for name in
+                    ('input_manifest.json','native_source.npz','objects.npz')},motion_backend_fingerprint='old-refiner-code')
+    (robot_folder/'validation.json').write_text(json.dumps(validation))
+    return spec,row,work,validation
+
+
+@pytest.mark.parametrize('selectors',[{}, {'trajectory_scale':'preserve','output_modalities':['trajectory']}])
+@pytest.mark.parametrize('change',[None,'state','descriptor','objects','clock','receipt'])
+def test_previous_code_result_exports_only_when_its_real_source_still_matches(isolated_store,monkeypatch,change,selectors):
+    from arenalab_workbench import source_identity
+    spec,row,work,validation=historical_source_binding(isolated_store)
+    path,scene=fixture_scene(isolated_store,['trajectory'],public=True)
+    scene['robots'][0]['playback_url']='/assets/historical-robot/playback.json'
+    path.write_text(json.dumps(scene))
+    if change=='state':
+        np.savez(spec['path'],poses=np.ones((3,165)),timestamps_s=np.arange(3)/30)
+    elif change=='descriptor':spec.update(format='robot_joint_state',family='robot',robot_id='g1')
+    elif change=='objects':np.savez(spec['objects_path'],timestamps_s=np.arange(3)/30,position=np.ones((3,3)))
+    elif change=='clock':
+        np.savez(work/'native_source.npz',timestamps_s=1+np.arange(3)/30,source_frame_indices=np.arange(3))
+        validation['source_hashes']['native_source.npz']=hashlib.sha256((work/'native_source.npz').read_bytes()).hexdigest()
+        (isolated_store/'historical-robot/validation.json').write_text(json.dumps(validation))
+    elif change=='receipt':(work/'input_manifest.json').write_text('{}')
+    monkeypatch.setattr(source_identity,'registered_source',lambda *a,**k:(row,spec))
+    monkeypatch.setattr('arenalab_workbench.unified_scene.scene_key',lambda *a,**k:'new-decoder-scene-key')
+    request=routes.ExportRequest(scene_id='clip',robot_id='g1',**selectors)
+    if change is None:
+        result,_=routes.select_export_scene(request,'clip',{'scene_url':'/assets/legacy/scene.json'})
+        assert result==path # A release/code hash change alone is not a source change.
+    else:
+        with pytest.raises(HTTPException) as exc:
+            routes.select_export_scene(request,'clip',{'scene_url':'/assets/legacy/scene.json'})
+        assert exc.value.detail['code']=='SOURCE_REVISION_MISMATCH'
 
 
 @pytest.mark.parametrize('outputs',[['point_cloud'],['contact'],['inpaint_fov']])

@@ -54,6 +54,14 @@ Existing idempotency keys still identify their historical jobs. Source-aware
 body caches include the selected source and object content identities; changing
 the source does not overwrite immutable older priors.
 
+Exports do not trust a catalog's saved scene URL as evidence of the current
+source. A current source-aware scene key is accepted; a historical key requires
+matching saved original-source SHA, source descriptor, object content and clock.
+Decoder/refiner code hashes alone do not invalidate those historical exports.
+Older complete-source receipts with independent observations must use the
+current source key when their original observation binding cannot be verified.
+Historical job links and already-created ZIPs remain available.
+
 These checks establish representation, provenance, and clock consistency.
 They do not certify physical feasibility, controller tracking, or geometric
 contact accuracy.
