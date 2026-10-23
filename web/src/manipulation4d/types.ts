@@ -8,8 +8,8 @@ export interface SceneAsset {
  video?:{url:string;start_seconds:number}|null;cloud?:{url?:string;format?:string;geometry_url?:string;source_human?:boolean;frames:CloudFrame[];fps:number};source_hands_url?:string;
  source_transform?:{scale:number;anchor_xyz_m:Vec3;world_up:'z';applied?:boolean};
  source_world_to_display?:[Vec3,Vec3,Vec3];
- source_robot?:{source_family:'robot';source_robot_id:string;model_url:string;playback_url:string;frames:number;fps:number;world_up:'z';video_role?:'preview-only'|'recorded';objects?:SourceObject[]};
- source_body?:{vertices_url:string;faces_url:string;frames:number;vertex_count:number;face_count:number;world_up:'z';fps?:number;source_family?:string;source_robot_id?:string;source_format?:string;source_surface?:string;
+ source_robot?:{source_family:'robot';source_robot_id:string;model_url:string;playback_url:string;frames:number;fps:number;world_up:'z';video_role?:'preview-only'|'recorded';objects?:SourceObject[];source_sha256?:string;source_evidence?:string;source_stage?:string;source_policy?:string;source_format?:string};
+ source_body?:{vertices_url:string;faces_url:string;frames:number;vertex_count:number;face_count:number;world_up:'z';fps?:number;source_family?:string;source_robot_id?:string;source_format?:string;source_surface?:string;source_sha256?:string;source_evidence?:string;source_policy?:string;
   objects?:SourceObject[]};
  robots:{id:string;encoder_policy?:string;trajectory_scale?:'preserve'|'match_robot';source_policy?:string;source_policy_version?:string;experimental?:boolean;registry_robot_id?:string;label:string;hand:string;model_url:string;playback_url:string;reference:string;quality?:{mean_mm:number;max_mm:number}}[];
  segmented_instances?:{fps:number;categories?:string[];audit_url?:string;frames:{time:number;source_frame:number;instances:{id:string;label:string;semantic_label:number;bounds:[Vec3,Vec3];points?:number}[]}[]};

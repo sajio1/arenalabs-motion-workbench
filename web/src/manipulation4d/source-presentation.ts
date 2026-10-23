@@ -38,17 +38,40 @@ export function recordingSourcePresentation(source:RecordingSourceMetadata){
  return {label:'Source type unspecified',detail:'The recording does not declare its motion source type.'};
 }
 
-/** Recorded robot state is authoritative; legacy human previews are not source RGB. */
+/** Scene-bound inputs, including morphology transforms and CV, are immutable. */
 export function withSourcePresentation(scene:SceneAsset,source=scene.source_robot):SceneAsset{
- if(!source)return scene;
+ if(!source||scene.source_robot||scene.source_body||scene.robots?.length||scene.output_modalities||scene.generation_status)return scene;
  const result={...scene,source_robot:source,source_body:undefined};
  if(source.video_role==='preview-only'){
-  // Old reconstruction previews can contain a human and a different scene. Keep
-  // target robot results, but only render the supplied native source geometry.
+  // Only a raw catalog preview may discard its non-source auxiliary video.
   Object.assign(result,{video:null,cloud:undefined,source_camera:undefined,segmented_instances:undefined,
    patch_videos:undefined,patch_kinds:undefined,wrist_videos:[]});
  }
  return result;
+}
+
+/** Read the historical scene's input; an equal recording ID is not provenance. */
+export function sceneSourceMetadata(scene:SceneAsset,recording?:RecordingSourceMetadata):RecordingSourceMetadata{
+ const bound=scene.source_robot||scene.source_body;
+ if(!bound)return {};
+ const current=recording?.source_motion;
+ const sameNativeSource=!!(scene.source_robot&&current&&bound.source_sha256&&
+  bound.source_sha256===current.source_sha256&&bound.source_robot_id===current.source_robot_id&&
+  bound.frames===current.frames&&bound.fps===current.fps&&scene.frames===bound.frames&&scene.fps===bound.fps);
+ const metadata:RecordingSourceMetadata=sameNativeSource?{...recording}:{};
+ for(const key of ['source_family','source_evidence','source_policy','source_robot_id','source_format'] as const){
+  if(bound[key])metadata[key]=bound[key];
+ }
+ metadata.source_body_family=bound.source_family;
+ if(scene.source_robot){metadata.source_motion=scene.source_robot;if(scene.source_robot.source_stage)metadata.source_stage=scene.source_robot.source_stage;}
+ return metadata;
+}
+
+/** A historical URL must not populate the current recording's cached badge. */
+export function recordingSceneCacheKey(recording:{id:string;scene_url?:string},sceneUrl=recording.scene_url){
+ const canonical=(url:string)=>url.replace(/^\/api\/v1\/media\//,'/assets/');
+ if(!recording.scene_url||!sceneUrl||canonical(recording.scene_url)!==canonical(sceneUrl))return undefined;
+ return recording.id+'\n'+canonical(sceneUrl);
 }
 
 export function initialSourceVisibility(nativeRobot:boolean,previousNativeRobot:boolean,changedRecording:boolean,checked:boolean){
