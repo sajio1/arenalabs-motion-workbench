@@ -7,6 +7,8 @@ import {TraceGlyph} from './trace-glyph';
 import {DepthDecoder} from './depth-decoder.mjs';
 import {DepthStream} from './depth-stream.mjs';
 import {sourceDisplayBasis,sourceDisplayTransform,transformSourcePoint} from './source-transform.mjs';
+import {SourceBodyLayer} from './source-body-layer';
+import {SourceRobotLayer} from './source-robot-layer';
 
 export class Workspace {
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(43,1,.01,50);
@@ -20,6 +22,7 @@ export class Workspace {
  instanceBoxes=new Map<string,THREE.Box3Helper>();
  sourceRoot=new THREE.Group();sourceTransform={scale:1,offset:[0,0,0]};
  sourceBasis=sourceDisplayBasis();
+ sourceBodyLayer?:SourceBodyLayer|SourceRobotLayer;
  sourceObjectFrame=-1;
  sourceObjectsRoot=new THREE.Group();sourceObjects:{node:THREE.Group;position:number[][];quaternion_xyzw:number[][]}[]=[];
  constructor(public host:HTMLElement){
@@ -33,16 +36,18 @@ export class Workspace {
  }
  async load(asset:SceneAsset,sceneUrl='',initialTime=0){
   this.currentTime=initialTime;
+  this.sourceBodyLayer?.dispose();this.sourceBodyLayer=undefined;
   this.loaded=false;this.depthStream?.dispose();this.depthStream=undefined;this.depthDecoder?.dispose();this.depthDecoder=undefined;
   const token=++this.serial;this.asset=asset;const ground=asset.geometry.ground as {height_m?:number}|undefined;this.grid.position.y=ground?.height_m??0;this.motion=undefined;this.geoms.clear();this.paths=[];this.errors=[];
   this.root.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Points||o instanceof THREE.Line||o instanceof THREE.LineSegments){o.geometry.dispose();const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose());}});this.root.clear();this.showRobot=true;this.showCloud=true;this.instanceBoxes.clear();this.robot=undefined;this.cloudFrame=-1;this.cloud=undefined;this.cloudBuffer=undefined;this.humanCloud=undefined;this.humanGeometry=undefined;
   this.sourceBasis=sourceDisplayBasis(asset.source_world_to_display);this.sourceTransform=sourceDisplayTransform(asset.source_transform,this.sourceBasis);this.sourceRoot=new THREE.Group();
   this.sourceRoot.scale.setScalar(this.sourceTransform.scale);this.sourceRoot.position.fromArray(this.sourceTransform.offset);this.root.add(this.sourceRoot);
+  if(asset.source_robot)this.sourceBodyLayer=new SourceRobotLayer(this.sourceRoot,asset.source_robot,this.sourceBasis,this.loader);
+  else if(asset.source_body?.vertices_url&&asset.source_body?.faces_url)this.sourceBodyLayer=new SourceBodyLayer(this.sourceRoot,asset.source_body,asset.fps,this.sourceBasis);
   this.grid.position.y=transformSourcePoint([0,ground?.height_m??0,0],this.sourceTransform)[1];
   this.sourceObjectFrame=-1;
   this.sourceObjectsRoot=new THREE.Group();const basis=this.sourceBasis;const rotation=new THREE.Matrix4().set(basis[0][0],basis[0][1],basis[0][2],0,basis[1][0],basis[1][1],basis[1][2],0,basis[2][0],basis[2][1],basis[2][2],0,0,0,0,1);this.sourceObjectsRoot.quaternion.setFromRotationMatrix(rotation);this.sourceRoot.add(this.sourceObjectsRoot);this.sourceObjects=[];
-  // Legacy scenes nest tracked objects under source_body. Keep their animation,
-  // but never load or render the internal body reconstruction in the workspace.
+  // Tracked objects remain independent of source motion visibility.
   if(asset.source_body?.objects?.length){
    const body=asset.source_body;
    if(!Number.isSafeInteger(body.frames)||body.frames<1||!Number.isFinite(body.fps??asset.fps)||(body.fps??asset.fps)<=0)throw new Error('Invalid source-object clock');
@@ -125,12 +130,21 @@ export class Workspace {
    }
    if(!bounds.isEmpty())bounds.getCenter(center);const size=bounds.isEmpty() ? .3 : Math.max(.2,bounds.getSize(new THREE.Vector3()).length());this.camera.position.copy(center).add(new THREE.Vector3(-.8,.65,-1.2).multiplyScalar(size*1.6));
   }
-  else if(mode==='body'){center.y=.9;this.camera.position.copy(center).add(new THREE.Vector3(-1.8,.7,-2.5));}
+  else if(mode==='body'){
+   const body=this.sourceBodyLayer?.mesh;
+   if(body?.visible){
+    if(body instanceof THREE.Mesh)body.geometry.computeBoundingBox();this.root.updateMatrixWorld(true);
+    const bounds=new THREE.Box3().setFromObject(body);if(this.robot?.visible)bounds.expandByObject(this.robot);
+    bounds.getCenter(center);const size=Math.max(1,bounds.getSize(new THREE.Vector3()).length());
+    this.camera.position.copy(center).add(new THREE.Vector3(-.7,.25,-1).normalize().multiplyScalar(size*1.8));
+   }else{center.y=.9;this.camera.position.copy(center).add(new THREE.Vector3(-1.8,.7,-2.5));}
+  }
   else this.camera.position.copy(center).add(new THREE.Vector3(-.8,.5,-1.1));this.controls.target.copy(center);this.controls.update();
  }
  pose(time:number){
   this.grid.visible=true;this.currentTime=time;const motion=this.motion;const frame=motion?Math.min(motion.frames-1,Math.floor(time*motion.fps)):0;
   this.updateSourceObjects(time);
+  this.sourceBodyLayer?.pose(time);
   if(motion){for(const [i,node] of this.geoms){node.position.fromArray(motion.positions[frame][i]);node.quaternion.fromArray(motion.quaternions[frame][i]);}if(this.robot)this.robot.visible=this.showRobot;
    for(let side=0;side<2;side++){
     const points=motion.tracking.actual.slice(frame,Math.min(motion.frames,frame+21)).map(f=>f[side]);this.paths[side].update(points);this.paths[side].visible=this.showTraces;

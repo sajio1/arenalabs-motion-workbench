@@ -8,6 +8,20 @@ import numpy as np
 from arenalab_workbench import source_preview as preview
 
 class PreviewTests(unittest.TestCase):
+    def test_original_robot_mesh_keeps_robot_identity_without_human_model(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);source=root/'source';source.mkdir();store=root/'store';store.mkdir()
+            vertices=np.arange(36,dtype=np.float32).reshape(3,4,3)/100
+            np.savez(source/'source_mesh.npz',vertices_world_m=vertices,faces=np.array([[0,1,2],[1,2,3]]),timestamps_s=np.arange(3)/30,source_frame_indices=[4,5,6])
+            (source/'source_provenance.json').write_text(json.dumps(dict(source_format='robot_joint_state',source_robot_id='g1',human_model=None)))
+            with patch.object(preview,'paths',SimpleNamespace(store=store)):
+                result=preview.export_source_preview(source,store/'scene')
+                self.assertEqual(result['source_family'],'robot')
+                self.assertEqual(result['source_robot_id'],'g1')
+                self.assertEqual(result,preview.export_source_preview(source,store/'scene'))
+                path=store/result['vertices_url'].removeprefix('/assets/')
+                np.testing.assert_array_equal(np.fromfile(path,dtype='<f4').reshape(3,4,3),vertices)
+
     def test_world_vertices_and_clock_are_exact_and_no_model_is_exported(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);source=root/'source';source.mkdir();store=root/'store';store.mkdir()

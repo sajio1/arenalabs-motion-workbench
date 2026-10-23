@@ -52,24 +52,28 @@ def export_source_preview(normalized_source, destination):
     if times.shape != (n,) or indices.shape != (n,) or not np.isfinite(times).all() or np.any(np.diff(times) <= 0):
         raise ValueError('Source preview clock must be finite and frame-aligned')
     faces = np.asarray(raw_faces, dtype='<u4')
+    provenance_path = source / 'source_provenance.json'
+    provenance = json.loads(provenance_path.read_text()) if provenance_path.exists() else {}
+    robot_source = provenance.get('source_format') == 'robot_joint_state'
     digest = sha256(mesh_path)
-    target = Path(destination) / 'source-body' / digest[:16]
+    # Keep earlier immutable robot previews intact when adding source identity.
+    target = Path(destination) / 'source-body' / (digest[:16] + ('-robot-v1' if robot_source else ''))
     _asset(target)  # Check the boundary before writing anything.
     hashes = {
         'vertices': _immutable_bytes(target / 'vertices.bin', vertices.tobytes(order='C')),
         'faces': _immutable_bytes(target / 'faces.bin', faces.tobytes(order='C')),
         'clock': _immutable_bytes(target / 'clock.json', (json.dumps(dict(timestamps_s=times.tolist(),source_frame_indices=indices.tolist()))+'\n').encode())}
-    provenance_path = source / 'source_provenance.json'
-    provenance = json.loads(provenance_path.read_text()) if provenance_path.exists() else {}
     result = dict(schema='arenalab.source-body-preview.v1', vertices_url=_asset(target/'vertices.bin'),
         faces_url=_asset(target/'faces.bin'), clock_url=_asset(target/'clock.json'),
         frames=n, vertex_count=v, face_count=len(faces), world_up='z', units='m',
         fps=30., exact_fps=fps, vertices_dtype='float32-le', faces_dtype='uint32-le',
         source_mesh_sha256=digest, output_sha256=hashes, source_policy=provenance.get('policy'),
-        source_family=provenance.get('human_model'), source_evidence=provenance.get('source_evidence'),
+        source_family='robot' if robot_source else provenance.get('human_model'), source_evidence=provenance.get('source_evidence'),
         source_sha256=provenance.get('source_sha256'),
         source_uniform_similarity_applied=bool(provenance.get('source_uniform_similarity_applied',False)),
         scope='Decoded source mesh only; no original RGB, body model or weights')
+    if result['source_family'] == 'robot' and provenance.get('source_robot_id'):
+        result['source_robot_id'] = provenance['source_robot_id']
     objects_path = source / 'objects.npz'
     if objects_path.is_file():
         result['objects'] = _export_objects(objects_path, target/'objects', times)
