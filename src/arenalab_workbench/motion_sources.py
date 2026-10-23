@@ -74,7 +74,7 @@ def source_route(manifest):
         if is_robot(spec):
             if not spec.get('robot_id'):raise ValueError('Source robot_id is required')
             return dict(route='supplied-robot', source_completion=False, family='robot', generated_human_model=None)
-        if not isinstance(spec, dict) or spec.get('format') not in {'smpl_parameters', 'smpl_decoded'}:
+        if not isinstance(spec, dict) or spec.get('format') not in {'smpl_parameters', 'smpl_decoded', 'recorded_skeleton_surface'}:
             raise ValueError('Invalid supplied motion_source; it must not fall back to body inference')
         if spec.get('family') not in FAMILY_JOINTS:
             raise ValueError('Declare supplied family smpl, smplh or smplx')
@@ -228,6 +228,9 @@ def _body_scale(raw, spec):
 
 
 def _decode(raw, spec, take, model_path):
+    if spec['format'] == 'recorded_skeleton_surface':
+        from .recorded_surface import decode_recorded_surface
+        return decode_recorded_surface(raw, spec, take, model_path)
     family = spec['family']; beta = _beta(raw)
     scale = _body_scale(raw, spec)
     model, shaped, rest, parents, weights, faces = _model(model_path, family, beta)
@@ -573,6 +576,9 @@ def describe_source(source, *, model_paths=None):
                   morphology_available=model_path is not None, evidence=source.get('evidence', 'unspecified'))
     if model_path is not None:
         _, shaped, rest, parents, _, _ = _model(model_path, source['family'], _beta(raw))
+        if source['format'] == 'recorded_skeleton_surface':
+            from .recorded_surface import describe_recorded_surface
+            shaped, rest = describe_recorded_surface(raw, source, take, model_path)
         scale = _body_scale(raw, source)
         shaped, rest = shaped * scale, rest * scale
         offsets = rest - rest[np.maximum(parents, 0)]; offsets[0] = 0

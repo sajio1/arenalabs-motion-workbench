@@ -75,7 +75,8 @@ def backend_fingerprint(env=None):
     files = [Path(__file__), Path(__file__).with_name('retarget_robot.py'),
              Path(__file__).with_name('end_effectors.py'), Path(__file__).with_name('motion_sources.py'), Path(__file__).with_name('robot_motion_source.py')]
     files += [Path(__file__).with_name(name+'.py') for name in
-              ('body_inference','human_reference','egoallo_runtime','unified_conversion','body_prior','gripper_body')]
+              ('body_inference','human_reference','egoallo_runtime','unified_conversion','body_prior','gripper_body',
+               'recorded_surface','source_identity')]
     spec = find_spec('arenalab_motion')
     if spec and spec.submodule_search_locations:
         for root in spec.submodule_search_locations:
@@ -336,6 +337,8 @@ def normalized_source(source_work):
     else:model=source/'model.npz'
     if model.is_file(): inputs['body_model']=cached_sha(model)
     inputs['adapter']=sha(Path(__file__).with_name('motion_sources.py'))
+    if spec and spec.get('format')=='recorded_skeleton_surface':
+        inputs['recorded_surface_adapter']=sha(Path(__file__).with_name('recorded_surface.py'))
     key=hashlib.sha256(json.dumps(inputs,sort_keys=True).encode()).hexdigest()
     output=source/'unified-sources'/key
     # Several target GPUs can consume one source concurrently. Only one process
