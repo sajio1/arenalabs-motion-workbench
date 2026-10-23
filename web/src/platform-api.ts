@@ -6,6 +6,14 @@ export type RunSpec={workflow:'manipulation'|'locomotion'|'export';recording_id:
 export type RunPlan={executable:boolean;required_choice?:'trajectory_scale'|null;choices:string[];outputs:OutputPlan;policy:{trajectory_scale?:TrajectoryScale|null;scale_choice_required?:boolean;scale_estimate_unavailable?:boolean;source_policy?:string;source_policy_version?:string|null;morphology?:{available:boolean;source_height_m?:number;target_height_m?:number;scale_factor?:number;large_mismatch?:boolean;reason?:string}}};
 type Job={id:string;status:string;result:Record<string,any>;error?:{detail?:string;code?:string}|null};
 export type UiJob={id:string;status:'queued'|'running'|'completed'|'failed';error?:string;robot_ready?:boolean;scene_ready?:boolean;contact_ready?:boolean;fov_ready?:boolean;completed_outputs?:string[];[key:string]:any};
+/** getRandomValues is available on HTTP origins where randomUUID is absent. */
+export function createSubmissionKey(source:Pick<Crypto,'getRandomValues'> & Partial<Pick<Crypto,'randomUUID'>>=globalThis.crypto):string{
+ if(typeof source?.randomUUID==='function')return source.randomUUID();
+ if(typeof source?.getRandomValues!=='function')throw new Error('Secure browser randomness is unavailable. Use a browser with Web Crypto support.');
+ const bytes=source.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+ const hex=Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');
+ return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
 export function hasPublishedOutputs(job:{robot_ready?:boolean;scene_ready?:boolean;contact_ready?:boolean;fov_ready?:boolean;completed_outputs?:string[]}){
  return !!(job.robot_ready||job.scene_ready||job.contact_ready||job.fov_ready||job.completed_outputs?.length);
 }
@@ -65,7 +73,7 @@ export const api={
   // Deliberate retry of a confirmed failed job gets a new key.
   const storageKey='arena-api-submit:'+identity;
   let saved:string|null=null;try{saved=sessionStorage.getItem(storageKey);}catch{}
-  if(!submission){submission={key:saved||crypto.randomUUID()};pending.set(identity,submission);}
+  if(!submission){submission={key:saved||createSubmissionKey()};pending.set(identity,submission);}
   try{sessionStorage.setItem(storageKey,submission.key);}catch{}
   const current=submission;
   current.promise=apiJson<Job>('/api/v1/runs',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':current.key},body:JSON.stringify(spec)})

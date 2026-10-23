@@ -484,7 +484,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
             seen.add(candidate)
             record=await run_in_threadpool(registry.artifact,row['owner'],candidate,kind)
             items.append(public_artifact(record))
-        return {'items':items,'semantics':'Content-identified references. If a legacy path is overwritten, download returns 409 rather than different bytes.'}
+        return {'items':items,'semantics':'Immutable content revisions preserve registered bytes. Unmigrated legacy references return 409 if their original bytes were overwritten.'}
 
     @app.get('/artifacts/{ident}',tags=['results'])
     def artifact(ident:str,request:Request):
@@ -504,9 +504,12 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
             if marker.is_file() and json.loads(marker.read_text()).get('owner')!=owner(request):raise HTTPException(404,'Artifact unavailable')
             if parent==storage:break
         stat=path.stat()
-        if (stat.st_size,stat.st_mtime_ns)!=(row['size'],row['mtime']):
+        snapshot = path.parent.name == row['sha256'] and path.parent.parent.name == '.artifact-revisions'
+        if not snapshot or (stat.st_size,stat.st_mtime_ns)!=(row['size'],row['mtime']):
             latest=await run_in_threadpool(registry.artifact,row['owner'],path,row['kind'])
             if latest['sha256']!=row['sha256']:raise HTTPException(409,'Artifact revision changed; obtain the current result')
+            path=Path(latest['path']).resolve()
+            if not path.is_relative_to(storage):raise HTTPException(404,'Artifact unavailable')
         etag='"'+row['sha256']+'"'
         if request.headers.get('if-none-match')==etag:
             from fastapi import Response

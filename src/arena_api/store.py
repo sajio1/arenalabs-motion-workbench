@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import hashlib
 import json
+import os
 import sqlite3
 import time
 import uuid
@@ -117,16 +118,46 @@ class Store:
         path = Path(path)
         before = path.stat()
         digest = hashlib.sha256()
-        with path.open('rb') as stream:
-            for block in iter(lambda:stream.read(1024*1024),b''):digest.update(block)
-        after = path.stat()
-        if (before.st_size,before.st_mtime_ns) != (after.st_size,after.st_mtime_ns):
-            raise Conflict('Artifact changed while indexing; retry when generation completes')
-        sha = digest.hexdigest()
+        # Keep revisions beside their source: existing workspace-marker access
+        # checks still apply, but later worker writes cannot change these bytes.
+        revisions = path.parent / '.artifact-revisions'
+        revisions.mkdir(exist_ok=True)
+        temporary = revisions / (uuid.uuid4().hex + '.tmp')
+        try:
+            with path.open('rb') as stream, temporary.open('xb') as target:
+                for block in iter(lambda:stream.read(1024*1024),b''):
+                    digest.update(block)
+                    target.write(block)
+                target.flush()
+                os.fsync(target.fileno())
+            after = path.stat()
+            if (before.st_size,before.st_mtime_ns,before.st_ino) != (after.st_size,after.st_mtime_ns,after.st_ino):
+                raise Conflict('Artifact changed while indexing; retry when generation completes')
+            sha = digest.hexdigest()
+            snapshot = revisions / sha / path.name
+            snapshot.parent.mkdir(exist_ok=True)
+            existing_sha = hashlib.sha256()
+            if snapshot.is_file():
+                with snapshot.open('rb') as stream:
+                    for block in iter(lambda:stream.read(1024*1024),b''):
+                        existing_sha.update(block)
+            if not snapshot.is_file() or existing_sha.hexdigest() != sha:
+                os.utime(temporary, ns=(after.st_atime_ns, after.st_mtime_ns))
+                temporary.replace(snapshot)
+                fd = os.open(snapshot.parent, os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    os.fsync(fd)
+                finally:
+                    os.close(fd)
+            snapshot_stat = snapshot.stat()
+        finally:
+            temporary.unlink(missing_ok=True)
         ident = hashlib.sha256((owner+'\0'+str(path)+'\0'+sha).encode()).hexdigest()
         with self.connect() as db:
-            db.execute('INSERT OR IGNORE INTO artifacts VALUES(?,?,?,?,?,?,?)',
-                       (ident,owner,str(path),sha,after.st_size,after.st_mtime_ns,kind))
+            # Migrate an existing legacy ID while its original bytes are still
+            # available. IDs whose old content was already lost remain explicit.
+            db.execute('INSERT INTO artifacts VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET path=excluded.path,mtime=excluded.mtime',
+                       (ident,owner,str(snapshot),sha,snapshot_stat.st_size,snapshot_stat.st_mtime_ns,kind))
         return self.get_artifact(ident,owner)
 
     def get_artifact(self, ident, owner):

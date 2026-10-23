@@ -113,3 +113,17 @@ test('partial contact or cloud outputs remain discoverable after another stage f
  const job=await api.job('part');assert.equal(job.status,'failed');assert.equal(hasPublishedOutputs(job),true);assert.equal(job.scene_url,'/api/v1/media/scene.json');assert.deepEqual(job.completed_outputs,['point_cloud']);
  assert.equal(hasPublishedOutputs({contact_ready:true}),true);assert.equal(hasPublishedOutputs({completed_outputs:['contact']}),true);assert.equal(hasPublishedOutputs({}),false);
 });
+
+test('HTTP browser without randomUUID still submits a secure v4 idempotency key',async t=>{
+ const previous=Object.getOwnPropertyDescriptor(globalThis,'crypto');let draws=0;
+ Object.defineProperty(globalThis,'crypto',{configurable:true,value:{getRandomValues(bytes){draws++;bytes.forEach((_,i)=>bytes[i]=(i+draws)&255);return bytes;}}});
+ t.after(()=>{if(previous)Object.defineProperty(globalThis,'crypto',previous);else delete globalThis.crypto;});
+ const keys=[];const {api}=await client(t,async(url,options)=>{if(url.endsWith('/sessions'))return response({});keys.push(options.headers['Idempotency-Key']);return response({id:'http-submitted',status:'queued',result:{}});});
+ assert.equal((await api.start(spec)).id,'http-submitted');await api.start(spec);
+ assert.equal(draws,2);assert.notEqual(keys[0],keys[1]);
+ for(const key of keys)assert.match(key,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+});
+test('missing secure randomness fails clearly instead of using weak randomness',async t=>{
+ const {createSubmissionKey}=await client(t,async()=>response({}));
+ assert.throws(()=>createSubmissionKey({}),/Secure browser randomness is unavailable/);
+});

@@ -146,7 +146,56 @@ def test_artifact_integrity_access_and_conditional_download(tmp_path):
     outsider=TestClient(app);outsider.cookies.set('arena_workspace','other')
     assert outsider.get(url).status_code==404
     (storage/'scene/robot-x2/playback.json').write_text('{"frames":456}')
-    assert c.get(url).status_code==409
+    assert c.get(url).content==first.content
+    updated=c.get('/jobs/'+ident+'/artifacts').json()['items']
+    next_motion=next(r for r in updated if r['kind']=='robot_motion')
+    assert next_motion['id']!=motion['id']
+    assert c.get('/artifacts/'+next_motion['id']+'/content').json()=={'frames':456}
+    assert c.get(url).content==first.content
+
+def test_contact_subset_keeps_existing_download_bytes(tmp_path):
+    c,_,_,storage,app=fixtures(tmp_path)
+    install_output_preflight(app)
+    scene=storage/'scene/scene.json'
+    manifest=json.loads(scene.read_text())
+    manifest['tactile']={'url':'/assets/scene/video-contact.json'}
+    scene.write_text(json.dumps(manifest))
+    contact=storage/'scene/video-contact.json'
+    data={'likelihood':[[[None]*5,[None]*5]],'quality_status':'unreliable_constant_digit_scores'}
+    contact.write_text(json.dumps(data,indent=2))
+    all_job=post(c,spec(recording_id='cached',output_modalities=['trajectory','point_cloud','contact','inpaint_fov']),key='all').json()['id']
+    all_items=c.get('/jobs/'+all_job+'/artifacts').json()['items']
+    old=next(r for r in all_items if r['kind']=='contact')
+    old_url='/artifacts/'+old['id']+'/content'
+    original=c.get(old_url)
+    # Contact-only may reformat a shared JSON without changing its values.
+    contact.write_text(json.dumps(data,separators=(',',':')))
+    subset=post(c,spec(recording_id='cached',output_modalities=['contact']),key='contact').json()['id']
+    new_items=c.get('/jobs/'+subset+'/artifacts').json()['items']
+    current=next(r for r in new_items if r['kind']=='contact')
+    assert current['id']!=old['id']
+    assert not any(r['kind']=='robot_motion' for r in new_items)
+    assert c.get(old_url).status_code==200
+    assert c.get(old_url).content==original.content
+    assert c.get('/artifacts/'+current['id']+'/content').json()==data
+    assert c.get(old_url,headers={'If-None-Match':original.headers['etag']}).status_code==304
+
+def test_existing_legacy_download_is_frozen_on_first_read(tmp_path):
+    import hashlib
+    c,_,_,storage,app=fixtures(tmp_path)
+    source=storage/'scene/robot-x2/playback.json'
+    original=source.read_bytes();sha=hashlib.sha256(original).hexdigest()
+    owner=hashlib.sha256(c.cookies.get('arena_workspace').encode()).hexdigest()
+    ident=hashlib.sha256((owner+'\0'+str(source)+'\0'+sha).encode()).hexdigest()
+    stat=source.stat()
+    with app.state.registry.connect() as db:
+        db.execute('INSERT INTO artifacts VALUES(?,?,?,?,?,?,?)',
+                   (ident,owner,str(source),sha,stat.st_size,stat.st_mtime_ns,'robot_motion'))
+    url='/artifacts/'+ident+'/content'
+    assert c.get(url).content==original
+    assert app.state.registry.get_artifact(ident,owner)['path']!=str(source)
+    source.unlink()
+    assert c.get(url).content==original
 
 def test_aliases_and_openapi_contract(tmp_path):
     c,_,_,_,_=fixtures(tmp_path)
