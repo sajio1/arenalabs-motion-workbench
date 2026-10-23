@@ -9,6 +9,21 @@ from greenwich_pipelines.viewer.export import C,motion_payload
 
 URDF=b'''<robot name="Test arm"><link name="base"><visual><geometry><box size="0.2 0.2 0.2"/></geometry></visual></link><link name="arm"><inertial><mass value="1"/><inertia ixx=".01" iyy=".01" izz=".01" ixy="0" ixz="0" iyz="0"/></inertial><visual><geometry><box size="0.1 0.1 0.5"/></geometry><origin xyz="0 0 .25"/></visual></link><joint name="lift" type="revolute"><parent link="base"/><child link="arm"/><origin xyz="0 0 .2"/><axis xyz="0 1 0"/><limit lower="-1" upper="1" effort="10" velocity="1"/></joint></robot>'''
 
+def test_operator_navigation_serves_the_built_api_frontend(tmp_path):
+    config=tmp_path/'configs/viewer.json';config.parent.mkdir()
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',robots=[],clips=[])))
+    dist=tmp_path/'web/dist';(dist/'operator').mkdir(parents=True)
+    (dist/'index.html').write_text('Motion workbench')
+    (dist/'operator/index.html').write_text('<script src="/web/operator/viewer.js"></script>')
+    (dist/'operator/viewer.js').write_text('export const api="/api/v1/simulation-episodes";')
+    with TestClient(create_app(config)) as client:
+        for path in ['/operator','/operator/']:
+            response=client.get(path)
+            assert response.status_code==200 and '/web/operator/viewer.js' in response.text
+        assert '/api/v1/simulation-episodes' in client.get('/web/operator/viewer.js').text
+        assert client.get('/locomotion').text=='Motion workbench'
+        assert client.get('/unknown-page').status_code==404
+
 def test_two_clients_share_worker_but_second_reports_queue_position(tmp_path,monkeypatch):
     import threading,time
     from types import SimpleNamespace

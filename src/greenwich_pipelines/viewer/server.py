@@ -277,9 +277,15 @@ def create_app(config_path):
     dist=root/'web/dist'
     if dist.exists():
         app.mount('/web',StaticFiles(directory=dist),name='web')
+        @app.get('/operator/')
+        def operator_page():
+            page=dist/'operator/index.html'
+            if not page.is_file():raise HTTPException(404,'Operator frontend unavailable')
+            return FileResponse(page)
         @app.get('/')
         @app.get('/{page}')
         def index(page='locomotion'):
+            if page=='operator':return operator_page()
             if page not in PAGES:raise HTTPException(404,'Unknown page')
             return FileResponse(dist/'index.html')
     return app

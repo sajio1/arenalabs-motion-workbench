@@ -288,9 +288,11 @@ physics execution. Those were not current website capabilities.
 Install the API extras with `pip install -e ".[api]"`. Private model weights,
 recordings and Operator episode assets stay outside Git. Operator's viewer also
 requires the existing `/isaac/cache` renderer modules and the site's shared
-navigation assets. Keep the site's public `/operator` route mapped to the built
-Operator page. This change does not replace deployment routing or algorithm
-module-path precedence.
+navigation assets. The service serves the built Operator page at `/operator`
+and `/operator/`. Forward these paths to the service; remove any legacy reverse
+proxy mapping to a separate `cached.html`, which would keep serving the old
+viewer after a code upgrade. Preserve the `/isaac/cache` renderer assets and
+the configured Operator episode data root.
 
 The live service already reports API version 1.1.2. Publishing this PR does not
 redeploy it or replace the active numerical workers.
