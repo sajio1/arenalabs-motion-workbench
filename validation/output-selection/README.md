@@ -10,3 +10,9 @@ API 1.3 adds requested trajectory, point-cloud, contact and inpaint/FOV modaliti
 - Browser rendering could not be visually inspected because no computer-use browser surface was available. HTTP/static checks and frontend unit/build checks do not replace visual acceptance.
 
 Final frontend verification: 43 Node tests passed; TypeScript and Vite build passed. API/SDK/viewer targeted suite: 61 tests passed. See `API_WEB_QA.md` for scope.
+
+## Isolated Lambda check
+
+`http://motion-test.192-222-53-217.nip.io/manipulation` reports API 1.3.0. Six deployed output-plan cases passed: HiPhi trajectory, HiPhi unsupported FOV, and the four individual EgoDex selections. The generated HiPhi-to-G1 trajectory-only task completed in 54.11 seconds and exposed only trajectory artifacts. A second submission with omitted outputs completed in 1.23 seconds by reusing the trajectory cache. These are feature smoke timings on an existing runtime, not fresh-model performance benchmarks. Point cloud, contact and FOV GPU stages were not rerun in this feature smoke.
+
+The cloud catalog contains ten HiPhi recordings; data stays outside Git. Both test and production services remained active; only the test service was restarted.
