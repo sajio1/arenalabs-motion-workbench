@@ -3,6 +3,7 @@ import {prepareRun} from '../trajectory-scale';
 import {showRecordingUpload,downloadEpisode} from './dataset-io';
 import {showTrajectoryHeight} from './trajectory-height';
 import {uniqueRecordings} from './library-recordings';
+import {cachedRobotSelection} from './cached-robot-selection';
 import './feedback-dismiss.mjs';
 import {demoNavigation,demoBrand} from '../demo-nav';
 import {robotChoices,motionGroup} from '../state.js';
@@ -73,7 +74,7 @@ document.querySelector('.wb-state-table')!.addEventListener('scroll',()=>lastJoi
 $('joint-select').onchange=()=>previousChart=-1;$('joint-trace').ontoggle=()=>previousChart=-1;
 async function chooseRobot(id:string){
  const row=asset.robots.find(r=>r.id===id);if(!row)return;const token=++loadingToken,resume=playing;$('scene-status').textContent='Loading robot and end effector…';playing=false;
- await stage.loadRobot(row);if(token!==loadingToken)return;currentRobot=id;$('robot-name').textContent=row.label;$('hand-name').textContent=row.hand==='none'?'No hand':row.hand==='wuji'?'Wuji':row.hand==='robotiq-2f-140'?'Robotiq 2F-140':row.hand;
+ await stage.loadRobot(row);if(token!==loadingToken)return;currentRobot=id;selectedHand=row.hand;$('robot-name').textContent=row.label;$('hand-name').textContent=row.hand==='none'?'No hand':row.hand==='wuji'?'Wuji':row.hand==='robotiq-2f-140'?'Robotiq 2F-140':row.hand;
  const auditUrl=asset.hand_motion_audit_urls?.[id]||asset.hand_motion_audit_url;handAudit=auditUrl?await json<HandAudit>(auditUrl):undefined;if(token!==loadingToken)return;$('finger-select').innerHTML=handAudit?handAudit.finger_motion.map((row,i)=>`<option value="${i}">${escape(row.side)} · ${escape(row.finger)}</option>`).join(''):'';
  document.querySelector<HTMLElement>('.wb-hand-check')!.hidden=row.hand!=='wuji';document.querySelector<HTMLElement>('.wb-touch')!.hidden=!contact&&row.hand!=='wuji';
  const motion=stage.motion!;const housingReference=motion.tracking.reference?.startsWith('Fixed-housing')??false;const mountReference=motion.tracking.reference?.startsWith('Mounting-base')??false;const eeLabel=document.getElementById('reference-label');if(eeLabel)eeLabel.textContent=row.hand==='robotiq-2f-140'?(housingReference?'GRIPPER CENTER':mountReference?'GRIPPER BASE':'GRIPPER TCP'):row.hand==='none'?'WRIST REFERENCE':'PALM REFERENCE';$('reference-note').textContent=row.hand==='robotiq-2f-140'?`${housingReference?'Fixed-housing center':mountReference?'Mounting-base origin':'Jaw-pad midpoint'} to source reference · excludes scene and contact error`:row.hand==='none'?'Wrist-to-source error · no finger reconstruction':'Palm-to-source error · excludes scene and fingertip error';setupJointStates(motion);$('joint-select').innerHTML=motion.joints.names.map((name,i)=>`<option value="${i}">${escape(name)}</option>`).join('');$('joint-note').textContent=motion.joints.representation;
@@ -103,7 +104,8 @@ async function load(url:string|SceneAsset,preservePlayback=false){
   const segmented=asset.segmented_instances;
   await stage.load({...asset,segmented_instances:segmented},typeof url==='string'?url:'',preservePlayback?savedTime:0);if(request!==loadSerial)return;
   sourceLayer.disabled=!stage.sourceBodyLayer;sourceLayer.title=stage.sourceBodyLayer?sourceDisplay.title:'Source motion is not available in this scene';if(showSource&&stage.sourceBodyLayer){sourceLayer.checked=true;await toggleSourceMotion(sourceLayer);if(request!==loadSerial)return;if(asset.source_robot)stage.focus('body');}
-  if(currentRobot&&selectedHand&&asset.robots.some(r=>r.id===currentRobot&&r.hand===selectedHand))await chooseRobot(currentRobot);
+  const cachedRobot=cachedRobotSelection(asset,currentRobot,selectedHand);
+  if(cachedRobot)await chooseRobot(cachedRobot.id);
   else{const patchId=bindPatchVideo(asset,currentRobot,allowed,patch,$('patch-empty'),$('patch-label'));const selectedId=patchId||asset.generation_status?.robot_id||currentRobot;const selectedRobot=available.find(r=>r.id===selectedId);$('scene-status').textContent=asset.output_modalities?.length?'Selected outputs available':'Choose a robot and end effector to continue';$('robot-name').textContent=selectedRobot?.label||'Choose robot';$('joint-select').innerHTML='';$('joint-value').textContent='—';$('joint-note').textContent='Robot output is unavailable for this recording';$('cloud-status').textContent='';for(const id of ['left-error','right-error','left-angle','right-angle'])$(id).textContent='—';for(const id of ['fingertip-error'])$(id).textContent='';for(const id of ['joint-chart','error-chart','finger-chart']){const c=$<HTMLCanvasElement>(id);c.getContext('2d')?.clearRect(0,0,c.width,c.height);}$('scene-generation-status').textContent=asset.output_modalities?.length?'Selected outputs are available in the side panels.':'Choose a robot and end effector to continue';}
   if(request!==loadSerial)return;rememberCachedRobots(asset);time=preservePlayback?Math.min(savedTime,asset.duration):0;displayTime=time;buffering=false;playbackStarted=false;stallCount=0;stallSeconds=0;playing=preservePlayback?savedPlaying:true;$('wb-loading').hidden=true;renderLibrary();
  }catch(error){if(request!==loadSerial)return;$('wb-loading').textContent=`Scene unavailable: ${(error as Error).message}`;console.error(error);}
