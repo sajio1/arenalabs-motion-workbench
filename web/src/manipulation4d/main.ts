@@ -1,3 +1,4 @@
+import {api,apiJson,normalizeUrls} from '../platform-api';
 import {showRecordingUpload,downloadEpisode} from './dataset-io';
 import {showTrajectoryHeight} from './trajectory-height';
 import './feedback-dismiss.mjs';
@@ -42,7 +43,7 @@ interface HandAudit {source_curl_deg:number[][][];robot_curl_deg:number[][][];fi
 let proximity:typeof contact;
 let handAudit:HandAudit|undefined;
 function notice(message:string){$('wb-notice').textContent=message;$('wb-notice').hidden=false;setTimeout(()=>$('wb-notice').hidden=true,7000);}
-async function json<T>(url:string,options:RequestInit={}):Promise<T>{const r=await fetch(url,{cache:/((catalog|scene)\.json$|^\/api\/)/.test(url)?'no-store':'default',...options});if(!r.ok){const error=await r.json().catch(()=>({}));throw new Error(error.detail||`${r.status}: ${url}`);}return r.json();}
+async function json<T>(url:string,options:RequestInit={}):Promise<T>{return apiJson<T>(url,options);}
 function chart(canvas:HTMLCanvasElement,values:number[][],frame:number,colors:string[],threshold?:number){
  const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h||!values.length)return;const ratio=devicePixelRatio;canvas.width=w*ratio;canvas.height=h*ratio;const c=canvas.getContext('2d')!;c.scale(ratio,ratio);c.clearRect(0,0,w,h);
  const flattened=values.flat().filter(Number.isFinite);const min=Math.min(0,...flattened),max=Math.max(threshold??0,...flattened,min+.001);const y=(v:number)=>h-10-(v-min)/(max-min)*(h-20);
@@ -81,7 +82,7 @@ async function load(url:string|SceneAsset,preservePlayback=false){
  $('generation-feedback').hidden=true;
  const request=++loadSerial;++loadingToken;
  $('wb-loading').hidden=false;setupJointStates();playing=false;time=0;$<HTMLInputElement>('timeline').value='0';
- try{const loaded=typeof url==='string'?await json<SceneAsset>(url):url;if(request!==loadSerial)return;const available=await json<RobotOption[]>('/api/4d/robots');if(request!==loadSerial)return;const allowed=new Set(available.map(r=>r.id));loaded.robots=loaded.robots.filter(r=>r.encoder_policy===ENCODER_POLICY&&(allowed.has(r.id)||allowed.has(r.registry_robot_id||''))).map(r=>({...r,label:available.find(a=>a.id===(r.registry_robot_id||r.id))?.label||r.label}));if(!asset||asset.id!==loaded.id)resetSelection();asset=loaded;dataset=asset.dataset;const ground=asset.geometry.ground as {height_m:number;estimated:boolean}|undefined;document.querySelector('.wb-geometry-note')!.textContent=ground?`Estimated floor ${ground.height_m.toFixed(3)} m · Kinematic playback`:'Estimated geometry · Kinematic playback';const depthCheck=asset.geometry.depth_scale_calibration as {after?:{median_mm:number;p95_mm:number}}|undefined;const reconstruction=asset.geometry.multiview_reconstruction as {triangulation_check?:{after:{median_mm:number;p95_mm:number}}}|undefined;const multiCheck=reconstruction?.triangulation_check?.after;const handAlign=asset.geometry.hand_alignment as {status:string;heldout_after_median_mm?:number;heldout_after_p90_mm?:number}|undefined;$('scene-depth-check').textContent=handAlign?.status==='registered'?`Hand–scene registration: ${handAlign.heldout_after_median_mm!.toFixed(0)} mm median / ${handAlign.heldout_after_p90_mm!.toFixed(0)} mm p90 on held-out landmarks`:multiCheck?`Sparse 3-view check: ${multiCheck.median_mm.toFixed(0)} mm median / ${multiCheck.p95_mm.toFixed(0)} mm p95 · limited baseline`:depthCheck?.after?`Scene depth check: ${depthCheck.after.median_mm.toFixed(0)} mm median / ${depthCheck.after.p95_mm.toFixed(0)} mm p95 (visible hand landmarks)`:'Scene depth alignment has not been measured';$('focus-objects').textContent='Objects';$('clip-name').textContent=asset.title;$('source-kind').textContent=asset.dataset;$('trajectory-height-open').hidden=false;source.src=asset.video.url;
+ try{const loaded=typeof url==='string'?await json<SceneAsset>(url):normalizeUrls(url);if(request!==loadSerial)return;const available=await json<RobotOption[]>('/api/v1/robots');if(request!==loadSerial)return;const allowed=new Set(available.map(r=>r.id));loaded.robots=loaded.robots.filter(r=>r.encoder_policy===ENCODER_POLICY&&(allowed.has(r.id)||allowed.has(r.registry_robot_id||''))).map(r=>({...r,label:available.find(a=>a.id===(r.registry_robot_id||r.id))?.label||r.label}));if(!asset||asset.id!==loaded.id)resetSelection();asset=loaded;dataset=asset.dataset;const ground=asset.geometry.ground as {height_m:number;estimated:boolean}|undefined;document.querySelector('.wb-geometry-note')!.textContent=ground?`Estimated floor ${ground.height_m.toFixed(3)} m · Kinematic playback`:'Estimated geometry · Kinematic playback';const depthCheck=asset.geometry.depth_scale_calibration as {after?:{median_mm:number;p95_mm:number}}|undefined;const reconstruction=asset.geometry.multiview_reconstruction as {triangulation_check?:{after:{median_mm:number;p95_mm:number}}}|undefined;const multiCheck=reconstruction?.triangulation_check?.after;const handAlign=asset.geometry.hand_alignment as {status:string;heldout_after_median_mm?:number;heldout_after_p90_mm?:number}|undefined;$('scene-depth-check').textContent=handAlign?.status==='registered'?`Hand–scene registration: ${handAlign.heldout_after_median_mm!.toFixed(0)} mm median / ${handAlign.heldout_after_p90_mm!.toFixed(0)} mm p90 on held-out landmarks`:multiCheck?`Sparse 3-view check: ${multiCheck.median_mm.toFixed(0)} mm median / ${multiCheck.p95_mm.toFixed(0)} mm p95 · limited baseline`:depthCheck?.after?`Scene depth check: ${depthCheck.after.median_mm.toFixed(0)} mm median / ${depthCheck.after.p95_mm.toFixed(0)} mm p95 (visible hand landmarks)`:'Scene depth alignment has not been measured';$('focus-objects').textContent='Objects';$('clip-name').textContent=asset.title;$('source-kind').textContent=asset.dataset;$('trajectory-height-open').hidden=false;source.src=asset.video.url;
   const task=typeof asset.semantic.task==='string'?asset.semantic.task.trim():'';$('task-text').textContent=!task||/^short visible action$/i.test(task)?'Action annotation unavailable':task;$('semantic-tags').innerHTML=asset.semantic.objects.map(o=>`<span>${escape(o)}</span>`).join('');$('tactile-note').textContent=asset.tactile.reason||'No tactile sensor stream';
   $('semantic-origin').textContent=asset.semantic.model?'QWEN · ESTIMATE':'SOURCE LABELS';
   $('semantic-phases').innerHTML=(asset.semantic.phases||[]).map((p,i)=>`<button data-phase="${i}"><small>${p.start_seconds.toFixed(1)}s</small>${escape(p.label)}</button>`).join('');
@@ -108,7 +109,7 @@ function sourceHand(dataset:string){return asset?.end_effector || (dataset==='Ny
 interface HandOption{id:string;label:string;status:string;supported:boolean;report?:{message?:string;required?:string[]};}
 let robotOptions:RobotOption[]=[],handOptions:HandOption[]=[];let pickerToken=0;
 async function refreshOptions(){
- const [robots,catalog,hands]=await Promise.all([json<RobotOption[]>('/api/4d/robots'),json<{robots:RobotOption[]}>('/api/catalog/localmanipulation'),json<HandOption[]>('/api/4d/hands')]);
+ const [robots,catalog,hands]=await Promise.all([json<RobotOption[]>('/api/v1/robots'),json<{robots:RobotOption[]}>('/api/v1/catalogs/localmanipulation'),json<HandOption[]>('/api/v1/end-effectors')]);
  const merged=new Map(robots.map(r=>[r.id,r]));for(const r of catalog.robots){if(merged.has(r.id))merged.set(r.id,{...r,...merged.get(r.id),report:r.report});else merged.set(r.id,{...r,supported:false,reason:r.report?.message||'Complete physical hand frames before conversion'});}robotOptions=robotChoices([...merged.values()]);handOptions=hands;
 }
 function revealPicker(){const bar=$('embodiment-bar');bar.hidden=false;bar.animate([{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],{duration:220,easing:'ease-out'});return bar;}
@@ -122,7 +123,7 @@ async function showRobotPicker(){
   const id=button.dataset.deleteRobot!,row=all.get(id)!;
   if(!confirm(`Delete ${row.label} and its generated motion cache? Original SMPL, source video and scene data will be kept.`))return;
   button.disabled=true;
-  try{const result=await json<{deleted_robot_ids:string[]}>(`/api/robots/${encodeURIComponent(id)}`,{method:'DELETE'});const removed=new Set(result.deleted_robot_ids);asset.robots=asset.robots.filter(r=>!removed.has(r.registry_robot_id||r.id)&&!removed.has(r.id));if(removed.has(currentRobot))resetSelection();await load(asset,true);await refreshLibraryCache();await showRobotPicker();notice('Robot and motion cache deleted. Original SMPL preserved.');}
+  try{const result=await json<{deleted_robot_ids:string[]}>(`/api/v1/robots/${encodeURIComponent(id)}`,{method:'DELETE'});const removed=new Set(result.deleted_robot_ids);asset.robots=asset.robots.filter(r=>!removed.has(r.registry_robot_id||r.id)&&!removed.has(r.id));if(removed.has(currentRobot))resetSelection();await load(asset,true);await refreshLibraryCache();await showRobotPicker();notice('Robot and motion cache deleted. Original SMPL preserved.');}
   catch(e){button.disabled=false;$('picker-feedback').textContent=(e as Error).message;}
  });
  bar.querySelector<HTMLButtonElement>('[data-upload]')!.onclick=()=>showUpload('robot');
@@ -139,7 +140,7 @@ async function showHandPicker(){
 function showUpload(kind:'robot'|'hand'){
  ++pickerToken;const bar=revealPicker();bar.innerHTML=`<small>ADD ${kind==='robot'?'ROBOT':'HAND / GRIPPER'}</small><label class="wb-package-drop">＋ Choose URDF or ZIP<input type="file" id="package-file" accept=".urdf,.zip" aria-label="Upload ${kind} package"/></label><p>${kind==='robot'?'Robot URDF and meshes are inspected with the shared robot importer.':'One hand URDF per package. Include mesh files in the ZIP; mounting and finger mapping remain explicit.'} Up to 150 MB.</p><p id="package-status" role="status"></p>`;
  const input=$<HTMLInputElement>('package-file');const upload=async(file:File)=>{const status=$('package-status');status.textContent='Uploading and inspecting…';input.disabled=true;
- try{if(file.size>150*1024*1024)throw new Error('Package exceeds 150 MB');const form=new FormData();form.append('file',file);const result=await json<RobotOption&HandOption>(kind==='robot'?'/api/robots/localmanipulation':'/api/4d/hands',{method:'POST',body:form});status.textContent=`${result.label} · ${result.report?.message||result.status||'Saved'}`;const done=document.createElement('button');done.textContent='Back to selection';done.onclick=()=>void(kind==='robot'?showRobotPicker():showHandPicker());status.append(document.createElement('br'),done);}
+ try{if(file.size>150*1024*1024)throw new Error('Package exceeds 150 MB');const form=new FormData();form.append('file',file);const result=await json<RobotOption&HandOption>(kind==='robot'?'/api/v1/robots/import/localmanipulation':'/api/v1/end-effectors',{method:'POST',body:form});status.textContent=`${result.label} · ${result.report?.message||result.status||'Saved'}`;const done=document.createElement('button');done.textContent='Back to selection';done.onclick=()=>void(kind==='robot'?showRobotPicker():showHandPicker());status.append(document.createElement('br'),done);}
  catch(e){status.textContent=(e as Error).message;input.disabled=false;}};
  input.onchange=()=>{if(input.files?.[0])void upload(input.files[0]);};const drop=bar.querySelector<HTMLElement>('.wb-package-drop')!;drop.ondragover=e=>e.preventDefault();drop.ondrop=e=>{e.preventDefault();if(e.dataTransfer?.files[0])void upload(e.dataTransfer.files[0]);};
 }
@@ -153,8 +154,8 @@ async function startSelected(){
 async function generateRobot(id:string){
  if(!id||!selectedHand)return;
  const scene=asset.id,feedback=$('scene-status');let token=loadSerial,previewRevision=-1;
- try{generationFeedback({status:'running',phase:'Submitting generation request…'});let job=await json<SceneJob>('/api/4d/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scene_id:scene,robot_id:id,hand_id:selectedHand})});
- while(job.status==='queued'||job.status==='running'){if(job.robot_ready&&job.scene_url&&(job.revision??0)!==previewRevision&&token===loadSerial&&currentRobot===id){await load(job.scene_url,true);token=loadSerial;previewRevision=job.revision??0;}if(token===loadSerial&&currentRobot===id)generationFeedback(job);feedback.textContent=job.status==='queued'?`Queued · position ${job.queue_position??1}`:`Generating · ${job.phase||'Retargeting'}`;await new Promise(resolve=>setTimeout(resolve,1200));job=await json(`/api/4d/jobs/${job.id}`);}
+ try{generationFeedback({status:'running',phase:'Submitting generation request…'});let job=await api.start({workflow:'manipulation',recording_id:scene,robot_id:id,hand_id:selectedHand});
+ while(job.status==='queued'||job.status==='running'){if(job.robot_ready&&job.scene_url&&(job.revision??0)!==previewRevision&&token===loadSerial&&currentRobot===id){await load(job.scene_url,true);token=loadSerial;previewRevision=job.revision??0;}if(token===loadSerial&&currentRobot===id)generationFeedback(job);feedback.textContent=job.status==='queued'?`Queued · position ${job.queue_position??1}`:`Generating · ${job.phase||'Retargeting'}`;await new Promise(resolve=>setTimeout(resolve,1200));job=await api.job(job.id);}
  if(job.status!=='completed')throw new Error(job.error||job.phase||'Conversion failed');if(token===loadSerial&&currentRobot===id&&job.scene_url){await load(job.scene_url,true);}else notice('Robot conversion completed and cached.');void refreshLibraryCache();
  }catch(e){if(token===loadSerial&&currentRobot===id)generationFeedback({status:'failed',error:(e as Error).message});feedback.textContent=(e as Error).message;notice((e as Error).message);}
 }
@@ -174,11 +175,11 @@ async function reconstructClip(clip:LibraryClip){
  const robotId=currentRobot,handId=selectedHand,key=clip.id+':'+robotId+':'+handId;let selectionToken=loadSerial,previewRevision=-1;
  if(sceneRequests.has(key))return sceneRequests.get(key);
  $('scene-retry').hidden=true;
- const task=(async()=>{try{generationFeedback({status:'running',phase:'Submitting generation request…'});let job=await json<SceneJob>('/api/4d/reconstruct',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scene_id:clip.id,robot_id:robotId,hand_id:handId})});
+ const task=(async()=>{try{generationFeedback({status:'running',phase:'Submitting generation request…'});let job=await api.start({workflow:'manipulation',recording_id:clip.id,robot_id:robotId,hand_id:handId});
   while(job.status==='queued'||job.status==='running'){
    if(job.robot_ready&&job.scene_url&&(job.revision??0)!==previewRevision&&asset.id===clip.id&&selectionToken===loadSerial&&currentRobot===robotId&&selectedHand===handId){await load(job.scene_url,true);selectionToken=loadSerial;previewRevision=job.revision??0;}
    if(asset.id===clip.id&&selectionToken===loadSerial&&currentRobot===robotId&&selectedHand===handId){generationFeedback(job);const text=job.status==='queued'?`Queued · position ${job.queue_position??1}`:`${job.phase||'Generating recording'}${job.elapsed_seconds!==undefined?' · '+Math.round(job.elapsed_seconds)+' s':''}`;$('scene-generation-status').textContent=text;$('scene-status').textContent=text;}
-   await new Promise(resolve=>setTimeout(resolve,1800));job=await json<SceneJob>(`/api/4d/jobs/${job.id}`);
+   await new Promise(resolve=>setTimeout(resolve,1800));job=await api.job(job.id);
   }
   if(job.status!=='completed'||!job.scene_url)throw new Error(`${job.error||job.phase||'Generation failed'}${job.id?' · Task '+job.id:''}`);
   clip.scene_url=job.scene_url;void refreshLibraryCache();renderLibrary();if(asset.id===clip.id&&selectionToken===loadSerial&&currentRobot===robotId&&selectedHand===handId){await load(job.scene_url,true);generationFeedback({status:'completed'});}else notice(`${clip.title}: scene ready`);
@@ -200,7 +201,7 @@ function rememberCachedRobots(scene:SceneAsset){
 async function refreshLibraryCache(){
  if(libraryCacheRefresh)return libraryCacheRefresh;
  libraryCacheRefresh=(async()=>{
-  const catalog=await json<LibraryClip[]>('/api/4d/library');
+  const catalog=await api.recordings<LibraryClip>();
   for(const clip of library){const latest=catalog.find(c=>c.id===clip.id);if(latest?.scene_url)clip.scene_url=latest.scene_url;}
   const pending=library.filter(c=>c.scene_url);let cursor=0;
   await Promise.all(Array.from({length:Math.min(4,pending.length)},async()=>{
@@ -259,7 +260,7 @@ function draw(now:number){requestAnimationFrame(draw);const dt=Math.min(.1,(now-
  if(frame!==previousChart){chart($<HTMLCanvasElement>('error-chart'),motion.tracking.error_mm,frame,['#eeb669','#7ad3dc'],10);chart($<HTMLCanvasElement>('joint-chart'),motion.joints.values.map(v=>[v[joint]]),frame,['#b0d69c']);previousChart=frame;}
 }
 requestAnimationFrame(draw);
-void (async()=>{try{library=await json<LibraryClip[]>('/api/4d/library');const unique=new Map<string,LibraryClip>();for(const clip of library){const key=JSON.stringify([clip.dataset,clip.title,clip.duration,clip.video?.start_seconds||0]);if(!unique.has(key)||clip.scene_url)unique.set(key,clip);}library=[...unique.values()];$('library-count').textContent=String(library.length);renderLibrary();void refreshLibraryCache();const selected=new URLSearchParams(location.search).get('clip');const clip=library.find(c=>c.id===selected);if(clip){await selectClip(clip);return;}const candidate=new URLSearchParams(location.search).get('scene');await load(candidate&&/^\/assets\/manipulation4d\/[A-Za-z0-9/_-]+\/scene\.json$/.test(candidate)?candidate:library.find(c=>c.scene_url)!.scene_url!);}catch(e){$('wb-loading').textContent='Workspace initialization failed';console.error(e);}})();
+void (async()=>{try{await api.session();library=await api.recordings<LibraryClip>();const unique=new Map<string,LibraryClip>();for(const clip of library){const key=JSON.stringify([clip.dataset,clip.title,clip.duration,clip.video?.start_seconds||0]);if(!unique.has(key)||clip.scene_url)unique.set(key,clip);}library=[...unique.values()];$('library-count').textContent=String(library.length);renderLibrary();void refreshLibraryCache();const selected=new URLSearchParams(location.search).get('clip');const clip=library.find(c=>c.id===selected);if(clip){await selectClip(clip);return;}const candidate=new URLSearchParams(location.search).get('scene');await load(candidate&&/^\/(?:assets|api\/v1\/media)\/manipulation4d\/[A-Za-z0-9/_-]+\/scene\.json$/.test(candidate)?candidate:library.find(c=>c.scene_url)!.scene_url!);}catch(e){$('wb-loading').textContent='Workspace initialization failed';console.error(e);}})();
 
 function heightApplied(clip:LibraryClip){
  const custom=clip as LibraryClip&{temporary?:boolean};
@@ -270,7 +271,7 @@ async function selectClip(clip:LibraryClip){
  resetSelection();++loadSerial;
  try{
   if(clip.dataset==='UMI'){
-   const setup=await json<{requires_initial_height:boolean;default_scene_url?:string}>(`/api/4d/trajectory-height/${encodeURIComponent(clip.id)}`);
+   const setup=await json<{requires_initial_height:boolean;default_scene_url?:string}>(`/api/v1/recordings/${encodeURIComponent(clip.id)}/height-preview`);
    if(setup.requires_initial_height){const preview=previewClip(clip,false);if(preview)await showTrajectoryHeight(preview,heightApplied,true);return;}
    if(setup.default_scene_url)clip.scene_url=setup.default_scene_url;
   }

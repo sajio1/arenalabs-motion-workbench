@@ -37,6 +37,7 @@ def create_api(config_path=None):
     attach_height_routes(app,lock)
     from arenalab_workbench.dataset_io.routes import attach_dataset_routes, require_scene
     attach_dataset_routes(app,lock)
+    from arenalab_workbench.source_requirements import input_requirements
     from arenalab_workbench.scene_geometry import attach_routes
     attach_routes(app)
     for path in folder.glob('*/job.json'):
@@ -87,7 +88,7 @@ def create_api(config_path=None):
         entry=public_entry(scene_id)
         if not entry:raise HTTPException(400,'Recording is not connected')
         if entry['dataset']=='UMI' and not variant(scene_id):raise HTTPException(409,'Set the first trajectory height before generating UMI')
-        expected_hand='robotiq-2f-140' if gripper_source else entry.get('end_effector', 'none' if entry['dataset']=='Nymeria' else 'wuji')
+        expected_hand=input_requirements(scene_id)['hand_id']
         if hand_id!=expected_hand:raise HTTPException(409,'This source requires '+expected_hand)
         if entry.get('scene_url'):
             scene=json.loads((paths.store/entry['scene_url'].removeprefix('/assets/')).read_text())
@@ -131,5 +132,10 @@ def create_api(config_path=None):
             require_scene(jobs[job_id]['scene_id'],request)
             return view(jobs[job_id])
     app.state.generation_jobs=jobs
+    def requirements(scene_id,request):
+        require_scene(scene_id,request)
+        try:return input_requirements(scene_id)
+        except ValueError as error:raise HTTPException(400,str(error)) from error
+    app.state.input_requirements=requirements
     app.state.pool=pool
     return app

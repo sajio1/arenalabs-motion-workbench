@@ -1,3 +1,4 @@
+import {canonicalAssetUrl} from '../platform-api';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -47,8 +48,8 @@ export class Workspace {
     const decoder=new DepthDecoder();this.depthDecoder=decoder;
     const first=Math.min(asset.cloud.frames.length-1,Math.max(0,Math.floor(initialTime*asset.cloud.fps)));
     const stream=new DepthStream(asset.cloud.frames.length,async(index:number,signal:AbortSignal)=>{
-     const query=new URLSearchParams({scene:sceneUrl,frame:String(index),rgb:'jpeg',revision:asset.cloud!.geometry_url!});
-     const response=await fetch('/api/4d/geometry/frame?'+query,{signal});if(!response.ok)throw new Error('Point-cloud frame unavailable');
+     const query=new URLSearchParams({scene:canonicalAssetUrl(sceneUrl),frame:String(index),rgb:'jpeg',revision:canonicalAssetUrl(asset.cloud!.geometry_url!)});
+     const response=await fetch('/api/v1/geometry/frame?'+query,{signal});if(!response.ok)throw new Error('Point-cloud frame unavailable');
      const value=await decoder.decode(await response.arrayBuffer(),signal);
      if(value.sourceFrame!==asset.cloud!.frames[index].source_frame)throw new Error('Depth/source clock mismatch');
      return value;

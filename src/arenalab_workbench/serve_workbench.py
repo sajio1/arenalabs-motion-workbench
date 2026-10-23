@@ -8,8 +8,16 @@ def create_app(config_path=None):
     from arenalab_workbench.workbench_api import create_api
     from arenalab_workbench.dataset_io.routes import protect_uploaded_assets
     app = create_viewer(config_path or paths.viewer_config)
-    app.mount('/api/4d', create_api(config_path))
+    workbench = create_api(config_path)
+    app.mount('/api/4d', workbench)
     protect_uploaded_assets(app)
+    from arena_api.app import create_api as create_platform_api
+    import os
+    app.mount('/api/v1', create_platform_api(
+        app, workbench, storage=paths.store,
+        database=os.environ.get('ARENA_API_DATABASE', str(paths.workbench / 'api-v1' / 'registry.sqlite3')),
+        operator_root=os.environ.get('ARENA_OPERATOR_ROOT', '/var/www/openarm-viewer'),
+    ))
     return app
 
 

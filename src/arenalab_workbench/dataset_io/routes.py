@@ -45,7 +45,12 @@ def import_recording(archive, ident, workspace):
     public_video.parent.mkdir(exist_ok=True)
     stream=json.loads(subprocess.check_output(['ffprobe','-v','error','-select_streams','v:0','-show_entries','stream=codec_name,pix_fmt','-of','json',str(video)]))['streams'][0]
     if stream.get('codec_name')=='h264' and stream.get('pix_fmt') in {'yuv420p','yuvj420p'}:shutil.copyfile(video, public_video)
-    else:subprocess.run(['ffmpeg','-v','error','-nostdin','-y','-i',str(video),'-map','0:v:0','-an','-c:v','libx264','-pix_fmt','yuv420p','-fps_mode','passthrough','-movflags','+faststart',str(public_video)],check=True)
+    else:
+        # Ubuntu's installed FFmpeg can predate -fps_mode. -vsync 0 has the
+        # same timestamp-preserving behavior across the supported binaries.
+        encoded=subprocess.run(['ffmpeg','-v','error','-nostdin','-y','-i',str(video),'-map','0:v:0','-an','-c:v','libx264','-pix_fmt','yuv420p','-vsync','0','-movflags','+faststart',str(public_video)],capture_output=True)
+        if encoded.returncode:
+            raise ValueError('Video could not be encoded for browser playback; check the video codec and frames')
     mode = manifest['end_effector']
     n = len(arrays['timestamps_s'])
     np.savez_compressed(work / 'observations-normalized.npz', **arrays)
@@ -160,7 +165,7 @@ def attach_dataset_routes(app, lock):
             result = s.read(directory / 'result.json')
             s.write(state, {**result, 'status': 'completed', 'download_url': f'/api/4d/exports/{ident}/download'})
         except Exception:
-            s.write(state, dict(status='failed', error='Dataset packaging failed; retry after the missing generation stages finish. Server log retained.'))
+            s.write(state, dict(status='failed', error='Dataset packaging failed while validating motion or assets. Server log retained; retry after the error is resolved.'))
 
     @app.post('/exports')
     def start_export(body: ExportRequest, request: Request):
