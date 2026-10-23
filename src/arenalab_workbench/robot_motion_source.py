@@ -226,6 +226,7 @@ def prepare_robot_source(spec, output_dir, *, row=None, observed_work=None, sour
             source_support='Source local robot visual hull; exact mesh/primitive plane minima',
             task_reference_evidence='Independent recorded operation targets' if observation_hashes else 'Original robot wrist origins and declared palm axes',
             observed_source_sha256=observation_hashes,source_clock='Original selected 30 Hz samples; no interpolation',model_arrays_exported=False)
+        if spec.get('video_role') is not None:provenance['source_video_role']=spec['video_role']
         MotionClip(names,target['spec'].parents,target['spec'].rest_offsets,r_y,p_y*100,times,provenance).save(temp/'canonical.npz')
         provenance.update(native_source_sha256=sha256(temp/'native_source.npz'),
             source_visual_format='rigid-link-poses-v1',source_model_glb_sha256=sha256(temp/'source_robot.glb'),

@@ -96,7 +96,14 @@ def _export_robot_preview(source, destination):
             or len(times) != len(P) or not np.isfinite(P).all() or not np.isfinite(R).all()
             or not np.allclose(np.diff(times),1/30,atol=1e-8,rtol=0)):
         raise ValueError('Invalid source robot preview geometry/clock')
-    target = destination/'source-robot'/sha256(motion)[:24]
+    role = provenance.get('source_video_role', provenance.get('motion_source', {}).get('video_role'))
+    if role is not None and role not in {'recorded', 'preview-only', 'unspecified'}:
+        raise ValueError('Unknown source video role')
+    # Role is part of this immutable manifest's identity; prior previews remain.
+    identity = hashlib.sha256(json.dumps(dict(motion=sha256(motion),model=sha256(model),
+        objects=sha256(source/'objects.npz') if (source/'objects.npz').is_file() else None,
+        video_role=role),sort_keys=True).encode()).hexdigest()
+    target = destination/'source-robot'/identity[:24]
     _asset(target)
     model_hash = _immutable_bytes(target/'model.glb',model.read_bytes())
     payload = dict(fps=30.,frames=len(times),positions=P.tolist(),
@@ -105,7 +112,8 @@ def _export_robot_preview(source, destination):
     result = dict(source_family='robot',source_robot_id=provenance['source_robot_id'],world_up='z',
         frames=len(times),fps=30.,model_url=_asset(target/'model.glb'),playback_url=_asset(target/'playback.json'),
         model_sha256=model_hash,playback_sha256=playback_hash,source_sha256=provenance['source_sha256'],
-        retargeted=False,source_trajectory_modified=False,video_role='preview-only')
+        retargeted=False,source_trajectory_modified=False)
+    if role is not None:result['video_role']=role
     if (source/'objects.npz').is_file():
         result['objects'] = _export_objects(source/'objects.npz',target/'objects',times)
     _immutable_bytes(target/'manifest.json',(json.dumps(result,indent=2,allow_nan=False)+'\n').encode())

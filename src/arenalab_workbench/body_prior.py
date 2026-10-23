@@ -16,19 +16,21 @@ def policy_for(dataset):
 
 def folder(scene_id):
  from arenalab_workbench.height_registry import variant
+ from arenalab_workbench.source_identity import registered_source, robot_source_identity
  custom=variant(scene_id)
- if custom:return Path(custom['body_work'])
+ _,resolved=registered_source(scene_id)
+ if custom and not resolved:return Path(custom['body_work'])
  public,row=resolve_clip(scene_id)
  version=policy_for(public['dataset'])+('-nymeria-sparse-nohand-window-v2' if public['dataset']=='Nymeria' else '')
  # Body identity must not depend on DA3/SAM versions or visual artifacts.
  source_hash=hashlib.sha256(Path(row['source']).read_bytes()).hexdigest()
- from arenalab_workbench.dataset_io.storage import entry as uploaded_entry
- supplied=row.get('motion_source') or (uploaded_entry(scene_id) or {}).get('motion_source')
+ row,supplied=registered_source(scene_id,row=row)
  supplied_hashes={}
  if supplied:
   for name in ['path','objects_path']:
    if supplied.get(name):supplied_hashes[name]=hashlib.sha256(Path(supplied[name]).read_bytes()).hexdigest()
  identity=dict(policy=version,motion_source=supplied,supplied_sha256=supplied_hashes,source_sha256=source_hash,window=row.get('source_window'),frames=row['frames'],fps=row['fps'],dataset=public['dataset'])
+ if supplied and supplied.get('format')=='robot_joint_state':identity['complete_robot']=robot_source_identity(supplied,row)
  if public.get('uploaded'):identity['private_recording_id']=scene_id
  target=ROOT/'body-jobs'/hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
  if target.exists():return target
@@ -46,8 +48,10 @@ def prepare(scene_id):
  public,row=resolve_clip(scene_id);work=folder(scene_id);work.mkdir(parents=True,exist_ok=True)
  from arenalab_workbench.dataset_io.storage import entry as uploaded_entry
  upload=uploaded_entry(scene_id)
- if row.get('motion_source'):
-  spec=dict(row['motion_source']);source=Path(spec['path']);spec['sha256']=hashlib.sha256(source.read_bytes()).hexdigest()
+ from arenalab_workbench.source_identity import registered_source
+ row,supplied=registered_source(scene_id,row=row)
+ if supplied and not upload:
+  spec=dict(supplied);source=Path(spec['path']);spec['sha256']=hashlib.sha256(source.read_bytes()).hexdigest()
   save(work/'input_manifest.json',dict(dataset=public['dataset'],clip=scene_id,frames=int(row['frames']),fps=30,end_effector=public.get('end_effector','none'),source_sha256=spec['sha256'],motion_source=spec,source_trajectory_edited=False,source_window=row.get('source_window'),video=row.get('video')))
   return work
  if not upload:

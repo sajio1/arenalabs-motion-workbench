@@ -10,8 +10,10 @@ POLICY='gripper-head-two-ee-smplh-v2'
 def body_path(work):
  work=Path(work);meta=json.loads((work/'source.json').read_text());cal=meta.get('head_calibration')
  if meta.get('motion_source'):
-  spec=meta['motion_source'];raw=Path(spec['path']);raw=raw if raw.is_absolute() else work/raw
+  from arenalab_workbench.source_identity import absolute_spec,robot_source_identity
+  spec=absolute_spec(meta['motion_source'],work);raw=Path(spec['path'])
   identity=dict(source=digest(work/'source.npz'),spec=spec,raw=digest(raw),adapter='supplied-gripper-body-v1')
+  if spec.get('format')=='robot_joint_state':identity['complete_robot']=robot_source_identity(spec,dict(source=str(work/'source.npz'),frames=meta['frames'],fps=meta.get('fps',30)))
   if spec.get('objects_path'):
    objects=Path(spec['objects_path']);objects=objects if objects.is_absolute() else work/objects
    identity['objects']=digest(objects)

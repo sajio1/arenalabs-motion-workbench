@@ -13,10 +13,23 @@ test('native source supersedes human preview video and geometry without changing
  assert.equal(scene.video.url,'human.mp4');assert.equal(scene.source_body.vertices_url,'human.bin');
 });
 test('supplied SMPL and actual robot camera streams remain available',()=>{
- const scene={video:{url:'recorded.mp4'},cloud:{url:'measured'},source_body:{vertices_url:'smplh.bin'}};
+ const scene={video:{url:'recorded.mp4'},cloud:{url:'measured'},source_body:{vertices_url:'smplh.bin'},
+  source_camera:{url:'camera'},segmented_instances:{url:'instances'},patch_videos:{a3:'fov.mp4'},
+  wrist_videos:[{url:'wrist.mp4'}]};
  assert.equal(withSourcePresentation(scene),scene);
  const output=withSourcePresentation(scene,{source_robot_id:'robot',video_role:'recorded'});
- assert.equal(output.video,scene.video);assert.equal(output.cloud,scene.cloud);
+ for(const key of ['video','cloud','source_camera','segmented_instances','patch_videos','wrist_videos']){
+  assert.equal(output[key],scene[key]);
+ }
+ assert.equal(output.source_body,undefined);
+});
+test('unspecified source robot video provenance never erases requested CV results',()=>{
+ const scene={video:{url:'camera.mp4'},cloud:{url:'cloud'},patch_videos:{a3:'fov.mp4'}};
+ for(const role of [undefined,'unspecified']){
+  const output=withSourcePresentation(scene,{source_robot_id:'robot',video_role:role});
+  assert.equal(output.video,scene.video);assert.equal(output.cloud,scene.cloud);
+  assert.equal(output.patch_videos,scene.patch_videos);
+ }
 });
 test('native preview defaults on, user visibility persists on reload, human remains opt-in',()=>{
  assert.equal(initialSourceVisibility(true,false,true,false),true);

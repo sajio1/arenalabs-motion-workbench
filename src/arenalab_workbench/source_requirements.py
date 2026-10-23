@@ -125,10 +125,11 @@ def input_requirements(scene_id, robot_id=None, config_path=None):
     if upload:
         row['manifest']=upload.get('manifest',{})
         if upload.get('motion_source'):row['motion_source']=upload['motion_source']
+    from arenalab_workbench.source_identity import registered_source
+    row, _ = registered_source(resolved, row=row, config_path=config_path)
     if resolved in gripper_sources:
         source_work=Path(gripper_sources[resolved]['work'])
         metadata=json.loads((source_work/'source.json').read_text())
-        if metadata.get('motion_source'):row['motion_source']=metadata['motion_source']
         camera_path=Path(metadata.get('head_video') or '')
         if not camera_path.is_absolute():camera_path=source_work/camera_path
         row.update(work=str(source_work),source=str(source_work/'source.npz'),video={'path':str(camera_path)} if camera_path.is_file() else None)

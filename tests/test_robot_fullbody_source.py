@@ -186,16 +186,196 @@ def test_attach_complete_source_keeps_registered_observations_and_clock(tmp_path
         attach(record,spec,preview=dict(preview,robot_id='different-target'),preview_url='/assets/robot.mp4')
 
 
-def test_robot_scene_does_not_reuse_sparse_reconstruction_scene(monkeypatch):
+def test_robot_scene_does_not_reuse_sparse_reconstruction_scene(tmp_path,monkeypatch):
+    _,spec,raw=fixture(tmp_path,monkeypatch)
     from arenalab_workbench import unified_scene
     from arenalab_workbench.dataset_io import storage
     monkeypatch.setattr(storage, 'entry', lambda _: {})
     old = unified_scene.scene_key('same-recording', 'preserve', 'target', ['trajectory'])
-    state = dict(format='robot_joint_state', robot_id='source', sha256='original')
+    state = spec
     monkeypatch.setattr(storage, 'entry', lambda _: dict(motion_source=state))
     new = unified_scene.scene_key('same-recording', 'preserve', 'target', ['trajectory'])
     assert new != old
-    state['sha256'] = 'new-source'
+    raw['root_position'][0,0]+=.001
+    np.savez_compressed(state['path'],**raw)
     assert unified_scene.scene_key('same-recording', 'preserve', 'target', ['trajectory']) != new
+
+
+@pytest.mark.parametrize('route',['uploaded','config','gripper','height'])
+def test_complete_source_identity_matches_all_registered_routes(tmp_path,monkeypatch,route):
+    _,spec,raw=fixture(tmp_path,monkeypatch)
+    from arenalab_workbench import unified_scene,source_identity,height_registry,gripper_registry,body_prior
+    from arenalab_workbench.dataset_io import storage
+    observation=tmp_path/'observations.npz';np.savez(observation,timestamps_s=raw['timestamps_s'])
+    row=dict(id='recording',source=str(observation),frames=4,fps=30,video=None)
+    public=dict(id='recording',dataset='Recorded',end_effector='none')
+    cfg=tmp_path/'viewer.json';cfg.write_text(json.dumps(dict(clips=[row])))
+    monkeypatch.setattr(source_identity.paths,'viewer_config',cfg)
+    monkeypatch.setattr(storage,'entry',lambda _:None)
+    monkeypatch.setattr(height_registry,'variant',lambda _:None)
+    monkeypatch.setattr(height_registry,'public_entry',lambda _:public)
+    monkeypatch.setattr(gripper_registry,'sources',lambda:{})
+    old=unified_scene.scene_key('recording','preserve','target',['trajectory'])
+    complete=dict(row,motion_source=spec)
+    if route=='uploaded':monkeypatch.setattr(storage,'entry',lambda _:dict(source_row=row,motion_source=spec,public=public))
+    elif route=='config':cfg.write_text(json.dumps(dict(clips=[complete])))
+    elif route=='height':monkeypatch.setattr(height_registry,'variant',lambda _:dict(original_scene_id='original',source_row=complete,public=public,body_work='old-smpl-cache'))
+    else:
+        work=tmp_path/'gripper';work.mkdir();(work/'source.npz').write_bytes(observation.read_bytes())
+        (work/'source.json').write_text(json.dumps(dict(frames=4,fps=30,motion_source=spec)))
+        monkeypatch.setattr(gripper_registry,'sources',lambda:dict(recording=dict(work=str(work))))
+    new=unified_scene.scene_key('recording','preserve','target',['trajectory'])
+    assert new!=old
+    assert new==unified_scene.scene_key('recording','preserve','other-target',['trajectory'])
+    selected,resolved=source_identity.registered_source('recording')
+    assert resolved==spec
+    assert new==unified_scene.scene_key('recording','preserve','target',['trajectory'])
+    if route in ('config','uploaded','height'):
+        monkeypatch.setattr(body_prior,'resolve_clip',lambda _: (public,selected))
+        monkeypatch.setattr(body_prior,'ROOT',tmp_path/'body-root')
+        first=body_prior.folder('recording')
+        raw['joint_positions'][0,0]+=.001;np.savez_compressed(spec['path'],**raw)
+        assert body_prior.folder('recording')!=first
+        assert unified_scene.scene_key('recording','preserve','target',['trajectory'])!=new
+
+
+def test_complete_robot_identity_binds_model_objects_and_clock(tmp_path,monkeypatch):
+    row,spec,raw=fixture(tmp_path,monkeypatch)
+    from arenalab_workbench.source_identity import robot_source_identity,identity_digest
+    obj=tmp_path/'objects.npz';np.savez(obj,timestamps_s=raw['timestamps_s'],positions=np.zeros((4,1,3)))
+    spec['objects_path']=str(obj)
+    selected=dict(source=spec['path'],frames=4,fps=30,source_window={'start_frame':0})
+    key=lambda:identity_digest(robot_source_identity(spec,selected))
+    old=key();selected['source_window']={'start_frame':1};assert key()!=old
+    old=key();np.savez(obj,timestamps_s=raw['timestamps_s'],positions=np.ones((4,1,3)));assert key()!=old
+    old=key();xml=Path(row['xml']);xml.write_text(xml.read_text().replace('size=".02 .02 .02"','size=".03 .02 .02"'));assert key()!=old
+    # Included local assets are identity dependencies even when poses are equal.
+    mesh=tmp_path/'part.obj';mesh.write_text('v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nf 1 2 3\nf 1 2 4\nf 1 3 4\nf 2 3 4\n')
+    xml.write_text(xml.read_text().replace('<worldbody>','<asset><mesh name="unused" file="part.obj"/></asset><worldbody>'))
+    old=key();mesh.write_text(mesh.read_text().replace('v 1 0 0','v 2 0 0'));assert key()!=old
+
+
+@pytest.mark.parametrize('role',['recorded','preview-only',None])
+def test_robot_preview_role_is_explicit_and_preserves_recorded_outputs(tmp_path,monkeypatch,role):
+    _,spec,_=fixture(tmp_path,monkeypatch)
+    if role:spec['video_role']=role
+    source=robot.prepare_robot_source(spec,tmp_path/'normalized')
+    from arenalab_workbench import source_preview
+    from arenalab_workbench.source_display import source_scene_metadata,MANIPULATION_WORLD_TO_DISPLAY
+    from arenalab_workbench.job_outputs import filtered_scene
+    monkeypatch.setattr(source_preview.paths,'store',tmp_path)
+    preview=source_preview.export_source_preview(source,tmp_path/'published')
+    assert preview.get('video_role')==role
+    scene=dict(robots=[dict(id='target')],video={'url':'recorded.mp4'},cloud={'url':'cloud'},
+               source_camera={'url':'camera'},segmented_instances={'url':'instances'},
+               patch_videos={'target':'fov.mp4'},wrist_videos=[{'url':'wrist.mp4'}])
+    scene.update(source_scene_metadata(preview,{},MANIPULATION_WORLD_TO_DISPLAY))
+    published=filtered_scene(scene,dict(effective_outputs=['trajectory','point_cloud','inpaint_fov']),dict(motion=True,scene=True,fov=True))
+    for key in ('video','cloud','source_camera','segmented_instances','patch_videos','wrist_videos'):assert published[key]==scene[key]
+    assert 'source_body' not in published
+
+
+def test_conflicting_gripper_source_fails_before_body_inference(tmp_path,monkeypatch):
+    _,spec,_=fixture(tmp_path,monkeypatch)
+    from arenalab_workbench import source_identity,gripper_registry,height_registry
+    from arenalab_workbench.dataset_io import storage
+    work=tmp_path/'old';work.mkdir();(work/'source.json').write_text('{}')
+    monkeypatch.setattr(gripper_registry,'sources',lambda:dict(recording=dict(work=str(work))))
+    monkeypatch.setattr(storage,'entry',lambda _:dict(motion_source=spec,source_row={}))
+    monkeypatch.setattr(height_registry,'variant',lambda _:None)
+    with pytest.raises(ValueError,match='disagrees with gripper'):
+        source_identity.registered_source('recording')
+
+
+@pytest.mark.parametrize('registration',['uploaded','server'])
+def test_attach_gripper_executes_complete_body_without_reusing_old_smpl(tmp_path,monkeypatch,registration):
+    from types import SimpleNamespace
+    from arenalab_workbench import (gripper_body,gripper_job,gripper_registry,body_inference,
+        source_identity,source_requirements,height_registry,robot_registry,gpu_scheduler,motion_backend)
+    from arenalab_workbench.dataset_io import storage
+    from arenalab_workbench.attach_robot_motion import attach
+    from arenalab_workbench.unified_scene import scene_key
+    row,spec,raw=fixture(tmp_path,monkeypatch)
+    old=tmp_path/'original-gripper';old.mkdir()
+    video=old/'head.mp4';video.write_bytes(b'original recorded RGB')
+    observations=dict(camera=np.broadcast_to(np.eye(4),(4,4,4)),tcp_zup=np.ones((4,2,3))*.2,
+                      tool_R_zup=np.broadcast_to(np.eye(3),(4,2,3,3)),timestamps_s=raw['timestamps_s'],
+                      floor_z=np.array(0.),intrinsic=np.eye(3),width=np.ones((4,2))*.04)
+    np.savez_compressed(old/'source.npz',**observations)
+    metadata=dict(dataset='Real robot',frames=4,fps=30,head_video='head.mp4',wrist_videos=[],target_reference='recorded tcp')
+    (old/'source.json').write_text(json.dumps(metadata))
+    old_body=gripper_body.body_path(old);old_body.mkdir()
+    (old_body/'prior-ready.json').write_text('{"historical_smpl_cache":true}')
+    (old_body/'egoallo_smplh.npz').write_bytes(b'old cached body must not be consumed')
+    public=dict(id='recording',title='Recorded gripper',dataset='Real robot',end_effector='robotiq-2f-140',video=dict(url='/assets/head.mp4'))
+    source_row=dict(id='recording',source=str(old/'source.npz'),frames=4,fps=30,video=dict(path=str(video)))
+    original=dict(public=public,source_row=source_row,body_adapter='gripper',gripper=dict(work=str(old),destination=str(tmp_path/'old-export')))
+    before={str(p.relative_to(old)):p.read_bytes() for p in old.rglob('*') if p.is_file()}
+    monkeypatch.setattr(gpu_scheduler,'ROOT',tmp_path/'locks')
+    upgraded=attach(original,spec)
+    new=Path(upgraded['gripper']['work'])
+    assert new!=old and new.is_dir() and not (new/'body-smplh-v2').exists()
+    assert (new/'source.npz').read_bytes()==before['source.npz']
+    assert upgraded['public']['video']==public['video']
+    assert json.loads((new/'source.json').read_text())['head_video']==str(video)
+    assert attach(original,spec)['gripper']['work']==str(new)
+    assert {str(p.relative_to(old)):p.read_bytes() for p in old.rglob('*') if p.is_file()}==before
+    store=tmp_path/'store';store.mkdir()
+    cfg=tmp_path/'viewer.json'
+    cfg.write_text(json.dumps(dict(clips=[upgraded['source_row'] if registration=='server' else source_row],robots=[])))
+    monkeypatch.setattr(source_identity.paths,'viewer_config',cfg)
+    monkeypatch.setattr(gripper_job.paths,'store',store)
+    records={'recording':upgraded} if registration=='uploaded' else {}
+    monkeypatch.setattr(storage,'uploads',lambda:records)
+    registry=tmp_path/'gripper-sources.json'
+    registry.write_text(json.dumps({'recording':upgraded['gripper']} if registration=='server' else {}))
+    monkeypatch.setattr(gripper_registry,'REGISTRY',registry)
+    monkeypatch.setattr(height_registry,'variant',lambda _:None)
+    monkeypatch.setattr(height_registry,'default_id',lambda _:None)
+    monkeypatch.setattr(height_registry,'public_entry',lambda _:upgraded['public'])
+    monkeypatch.setattr(robot_registry,'roster',lambda *a,**kw:{'fixture':dict(id='fixture',label='Fixture',kind='Humanoid',pipeline_row=row)})
+    monkeypatch.setattr(body_inference,'run',lambda *a,**kw:pytest.fail('Attached robot source entered EgoAllo'))
+    monkeypatch.setenv('ARENA_OUTPUT_MODALITIES','["trajectory"]')
+    monkeypatch.setenv('ARENA_TRAJECTORY_SCALE','preserve')
+    req=source_requirements.input_requirements('recording','fixture')
+    assert req['source_policy']=='supplied-robot'
+    assert req['output_capabilities']['outputs']['point_cloud']['available']
+    assert req['output_capabilities']['outputs']['inpaint_fov']['available']
+    def normalized(work):
+        out=Path(work)/'normalized-fixture'
+        return out if out.exists() else prepare_body_source(work,out)
+    monkeypatch.setattr(motion_backend,'normalized_source',normalized)
+    called=[]
+    def worker(command,**kwargs):
+        name=Path(command[1]).name;called.append(name)
+        assert Path(command[2])==new
+        if name in ('gripper_body.py','gripper_retarget.py'):
+            body=gripper_body.run(new)
+            assert body!=old_body
+            manifest=json.loads((body/'input_manifest.json').read_text())
+            assert source_route(manifest)['route']=='supplied-robot'
+            source=normalized(body)
+            provenance=json.loads((source/'source_provenance.json').read_text())
+            assert provenance['source_sha256']==hashlib.sha256(Path(spec['path']).read_bytes()).hexdigest()
+            assert provenance['human_model'] is None and provenance['neural_source_decode'] is False
+            with np.load(source/'native_source.npz') as z:
+                np.testing.assert_array_equal(z['wrist_position_world_m'],observations['tcp_zup'])
+        elif name=='gripper_export.py':
+            destination=Path(command[4])
+            gpu_scheduler.merge_scene(destination/'scene.json',lambda scene:scene.update(robots=[dict(id='fixture',hand='robotiq-2f-140')]))
+        else:pytest.fail('Unexpected worker '+name)
+        return SimpleNamespace(returncode=0)
+    monkeypatch.setattr(gripper_job,'gpu_run',worker)
+    monkeypatch.setattr(gripper_job.subprocess,'run',worker)
+    status=tmp_path/'job/state.json'
+    url=gripper_job.run('recording','fixture','robotiq-2f-140',status)
+    assert json.loads(status.read_text())['completed_outputs']==['trajectory']
+    assert set(called)=={'gripper_body.py','gripper_retarget.py','gripper_export.py'}
+    assert (store/url.removeprefix('/assets/')).is_file()
+    # The complete-source scene is isolated from the old shared sparse scene.
+    import hashlib as h
+    legacy=h.sha256('recording:preserve:resident-v3:outputs:trajectory'.encode()).hexdigest()
+    assert scene_key('recording','preserve','fixture',['trajectory'])!=legacy
+    assert {str(p.relative_to(old)):p.read_bytes() for p in old.rglob('*') if p.is_file()}==before
 
 
