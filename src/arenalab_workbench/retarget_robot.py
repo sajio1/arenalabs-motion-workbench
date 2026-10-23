@@ -90,12 +90,10 @@ def export_result(robot_id,robot,row,output,angles,hashes,source_hashes,status_p
     for i in range(count):
         mesh=trimesh.Trimesh(visual[f'v{i}'],visual[f'f{i}'],process=False);color=np.asarray(visual[f'c{i}']).ravel();color=color*255 if color.max()<=1 else color;mesh.visual.vertex_colors=np.tile(color.astype(np.uint8),(len(mesh.vertices),1));scene.add_geometry(mesh,node_name=f'geom_{i}',geom_name=f'geom_{i}')
     scene.export(folder/'model.glb')
-    spec,_,_,bindings,_=build_from_mjcf(row['xml'],row['body']);wrist_ids=[spec.joint_names.index(row['endpoints'][side+'_wrist']) for side in ['left','right']]
-    from alphamotion.engine.nets.rotations import rot6d_to_matrix
-    import torch
-    C=np.array([[0,1,0],[0,0,1],[1,0,0]],float)
-    R=rot6d_to_matrix(torch.tensor(motion['rot6d'])).numpy()[:,wrist_ids]
-    actual=(motion['world_position_cm'][:,wrist_ids]/100+np.einsum('tsij,tsj->tsi',R,local[:,:,0]@C.T))@C@S
+    _,_,_,bindings,_=build_from_mjcf(row['xml'],row['body'])
+    from arenalab_workbench.native_export_parity import native_task_points
+    all_actual=native_task_points(motion,local)@S
+    actual=all_actual[:,:,0]
     target_path=output/'source-targets.npz' if (output/'source-targets.npz').is_file() else WORK/'operation-accuracy/source-targets.npz'
     target=np.load(target_path)['points'][:,:,0]@S
     error=np.linalg.norm(actual-target,axis=-1)*1000
@@ -107,7 +105,6 @@ def export_result(robot_id,robot,row,output,angles,hashes,source_hashes,status_p
         for finger in range(5):
             for joint in range(4):joint_names.append(f'{side}_finger{finger+1}_joint{joint+1}');joint_values.append(angles[:,si,finger*4+joint])
     payload=dict(fps=30,frames=n,positions=positions.tolist(),quaternions=Rotation.from_matrix(rotations.reshape(-1,3,3)).as_quat().reshape(n,count,4).tolist(),tracking=dict(actual=actual.tolist(),target=target.tolist(),error_mm=error.tolist(),orientation_deg=motion['wrist_error_deg'].tolist(),reference='Observed wrist reference' if angles is None else 'Four proximal knuckle center + palm frame'),joints=dict(names=joint_names,values=np.stack(joint_values,1).tolist(),unit='rad',representation='Native robot joint coordinates; no dexterous hand' if angles is None else 'Native robot and Wuji joint coordinates; kinematic output'))
-    all_actual=(motion['world_position_cm'][:,wrist_ids,None,:]/100+np.einsum('tsij,tskj->tski',R,local@C.T))@C@S
     all_targets=np.load(target_path)['points']@S
     if angles is not None:payload['tracking']['fingertip_error_mm']=(np.linalg.norm(all_actual[:,:,1:6]-all_targets[:,:,1:6],axis=-1)*1000).tolist()
     write(folder/'playback.json',payload)

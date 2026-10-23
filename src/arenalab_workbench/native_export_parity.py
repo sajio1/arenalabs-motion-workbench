@@ -9,6 +9,28 @@ from scipy.spatial.transform import Rotation
 DISPLAY_TO_WORLD=np.array([[1.,0,0],[0,0,-1],[0,1,0]])
 
 
+def native_task_points(motion, operation_local):
+    """Transform TCPs with their native wrist-link frames, not descriptor frames.
+
+    A merged motion descriptor may store a wrist position at one native body
+    and its rotation at a downstream body. Native-local tool offsets belong to
+    the explicitly recorded wrist body pose; those frames are not interchangeable.
+    """
+    position=np.asarray(motion['wrist_body_position_native_m'],dtype=float)
+    rotation=np.asarray(motion['wrist_body_rotation_native'],dtype=float)
+    local=np.asarray(operation_local,dtype=float)
+    n=len(position)
+    if position.shape!=(n,2,3) or rotation.shape!=(n,2,3,3):
+        raise ValueError('Expected explicit native wrist body poses [frames,2]')
+    if local.ndim!=4 or local.shape[:2]!=(n,2) or local.shape[-1]!=3 or local.shape[2]<1:
+        raise ValueError('Expected native wrist-local operation points [frames,2,points,3]')
+    if not all(np.isfinite(x).all() for x in (position,rotation,local)):
+        raise ValueError('Native wrist poses and operation offsets must be finite')
+    if not np.allclose(rotation.swapaxes(-1,-2)@rotation,np.eye(3),atol=1e-6,rtol=0) or not np.allclose(np.linalg.det(rotation),1.,atol=1e-6,rtol=0):
+        raise ValueError('Native wrist body rotations must be proper rotation matrices')
+    return position[:,:,None,:]+np.einsum('tsij,tskj->tski',rotation,local)
+
+
 def audit_native_export(row,qpos_path,playback_path,visual_path,operation_local):
     m=mj.MjModel.from_xml_path(row['xml']);d=mj.MjData(m)
     with np.load(qpos_path) as data:q=np.asarray(data['qpos'])

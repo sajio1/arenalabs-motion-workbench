@@ -73,7 +73,8 @@ def backend_fingerprint(env=None):
     from importlib.util import find_spec
     selected_backend(env)
     files = [Path(__file__), Path(__file__).with_name('retarget_robot.py'),
-             Path(__file__).with_name('end_effectors.py'), Path(__file__).with_name('motion_sources.py'), Path(__file__).with_name('robot_motion_source.py')]
+             Path(__file__).with_name('end_effectors.py'), Path(__file__).with_name('native_export_parity.py'),
+             Path(__file__).with_name('motion_sources.py'), Path(__file__).with_name('robot_motion_source.py')]
     files += [Path(__file__).with_name(name+'.py') for name in
               ('body_inference','human_reference','egoallo_runtime','unified_conversion','body_prior','gripper_body',
                'recorded_surface','source_identity')]
