@@ -71,3 +71,23 @@ test('body source labels preserve declared family and evidence without exposing 
  assert.equal(recordingSourcePresentation(row).label,'SMPL-X');
  assert.equal(JSON.stringify(recordingSourcePresentation(row)).includes('/private'),false);
 });
+test('recorded skeleton format takes precedence over SMPL-X joint semantics',()=>{
+ const source={source_format:'recorded_skeleton_surface',source_body_family:'smplx',source_evidence:'recorded'};
+ const result=recordingSourcePresentation(source);
+ assert.equal(result.label,'Recorded skeleton · recorded');
+ assert.ok(result.detail.includes('SMPL-X joint semantics'));
+ assert.ok(result.detail.includes('derived surface'));
+ assert.equal(recordingSourcePresentation({...source,source_format:'smpl_parameters',source_evidence:'fitted'}).label,'SMPL-X · fitted');
+ assert.equal(recordingSourcePresentation({...source,source_format:'smpl_parameters',source_evidence:'reconstructed'}).label,'SMPL-X · reconstructed');
+ assert.equal(recordingSourcePresentation({metadata:source}).label,result.label);
+});
+test('explicit observation schema, evidence and policy identify head and wrist input',()=>{
+ for(const source of [
+  {source_family:'observations',source_format:'observed_head_wrists',source_evidence:'observed-head-wrists'},
+  {source_family:'observations',source_policy:'observed-head-wrists'},
+  {source_family:'observations',source_policy:'three-point-egoallo'},
+  {source_evidence:'observed-head-wrists'},
+  {metadata:{source_format:'observed_head_wrists'}}
+ ])assert.equal(recordingSourcePresentation(source).label,'Observed head + wrists');
+ assert.equal(recordingSourcePresentation({source_family:'observations'}).label,'Source type unspecified');
+});
