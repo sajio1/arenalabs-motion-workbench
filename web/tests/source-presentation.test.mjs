@@ -38,3 +38,36 @@ test('native preview defaults on, user visibility persists on reload, human rema
  assert.equal(initialSourceVisibility(false,false,true,false),false);
  assert.equal(initialSourceVisibility(false,false,false,true),true);
 });
+
+const {recordingSourcePresentation}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('identically named GRAIL recordings describe their selected source, not the dataset',()=>{
+ const shared={dataset:'GRAIL',title:'Terrain curbs — curb 073 — 000',family:'terrain'};
+ assert.equal(recordingSourcePresentation({...shared,source_body_family:'smplx',source_evidence:'reconstructed'}).label,'SMPL-X · reconstructed');
+ assert.equal(recordingSourcePresentation({...shared,source_body_family:'robot',source_robot_id:'g1',source_stage:'post_rl',source_evidence:'simulation_fk'}).label,'G1 · post-RL simulation');
+ assert.equal(recordingSourcePresentation(shared).label,'Source type unspecified');
+});
+test('robot preview metadata is a fallback and does not turn all recordings into simulations',()=>{
+ assert.equal(recordingSourcePresentation({source_motion:{source_family:'robot',source_robot_id:'g1'}}).label,'G1 · joint-state motion');
+ assert.equal(recordingSourcePresentation({source_family:'robot',source_robot_id:'g1',source_evidence:'recorded'}).label,'G1 · recorded');
+ assert.equal(recordingSourcePresentation({source_family:'robot',source_robot_id:'g1',source_stage:'post-rl-simulation'}).label,'G1 · post-RL simulation');
+ assert.equal(recordingSourcePresentation({source_family:'robot',source_robot_id:'g1',source_stage:'unknown',source_evidence:'simulation_fk'}).label,'G1 · simulation FK');
+});
+test('explicit catalog source metadata wins over stale preview metadata',()=>{
+ const source={source_body_family:'smplh',source_evidence:'recorded',source_motion:{source_family:'robot',source_robot_id:'g1',source_evidence:'simulation_fk'},metadata:{source_body_family:'smplx'}};
+ assert.equal(recordingSourcePresentation(source).label,'SMPL-H · recorded');
+ assert.equal(recordingSourcePresentation({...source,source_evidence:undefined}).label,'SMPL-H');
+});
+test('observed inputs stay observed even when downstream generation uses SMPL-H',()=>{
+ const source={motion_source_policy:'three-point-egoallo',generated_human_model:'smplh',dataset:'EgoDex'};
+ assert.equal(recordingSourcePresentation(source).label,'Observed head + wrists');
+ assert.equal(recordingSourcePresentation({metadata:{source_format:'head-wrists-v1'}}).label,'Observed head + wrists');
+ assert.equal(recordingSourcePresentation({dataset:'EgoDex',generated_human_model:'smplh'}).label,'Source type unspecified');
+});
+test('body source labels preserve declared family and evidence without exposing paths',()=>{
+ for(const [family,label] of [['smpl','SMPL'],['smplh','SMPL-H'],['smplx','SMPL-X']]){
+  assert.equal(recordingSourcePresentation({metadata:{source_body_family:family,source_evidence:'reconstructed',source:'/private/model.npz'}}).label,label+' · reconstructed');
+ }
+ const row={source_body_family:'smplx',source_evidence:'/private/unspecified.npz'};
+ assert.equal(recordingSourcePresentation(row).label,'SMPL-X');
+ assert.equal(JSON.stringify(recordingSourcePresentation(row)).includes('/private'),false);
+});
