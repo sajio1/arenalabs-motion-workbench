@@ -58,3 +58,36 @@ def export(source, row, robot_id, destination, store):
                 source_trajectory_modified=False,retargeted=False)
     _immutable_bytes(folder/'manifest.json',(json.dumps(result,indent=2)+'\n').encode())
     return result
+
+
+def export_scene(source, frames, fps, destination, store):
+    """Export the original local mesh and world poses without fitting or recentering."""
+    import trimesh
+    from arenalab_workbench.source_preview import _immutable_bytes
+    source, destination, store = map(Path, (source, destination, store))
+    destination.resolve().relative_to(store.resolve())
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    with np.load(source, allow_pickle=False) as d:
+        vertices = d['vertices']; faces = d['faces']
+        position = d['position_zup_m']; quaternion = d['quaternion_wxyz']
+        if float(d['fps']) != fps or position.shape != (frames, 3) or quaternion.shape != (frames, 4):
+            raise ValueError('Scene and source robot clocks do not match')
+    if (vertices.ndim != 2 or vertices.shape[1] != 3 or faces.ndim != 2 or faces.shape[1] != 3
+            or not np.issubdtype(faces.dtype, np.integer) or not len(faces)
+            or faces.min() < 0 or faces.max() >= len(vertices)
+            or any(not np.isfinite(v).all() for v in (vertices, position, quaternion))
+            or not np.allclose(np.linalg.norm(quaternion, axis=1), 1, atol=1e-5)):
+        raise ValueError('Invalid original scene mesh or poses')
+    folder = destination / digest[:16]
+    mesh = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
+    mesh.visual.face_colors = [156, 166, 153, 255]
+    mesh_hash = _immutable_bytes(folder/'mesh.glb', mesh.export(file_type='glb'))
+    animation = dict(world_up='z', fps=fps, timestamps_s=(np.arange(frames)/fps).tolist(),
+                     position=position.tolist(), quaternion_xyzw=quaternion[:, [1, 2, 3, 0]].tolist())
+    pose_hash = _immutable_bytes(folder/'poses.json', (json.dumps(animation, allow_nan=False)+'\n').encode())
+    url = lambda p: '/assets/' + p.resolve().relative_to(store.resolve()).as_posix()
+    result = dict(id='original-scene', mesh_url=url(folder/'mesh.glb'), poses_url=url(folder/'poses.json'),
+                  frames=frames, world_up='z', source_sha256=digest, mesh_sha256=mesh_hash, poses_sha256=pose_hash,
+                  local_axes='original mesh; no fitting, rotation or scaling baked into vertices')
+    _immutable_bytes(folder/'manifest.json', (json.dumps(result, indent=2)+'\n').encode())
+    return result

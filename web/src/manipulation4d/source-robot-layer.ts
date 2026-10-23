@@ -34,7 +34,7 @@ export class SourceRobotLayer {
   const nodes=new Map<number,THREE.Object3D>();gltf.scene.traverse(o=>{if(/^geom_\d+$/.test(o.name))nodes.set(Number(o.name.slice(5)),o);});
   if(nodes.size!==count||[...nodes.keys()].some(i=>i>=count)){this.release(gltf.scene);throw new Error('Source robot mesh does not match its motion');}
   const b=this.basis,group=new THREE.Group();group.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(b[0][0],b[0][1],b[0][2],0,b[1][0],b[1][1],b[1][2],0,b[2][0],b[2][1],b[2][2],0,0,0,0,1));
-  gltf.scene.traverse(o=>{if(o instanceof THREE.Mesh){for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();o.material=new THREE.MeshStandardMaterial({color:0xa6cbd7,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide});}});
+  gltf.scene.traverse(o=>{if(o instanceof THREE.Mesh){for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();o.material=new THREE.MeshStandardMaterial({color:0xe8e9e6,roughness:.72,metalness:.05,side:THREE.DoubleSide});}});
   group.add(gltf.scene);group.visible=this.visible;this.parent.add(group);this.nodes=nodes;this.motion=motion;this.mesh=group;
  }
  pose(time:number){

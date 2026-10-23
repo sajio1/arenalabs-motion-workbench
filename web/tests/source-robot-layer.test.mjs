@@ -21,7 +21,7 @@ test('original source robot uses shared clock and similarity without target robo
  await layer.setVisible(false,0);assert.deepEqual(counts(),[0,0]);
  await layer.setVisible(true,1/30);parent.updateMatrixWorld(true);
  assert.ok(node.getWorldPosition(new THREE.Vector3()).distanceTo(new THREE.Vector3(3,3,-2.5))<1e-12);
- assert.equal(node.material.transparent,true);await layer.setVisible(false,0);assert.equal(layer.mesh.visible,false);
+ assert.equal(node.material.transparent,false);assert.equal(node.material.opacity,1);await layer.setVisible(false,0);assert.equal(layer.mesh.visible,false);
  await layer.setVisible(true,0);assert.deepEqual(node.position.toArray(),[1,2,3]);assert.deepEqual(counts(),[1,1]);
 });
 test('scene change releases late source robot geometry',async t=>{

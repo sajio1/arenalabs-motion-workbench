@@ -48,13 +48,14 @@ export class Workspace {
   this.sourceObjectFrame=-1;
   this.sourceObjectsRoot=new THREE.Group();const basis=this.sourceBasis;const rotation=new THREE.Matrix4().set(basis[0][0],basis[0][1],basis[0][2],0,basis[1][0],basis[1][1],basis[1][2],0,basis[2][0],basis[2][1],basis[2][2],0,0,0,0,1);this.sourceObjectsRoot.quaternion.setFromRotationMatrix(rotation);this.sourceRoot.add(this.sourceObjectsRoot);this.sourceObjects=[];
   // Tracked objects remain independent of source motion visibility.
-  if(asset.source_body?.objects?.length){
-   const body=asset.source_body;
+  const objectSource=asset.source_robot||asset.source_body;
+  if(objectSource?.objects?.length){
+   const body=objectSource;
    if(!Number.isSafeInteger(body.frames)||body.frames<1||!Number.isFinite(body.fps??asset.fps)||(body.fps??asset.fps)<=0)throw new Error('Invalid source-object clock');
    for(const object of body.objects!){
     const [gltf,animation]=await Promise.all([this.loader.loadAsync(object.mesh_url),fetch(object.poses_url).then(async response=>{if(!response.ok)throw new Error('Source-object motion unavailable');return response.json();})]);
     if(token!==this.serial)return;
-    if(object.world_up!=='z'||animation.world_up!=='z'||animation.position?.length!==body.frames||animation.quaternion_xyzw?.length!==body.frames)throw new Error('Source-object clock mismatch');
+    if(object.world_up!=='z'||animation.world_up!=='z'||object.frames!==body.frames||animation.position?.length!==body.frames||animation.quaternion_xyzw?.length!==body.frames)throw new Error('Source-object clock mismatch');
     const node=new THREE.Group();node.add(gltf.scene);this.sourceObjectsRoot.add(node);this.sourceObjects.push({node,position:animation.position,quaternion_xyzw:animation.quaternion_xyzw});
    }
    this.updateSourceObjects(initialTime);
@@ -99,7 +100,7 @@ export class Workspace {
  depthError(time:number){return this.depthStream?.errors.get(this.depthIndex(time));}
  updateSourceObjects(time:number){
   this.sourceObjectsRoot.visible=this.showCloud;
-  const body=this.asset?.source_body;if(!body||!this.sourceObjects.length)return;
+  const body=this.asset?.source_robot||this.asset?.source_body;if(!body||!this.sourceObjects.length)return;
   const frame=Math.min(body.frames-1,Math.max(0,Math.floor(time*(body.fps??this.asset!.fps))));
   if(frame===this.sourceObjectFrame)return;
   for(const object of this.sourceObjects){object.node.position.fromArray(object.position[frame]);object.node.quaternion.fromArray(object.quaternion_xyzw[frame]);}
@@ -134,7 +135,7 @@ export class Workspace {
    const body=this.sourceBodyLayer?.mesh;
    if(body?.visible){
     if(body instanceof THREE.Mesh)body.geometry.computeBoundingBox();this.root.updateMatrixWorld(true);
-    const bounds=new THREE.Box3().setFromObject(body);if(this.robot?.visible)bounds.expandByObject(this.robot);
+    const bounds=new THREE.Box3().setFromObject(body);if(this.robot?.visible)bounds.expandByObject(this.robot);if(this.asset?.source_robot&&this.sourceObjectsRoot.visible)bounds.expandByObject(this.sourceObjectsRoot);
     bounds.getCenter(center);const size=Math.max(1,bounds.getSize(new THREE.Vector3()).length());
     this.camera.position.copy(center).add(new THREE.Vector3(-.7,.25,-1).normalize().multiplyScalar(size*1.8));
    }else{center.y=.9;this.camera.position.copy(center).add(new THREE.Vector3(-1.8,.7,-2.5));}
