@@ -1,0 +1,114 @@
+{
+  "baseline": "HiPhi scaled v3 before fixed-hand-tolerance experiments",
+  "math_policy": "60 soft + 20 polish; hand coefficient600; full nonlinear floor restoration; exact outer-threshold IPM freeze",
+  "files": [
+    {
+      "module": "hybrid_ops.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "hybrid_ops.py",
+      "source_sha256": "2aeb5a18a58fc44e283b852b07d27f0c9775d91c756fd90eea23d2245cd6a7d3",
+      "changes": "package-relative imports; remove standalone geometry smoke CLI only"
+    },
+    {
+      "module": "geometry.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "universal_geometry.py",
+      "source_sha256": "11c63b5501037a26c1b5bc594677b443dfa3c99d874217c7b8c0c5780252698b",
+      "changes": "package-relative imports; remove standalone geometry smoke CLI only"
+    },
+    {
+      "module": "block_qp.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "block_qp.py",
+      "source_sha256": "b90129de2b5663762b93939f02eea3f680cdb5c844f37df7524dde877328659b",
+      "changes": "package-relative imports; remove standalone geometry smoke CLI only"
+    },
+    {
+      "module": "resident_solver.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "resident_solver.py",
+      "source_sha256": "bf1fb63d25558ba7a2c264830a7001990ddaa4addd81371efa450af27f007fa2",
+      "changes": "package-relative imports; remove standalone geometry smoke CLI only"
+    },
+    {
+      "module": "solver.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "projected_solver.py",
+      "source_sha256": "dfedfde394037645f12d4e32e9427a52aaa9e7053028e15a07737ecb754fe5ea",
+      "changes": "package-relative imports; remove standalone geometry smoke CLI only"
+    },
+    {
+      "module": "stable_ipm.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "stable_ipm.py",
+      "source_sha256": "351c5e1b9a538a769e5ff31b843b3c41c940ddccfc4cdf012ed375a3f4f1a8ca",
+      "changes": "package-relative imports; remove standalone geometry smoke CLI only"
+    },
+    {
+      "module": "kinematics.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "kin.py",
+      "source_sha256": "989068b7178d2350d710d9674f4246a5ad2b5320cee9f657a3c9bdd50bc4260d",
+      "changes": "package-relative imports; remove standalone geometry smoke CLI only"
+    },
+    {
+      "module": "runner.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "hiphi_scaled_20261022/runtime/gpu_motion_runner.py",
+      "source_sha256": "e8364209ee149bc0675b436b70359d5e64704fa0a9c38e64a8bbdd105a898af0",
+      "changes": "Preserved numerical initialization, objectives, 60+20 schedule, hand600 and export; installed CLI/runtime, request normalization, immutable slots, scale modes and explicit solver status"
+    },
+    {
+      "module": "scaling.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "hiphi_scaled_20261022/morphology_scale.py",
+      "source_sha256": "1d8cd017ee33eb8a99561c91aed28140b0036b0fe6bdbc24b2c405a74ca66e55",
+      "changes": "Preserved eight-segment scalar fit and anchored similarity; generalized normalized source path/materialization with immutable output"
+    },
+    {
+      "module": "prior.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "grid_gpu_universal_20261022/source_prior.py",
+      "source_sha256": "15f47a1f7b32084c9da40d1743138fcf4ed77d60ed2910df17c079a5e31f1e18",
+      "changes": "Extracted immutable native prior/projection/export; replaced research imports with configured Runtime and explicit codec"
+    },
+    {
+      "module": "prior.py + sources.py",
+      "source_revision": "local pre-fixed-tolerance HiPhi scaled v3 / shared universal core",
+      "source_file": "hiphi_scaled_20261022/runtime/native_prior.py",
+      "source_sha256": "f4ff9cc8719fea449e25473bf9c5511021a71684b7ea565417687e0950097da0",
+      "changes": "Exact body22 source encode math generalized to normalized complete source format/joint count; no source reconstruction"
+    }
+  ],
+  "new_adapters": [
+    "runtime.py",
+    "robot_metadata.py"
+  ],
+  "validation": {
+    "unit_tests": 14,
+    "full_motion_parity_frames": 300,
+    "prior_code_native_initial_final_targets_max_numeric_difference": 0.0,
+    "same_machine_only": true,
+    "independent_task_fk_max_abs_m": 1.3322676295501878e-15,
+    "full_motion_parity_is_not_new_quality_benchmark": true,
+    "native_smplh_bridge_smoke_frames": 16,
+    "native_smplh_bridge_artifacts_valid": true,
+    "unified_entry_routing_tests": 6,
+    "native_smplh_viewer_mesh_max_abs_error_m": 5.9502623050988745e-08
+  },
+  "numerical_maintenance": [
+    {
+      "date": "2026-10-23",
+      "reason": "Nymeria A3 barrier Newton Schur blocks can lose positive definiteness at FP64 roundoff after cyclic reduction.",
+      "method": "Diagonal congruence of the current Newton system and pivoted GPU LU block solves.",
+      "unchanged": [
+        "original QP objective and constraints",
+        "original-unit primal, stationarity and complementarity acceptance",
+        "60 soft / 20 polish schedule",
+        "hand objective and budget policy",
+        "nonlinear line search and floor checks"
+      ],
+      "scope": "Numerical robustness; not a new model-quality or physical-feasibility claim"
+    }
+  ]
+}

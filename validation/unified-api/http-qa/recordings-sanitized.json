@@ -1,0 +1,102 @@
+[
+  {
+    "id": "hiphi-adjusting-adjust-0108",
+    "title": "\u7ad9\u7acb\u8f7b\u63d0\u6905\u5e76\u653e\u7a33",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0097",
+    "title": "\u8f7b\u5f2f\u8170\u503e\u7bb1\u5e76\u653e\u5e73",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0110",
+    "title": "\u540e\u9000\u5c0f\u6b65\u62c9\u811a\u51f3",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0079",
+    "title": "\u7ed5\u684c\u79fb\u52a8\u5e76\u8c03\u6574\u89d2\u5ea6",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0086",
+    "title": "\u539f\u5730\u5c0f\u5e45\u8f6c\u6905",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0082",
+    "title": "\u6447\u6905\u68c0\u67e5\u7a33\u5b9a\u5e76\u5c0f\u79fb",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0102",
+    "title": "\u524d\u540e\u63a8\u62c9\u6905\u5b50\u5b9a\u4f4d",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0095",
+    "title": "\u503e\u659c\u7bb1\u4f53\u5e76\u653e\u5e73",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0085",
+    "title": "\u8f7b\u63d0\u6905\u5b50\u5e76\u653e\u7a33",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  },
+  {
+    "id": "hiphi-adjusting-adjust-0090",
+    "title": "\u5c0f\u89d2\u5ea6\u65cb\u8f6c\u6905\u5b50\u5bf9\u9f50",
+    "dataset": "HiPhi",
+    "end_effector": "none",
+    "video": null,
+    "has_supplied_body": true,
+    "motion_source_policy": "supplied-body22-surface-v1",
+    "source_body_family": "smplx"
+  }
+]

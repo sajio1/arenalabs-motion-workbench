@@ -39,8 +39,8 @@ def resolve_clip(scene_id):
     config=read(str(paths.viewer_config))
     row=custom['source_row'] if custom else next((r for r in config['clips'] if r['id']==(public or {}).get('source_catalog_id',scene_id)),None)
     if not public or not row:raise ValueError('Recording is not connected to the source catalog')
-    video=Path(row.get('video',{}).get('path',''))
-    if not video.is_file():raise ValueError('Source video is missing')
+    video=Path((row.get('video') or {}).get('path',''))
+    if not video.is_file() and not (row.get('motion_source') or (upload or {}).get('manifest',{}).get('motion_source')):raise ValueError('Source video is missing')
     source=Path(row['source'])
     if not source.is_file():raise ValueError('Source motion data is missing')
     return public,row

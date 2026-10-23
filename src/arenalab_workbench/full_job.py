@@ -1,156 +1,232 @@
-"""Complete per-recording generation; raw observations and priors remain immutable."""
-from arenalab_workbench.settings import paths
+"""Requested per-recording outputs and their necessary dependencies only."""
 from pathlib import Path
-from greenwich_pipelines.input_policy import POLICY as ENCODER_POLICY
-import json,os,subprocess,sys,time,hashlib
-from arenalab_workbench.scene_job import resolve_clip,run as scene_run,save,depth_current,refresh_scene
-from arenalab_workbench.body_prior import folder as body_folder
 from concurrent.futures import ThreadPoolExecutor
-from arenalab_workbench.gpu_scheduler import run as gpu_run, resource_lock, merge_scene
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+
+from arenalab_workbench.settings import paths
+from arenalab_workbench.scene_job import resolve_clip, run as scene_run, save, depth_current
+from arenalab_workbench.body_prior import folder as body_folder
+from arenalab_workbench.gpu_scheduler import run as gpu_run, resource_lock, merge_scene, write
 from arenalab_workbench.progressive_job import Progress, initialize, merge_perception
-from arenalab_workbench.support_reference import POLICY as SUPPORT_POLICY
-ROOT=Path(os.environ.get('ARENA_WORKBENCH_ROOT',str(paths.workbench)))
-STORE=paths.store
+from arenalab_workbench.job_outputs import selection_for, publish_scene, apply_scene_scale, native_cache_valid, render_key, prepare_contact_source, require_point_cloud, require_fov, publish_failure
 
-def run(scene_id,robot_id,hand_id,status):
- # Drain legacy whole-source jobs before entering the stage-level scheduler.
- with resource_lock("source:"+scene_id):pass
- with resource_lock("robot:"+scene_id+":"+robot_id+":"+hand_id):
-  return _run(scene_id,robot_id,hand_id,status)
+ROOT = Path(os.environ.get('ARENA_WORKBENCH_ROOT', str(paths.workbench)))
+STORE = paths.store
 
-def _run(scene_id,robot_id,hand_id,status):
- from arenalab_workbench.gripper_job import sources,run as gripper_run
- if scene_id in sources():return gripper_run(scene_id,robot_id,hand_id,status)
- started=time.time();public,row=resolve_clip(scene_id)
- expected=public.get('end_effector','none' if public['dataset']=='Nymeria' else 'wuji')
- if hand_id!=expected:raise ValueError('Source requires '+expected)
- # Run body inference independently from scene perception, using a separate status.
- work=body_folder(scene_id)
- scene_url=public.get('scene_url') or '/assets/manipulation4d/progressive/'+hashlib.sha256(scene_id.encode()).hexdigest()+'/scene.json'
- destination=(STORE/scene_url.removeprefix('/assets/')).parent
- from arenalab_workbench.dataset_io.storage import mark_private
- mark_private(destination,public.get('owner'))
- initialize(destination/'scene.json',public,int(row['frames']))
- progress=Progress(status,scene_url,robot_id)
- progress.write('running','Preparing shared body and scene')
- def recover_body():
-  requested=time.time()
-  with resource_lock('body:'+str(work)):
-   acquired=time.time();cache_hit=(work/'prior-ready.json').exists()
-   with (status.parent/'body-worker.log').open('w') as log:
-    runner=subprocess.run if (work/'prior-ready.json').exists() else gpu_run
-    body_env=os.environ.copy()
+
+def run(scene_id, robot_id, hand_id, status):
+    with resource_lock('source:' + scene_id):
+        pass  # Drain legacy whole-source jobs before stage-level scheduling.
+    with resource_lock('robot:' + scene_id + ':' + robot_id + ':' + hand_id):
+        return _run(scene_id, robot_id, hand_id, Path(status))
+
+
+def _run(scene_id, robot_id, hand_id, status):
+    from arenalab_workbench.gripper_job import sources, run as gripper_run
+    if scene_id in sources():
+        return gripper_run(scene_id, robot_id, hand_id, status)
+    started = time.time()
+    public, row = resolve_clip(scene_id)
+    expected = public.get('end_effector', 'none' if public['dataset'] == 'Nymeria' else 'wuji')
+    if hand_id != expected:
+        raise ValueError('Source requires ' + expected)
+    selection, plan = selection_for(scene_id, robot_id)
+    mode = plan['trajectory_scale']
+    from arenalab_workbench.unified_scene import scene_key
+    version = scene_key(scene_id, mode, robot_id, output_modalities=selection['effective_outputs'])
+    public_dir = STORE / 'manipulation4d/unified' / version
+    worker_version = scene_key(scene_id, mode, robot_id)
+    destination = STORE / 'manipulation4d/unified' / worker_version / 'artifacts'
+    scene_url = '/assets/' + (public_dir / 'scene.json').relative_to(STORE).as_posix()
+    from arenalab_workbench.dataset_io.storage import mark_private
+    mark_private(public_dir, public.get('owner'))
+    mark_private(destination, public.get('owner'))
+    initialize(destination / 'scene.json', public, int(row['frames']))
+    status.parent.mkdir(parents=True, exist_ok=True)
+    progress = Progress(status, scene_url, robot_id, selection, plan)
+    publish_scene(destination / 'scene.json', public_dir / 'scene.json', selection, progress.ready)
+    progress.write('running', 'Preparing selected outputs')
+    # A cloud-only request does not even prepare a body workspace.
+    work = body_folder(scene_id) if plan['body'] else status.parent
+    work.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env.update(OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='2', PYTHONPATH=paths.pythonpath(),
+               ARENA_SOURCE_WORK=str(work), ARENA_RETARGET_WORK=str(work / 'retarget' / robot_id),
+               ARENA_EXPORT_DIR=str(destination), ARENA_SCENE_WORK=str(ROOT / 'scene-jobs' / version))
+    env.pop('ARENA_STREAM_ROBOT_ID', None)
     from arenalab_workbench.robot_registry import roster
-    if roster()[robot_id]['kind']!='Wheeled':body_env['ARENA_STREAM_ROBOT_ID']=robot_id
-    runner([sys.executable,str(Path(__file__).with_name('body_prior.py')),scene_id,'--status',str(status.with_name('body-stage.json'))],env=body_env,stdout=log,stderr=subprocess.STDOUT,check=True)
-  save(status.with_name('body-timing.json'),dict(cache_hit=cache_hit,lock_wait_seconds=acquired-requested,seconds=time.time()-acquired))
-  return work
- def recover_scene():
-  with resource_lock('scene:'+scene_id):
-   current=json.loads((destination/'scene.json').read_text())
-   source_hash=current.get('geometry',{}).get('source_sha256')
-   if source_hash and source_hash!=hashlib.sha256(Path(row['source']).read_bytes()).hexdigest():raise ValueError('Source changed; stale scene cannot be reused')
-   if not depth_current(current):
-    fresh_url=scene_run(scene_id,status.with_name('scene-stage.json'))
-    merge_perception(destination/'scene.json',json.loads((STORE/fresh_url.removeprefix('/assets/')).read_text()))
-  return json.loads((destination/'scene.json').read_text())
- branches=ThreadPoolExecutor(max_workers=2)
- body_future=branches.submit(recover_body)
- scene_future=branches.submit(recover_scene)
- work=body_future.result()
- scene=json.loads((destination/'scene.json').read_text())
- from arenalab_workbench.robot_registry import roster
- robot=roster()[robot_id]
- mobile=robot['kind']=='Wheeled'
- env=os.environ.copy();env.update(CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2',PYTHONPATH=paths.pythonpath(),ARENA_SOURCE_WORK=str(work),ARENA_RETARGET_WORK=str(work/'retarget'/robot_id),ARENA_EXPORT_DIR=str(destination),ARENA_SCENE_WORK=str(ROOT/'scene-jobs'/destination.name))
- # Find the immutable depth/mask work by the scene directory's build key.
- env['ARENA_SCENE_WORK']=str(ROOT/'scene-jobs'/scene.get('geometry',{}).get('scene_work',destination.name))
- if (work/'retarget'/f'{robot_id}-result').exists():env['ARENA_RETARGET_WORK']=str(work/'retarget')
- native_validation=destination/('robot-'+robot_id)/'validation.json'
- if native_validation.exists():
-  native_dir=json.loads(native_validation.read_text()).get('native_work_dir')
-  if native_dir and Path(native_dir).resolve().is_relative_to(work.resolve()):env['ARENA_RETARGET_WORK']=native_dir
- robot_regenerated=False
- stages=[('retarget_robot.py',[robot_id],'Retargeting body, palms and Wuji fingers'),('render_recording.py',[robot_id],'Rendering robot arms and hands in source FOV'),('contact_recording.py',[],'Estimating individual finger contact from video')]
- if hand_id=='none':stages=[('retarget_robot.py',[robot_id],'Retargeting body and observed wrists; no dexterous hand')]
- if mobile:
-  stages=[('wheeled_job.py',[robot_id,str(work),str(destination),hand_id],'Retargeting SMPL-H to native mobile body'),('mobile_render_job.py',[str(work),str(destination),robot_id],'Rendering native robot arms and end effector')]+([] if hand_id=='none' else [('contact_recording.py',[],'Estimating individual finger contact from video')])
- def execute_stage(task):
-  script,args,phase=task
-  stage_started=time.time()
-  validation=destination/('robot-'+robot_id)/'validation.json'
-  if script=='retarget_robot.py' and validation.exists():
-   report=json.loads(validation.read_text())
-   native_ready=(Path(env['ARENA_RETARGET_WORK'])/'operation-accuracy/palm'/robot_id/'motion.npz').exists()
-   if native_ready and report.get('human_model')=='smplh' and report.get('human_policy')==__import__('arenalab_workbench.human_reference',fromlist=['SMPLH_POLICY']).SMPLH_POLICY and report.get('encoder_policy')==ENCODER_POLICY and report.get('support_policy')==SUPPORT_POLICY and report.get('source_id')==scene_id and all(hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in report.get('source_hashes',{}).items()) and report.get('source_hashes'):
-    save(status.with_name(status.stem+'-'+script+'.json'),dict(status='completed',phase=phase,cache_hit=True,seconds=time.time()-stage_started));return
-  nonlocal robot_regenerated
-  if script=='retarget_robot.py':robot_regenerated=True
-  render_receipt=destination/('robot-'+robot_id)/'render-cache.json'
-  render_key=None
-  if script=='render_recording.py':
-   manifest=json.loads((destination/'scene.json').read_text())
-   render_key=hashlib.sha256((destination/('robot-'+robot_id)/'playback.json').read_bytes()+json.dumps(manifest.get('geometry',{}),sort_keys=True).encode()).hexdigest()
-  from arenalab_workbench.depth_store import fov_current
-  if script=='render_recording.py' and not robot_regenerated and (destination/(robot_id+'-arm-view-v1.mp4')).exists() and render_receipt.exists() and json.loads(render_receipt.read_text()).get('key')==render_key and fov_current(manifest,robot_id):
-   save(status.with_name(status.stem+'-'+script+'.json'),dict(status='completed',phase=phase,cache_hit=True,seconds=time.time()-stage_started));return
-  if script=='contact_recording.py' and (destination/'video-contact.json').exists():return
-  save(status.with_name(status.stem+'-'+script+'.json'),dict(status='running',phase=phase,started_at=stage_started))
-  with (work/(script+'-'+robot_id+'.log')).open('w') as log:
-   gpu_run([sys.executable,str(Path(__file__).with_name(script)),*args],env=env,cwd=work,stdout=log,stderr=subprocess.STDOUT,check=True)
-  if script=='render_recording.py':save(render_receipt,dict(key=render_key))
-  save(status.with_name(status.stem+'-'+script+'.json'),dict(status='completed',phase=phase,started_at=stage_started,seconds=time.time()-stage_started))
- def visual_contact():
-  staging=destination/'contact-stage'
-  initialize(staging/'scene.json',public,int(row['frames']))
-  contact_env=env.copy();contact_env.update(ARENA_EXPORT_DIR=str(staging),ARENA_DEFER_PROXIMITY='1')
-  with resource_lock('contact:'+scene_id):
-   for candidate in [destination/'video-contact.json',staging/'video-contact.json']:
-    if candidate.exists():
-     data=json.loads(candidate.read_text())
-     manifest=json.loads((work/'input_manifest.json').read_text())
-     if data.get('source_sha256')==manifest['source_sha256'] and data.get('source_hands_sha256')==hashlib.sha256((work/'source_hands.npz').read_bytes()).hexdigest():return candidate
-   try:
-    with (work/'contact-worker.log').open('w') as log:
-     gpu_run([sys.executable,str(Path(__file__).with_name('contact_recording.py'))],env=contact_env,stdout=log,stderr=subprocess.STDOUT,check=True)
-   except subprocess.CalledProcessError as error:
-    import re
-    lines=(work/'contact-worker.log').read_text(errors='replace').splitlines()
-    reason=next((line.strip() for line in reversed(lines) if re.match(r'[\w.]+(?:Error|Exception):',line)), 'Contact subprocess exited with code '+str(error.returncode))
-    raise RuntimeError('Finger contact estimation failed: '+reason) from error
-   return staging/'video-contact.json'
- contact_future=branches.submit(visual_contact) if hand_id=='wuji' else None
- try:
-  execute_stage(stages[0])
-  if robot_regenerated:merge_scene(destination/'scene.json',lambda scene:scene.get('patch_videos',{}).pop(robot_id,None))
-  progress.publish('motion','Motion ready; completing point cloud')
-  scene=scene_future.result()
-  env['ARENA_SCENE_WORK']=str(ROOT/'scene-jobs'/scene.get('geometry',{}).get('scene_work',destination.name))
-  progress.publish('scene','Point cloud ready; completing FOV and contact')
-  with ThreadPoolExecutor(max_workers=2) as post:
-   futures=[post.submit(execute_stage,task) for task in stages[1:] if task[0]!='contact_recording.py']
-   for index,future in enumerate(futures):
-    future.result()
-    progress.publish('fov' if index==0 else 'contact','FOV ready; completing contact' if index==0 else 'Contact ready')
-  if contact_future:
-   contact_path=contact_future.result()
-   from arenalab_workbench.gpu_scheduler import write
-   write(destination/'video-contact.json',json.loads(contact_path.read_text()))
-   contact_path=destination/'video-contact.json'
-   merge_scene(destination/'scene.json',lambda scene:scene.setdefault('tactile',{}).update(status='video_estimate',url='/assets/'+contact_path.relative_to(STORE).as_posix(),reason='Independent per-digit video estimate; not measured force'))
-   # Geometry proximity is CPU work and starts only after the DA3 scene exists.
-   subprocess.run([sys.executable,str(Path(__file__).with_name('proximity_recording.py'))],env=env,check=True)
-   progress.publish('contact','Contact ready')
-  def finish(scene):
-   if hand_id=='none':scene['tactile']={'status':'unavailable','reason':'No dexterous hand requested for this recording'}
-   scene['generation_status']=dict(status='completed',robot_id=robot_id,hand_id=hand_id,seconds=time.time()-started)
-  merge_scene(destination/'scene.json',finish)
-  progress.complete()
-  return scene_url
- except Exception as error:
-  progress.write('failed','Generation stage failed: '+type(error).__name__)
-  raise
- finally:branches.shutdown()
-if __name__=='__main__':
- import argparse
- p=argparse.ArgumentParser();p.add_argument('scene_id');p.add_argument('robot_id');p.add_argument('hand_id');p.add_argument('--status',type=Path,required=True);a=p.parse_args();run(a.scene_id,a.robot_id,a.hand_id,a.status)
+    robot = roster()[robot_id]
+    mobile = robot['kind'] == 'Wheeled'
+
+    def publish(stage, phase):
+        # Scene publication precedes its ready flag: consumers never load half an artifact.
+        ready = dict(progress.ready, **{stage: True})
+        publish_scene(destination / 'scene.json', public_dir / 'scene.json', selection, ready)
+        progress.publish(stage, phase)
+
+    def recover_body():
+        requested = time.time()
+        with resource_lock('body:' + str(work)):
+            acquired = time.time()
+            cache_hit = (work / 'prior-ready.json').exists()
+            with (status.parent / 'body-worker.log').open('w') as log:
+                from arenalab_workbench.dataset_io.storage import entry as uploaded_entry
+                supplied = row.get('motion_source') or (uploaded_entry(scene_id) or {}).get('motion_source')
+                runner = subprocess.run if cache_hit or supplied else gpu_run
+                runner([sys.executable, str(Path(__file__).with_name('body_prior.py')), scene_id,
+                        '--status', str(status.with_name('body-stage.json'))], env=env.copy(),
+                       stdout=log, stderr=subprocess.STDOUT, check=True)
+        save(status.with_name('body-timing.json'), dict(cache_hit=cache_hit,
+             lock_wait_seconds=acquired-requested, seconds=time.time()-acquired))
+        return work
+
+    def recover_scene():
+        with resource_lock('scene:' + scene_id):
+            current = json.loads((destination / 'scene.json').read_text())
+            source_hash = current.get('geometry', {}).get('source_sha256')
+            source = row.get('source')
+            if source_hash and source and source_hash != hashlib.sha256(Path(source).read_bytes()).hexdigest():
+                raise ValueError('Source changed; stale scene cannot be reused')
+            if not depth_current(current):
+                # scene_run owns its source/cache identity; it does not infer a body.
+                fresh_url = scene_run(scene_id, status.with_name('scene-stage.json'))
+                merge_perception(destination / 'scene.json', json.loads((STORE / fresh_url.removeprefix('/assets/')).read_text()))
+        scene = json.loads((destination / 'scene.json').read_text())
+        require_point_cloud(scene)
+        return scene
+
+    def execute(script, args, phase, cpu=False, source_work=None):
+        stage_started = time.time()
+        save(status.with_name(status.stem + '-' + script + '.json'), dict(status='running', phase=phase, started_at=stage_started))
+        with (status.parent / (script + '-' + robot_id + '.log')).open('w') as log:
+            runner = subprocess.run if cpu else gpu_run
+            stage_env=env.copy()
+            if source_work is not None:stage_env['ARENA_SOURCE_WORK']=str(source_work)
+            runner([sys.executable, str(Path(__file__).with_name(script)), *args], env=stage_env,
+                   cwd=work, stdout=log, stderr=subprocess.STDOUT, check=True)
+        save(status.with_name(status.stem + '-' + script + '.json'), dict(status='completed', phase=phase,
+             seconds=time.time()-stage_started))
+
+    def visual_contact():
+        contact_work = prepare_contact_source(public, row, ROOT / 'contact-jobs')
+        manifest = json.loads((contact_work / 'input_manifest.json').read_text())
+        hands_sha = hashlib.sha256((contact_work / 'source_hands.npz').read_bytes()).hexdigest()
+        staging = destination / 'contact-stage'
+        initialize(staging / 'scene.json', public, int(row['frames']))
+        contact_env = env.copy()
+        contact_env.update(ARENA_EXPORT_DIR=str(staging), ARENA_DEFER_PROXIMITY='1', ARENA_SOURCE_WORK=str(contact_work))
+        shared = contact_work / 'video-contact-result.json'
+        with resource_lock('contact:' + scene_id):
+            for candidate in (destination / 'video-contact.json', staging / 'video-contact.json', shared):
+                if candidate.exists():
+                    data = json.loads(candidate.read_text())
+                    if data.get('source_sha256') == manifest['source_sha256'] and data.get('source_hands_sha256') == hands_sha:
+                        return data, contact_work
+            with (status.parent / 'contact-worker.log').open('w') as log:
+                gpu_run([sys.executable, str(Path(__file__).with_name('contact_recording.py'))], env=contact_env,
+                        stdout=log, stderr=subprocess.STDOUT, check=True)
+            data = json.loads((staging / 'video-contact.json').read_text())
+            write(shared, data)
+            return data, contact_work
+
+    body_complete = False
+    scene_attempted = False
+    body_future = scene_future = contact_future = None
+
+    def finish_scene():
+        nonlocal scene_attempted
+        scene_attempted = True
+        scene = scene_future.result()
+        env['ARENA_SCENE_WORK'] = str(ROOT / 'scene-jobs' / scene.get('geometry', {}).get('scene_work', version))
+        if plan['source_body_for_scene_scale'] and not progress.ready.get('motion'):
+            if not body_complete:
+                raise RuntimeError('Matched point cloud requires a completed source body')
+            # A failed trajectory has not exported its source/scene transform.
+            # Fit that same transform independently before publishing the cloud.
+            apply_scene_scale(work, robot, destination / 'scene.json')
+        publish('scene', 'Point cloud ready')
+
+    branches = ThreadPoolExecutor(max_workers=3)
+    try:
+        body_future = branches.submit(recover_body) if plan['body'] else None
+        scene_future = branches.submit(recover_scene) if plan['scene'] else None
+        contact_future = branches.submit(visual_contact) if plan['contact'] else None
+        if body_future:
+            body_future.result()
+            body_complete = True
+        if plan['retarget']:
+            validation = destination / ('robot-' + robot_id) / 'validation.json'
+            if validation.exists():
+                from arenalab_workbench.motion_backend import select_native_work_env
+                env = select_native_work_env(env, json.loads(validation.read_text()), work, robot_id)
+            if mobile or not native_cache_valid(destination, robot_id, source_work=work):
+                if mobile:
+                    execute('wheeled_job.py', [robot_id, str(work), str(destination), hand_id], 'Retargeting native mobile body')
+                else:
+                    execute('retarget_robot.py', [robot_id], 'Refining native robot trajectory')
+                merge_scene(destination / 'scene.json', lambda scene: scene.get('patch_videos', {}).pop(robot_id, None))
+            if validation.exists():
+                from arenalab_workbench.motion_backend import select_native_work_env
+                env = select_native_work_env(env, json.loads(validation.read_text()), work, robot_id)
+            publish('motion', 'Trajectory ready')
+        if scene_future:
+            finish_scene()
+        if plan['render']:
+            from arenalab_workbench.depth_store import fov_current
+            receipt = destination / ('robot-' + robot_id) / 'render-cache.json'
+            key = render_key(destination, robot_id)
+            scene = json.loads((destination / 'scene.json').read_text())
+            hit = receipt.is_file() and json.loads(receipt.read_text()).get('key') == key and fov_current(scene, robot_id)
+            if not hit:
+                if mobile:
+                    execute('mobile_render_job.py', [str(work), str(destination), robot_id], 'Rendering selected FOV')
+                else:
+                    execute('render_recording.py', [robot_id], 'Rendering selected FOV')
+                save(receipt, dict(key=key))
+            require_fov(json.loads((destination / 'scene.json').read_text()), robot_id)
+            publish('fov', 'FOV ready')
+        if contact_future:
+            contact_data, contact_work = contact_future.result()
+            write(destination / 'video-contact.json', contact_data)
+            url = '/assets/' + (destination / 'video-contact.json').relative_to(STORE).as_posix()
+            merge_scene(destination / 'scene.json', lambda scene: scene.update(tactile=dict(status='video_estimate', url=url,
+                        reason='Independent per-digit video estimate; not measured force')))
+            if plan['proximity']:
+                execute('proximity_recording.py', [], 'Computing geometry proximity', cpu=True, source_work=contact_work)
+            publish('contact', 'Contact ready')
+        merge_scene(destination / 'scene.json', lambda scene: scene.update(generation_status=dict(status='completed',
+                    robot_id=robot_id, hand_id=hand_id, trajectory_scale=mode, output_modalities=selection['effective_outputs'],
+                    pipeline_version='resident-skeleton-surface-wrist-v3', seconds=time.time()-started)))
+        publish_scene(destination / 'scene.json', public_dir / 'scene.json', selection, progress.ready)
+        progress.complete('Selected outputs ready')
+        return scene_url
+    except Exception as error:
+        # Perception runs independently and may finish after trajectory failure.
+        # Drain and publish it before the terminal failed snapshot, without
+        # converting the failed trajectory (or the overall job) into success.
+        if scene_future is not None and not scene_attempted:
+            progress.write('running', 'A generation stage failed; collecting independent point cloud')
+            try:
+                finish_scene()
+            except Exception as scene_error:
+                save(status.with_name('independent-stage-errors.json'),
+                     dict(scene=dict(error_type=type(scene_error).__name__, message=str(scene_error))))
+        publish_failure(public_dir / 'scene.json', selection, progress.ready, error)
+        progress.write('failed', 'Generation stage failed: ' + str(error))
+        raise
+    finally:
+        branches.shutdown(wait=True, cancel_futures=True)
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('scene_id'); parser.add_argument('robot_id'); parser.add_argument('hand_id')
+    parser.add_argument('--status', type=Path, required=True)
+    args = parser.parse_args()
+    run(args.scene_id, args.robot_id, args.hand_id, args.status)

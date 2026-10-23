@@ -1,0 +1,318 @@
+{
+  "plans": [
+    {
+      "request": {
+        "workflow": "manipulation",
+        "recording_id": "hiphi-adjusting-adjust-0079",
+        "robot_id": "custom_95e90092ed",
+        "hand_id": "none"
+      },
+      "status": 200,
+      "response": {
+        "executable": false,
+        "request": {
+          "workflow": "manipulation",
+          "recording_id": "hiphi-adjusting-adjust-0079",
+          "robot_id": "custom_95e90092ed",
+          "hand_id": "none",
+          "trajectory_scale": null
+        },
+        "operation": "manipulation",
+        "stages": [
+          "provided full body or three-point EgoAllo SMPL-H",
+          "explicit interaction scale",
+          "fullbody retargeting",
+          "GPU hybrid refinement",
+          "scene perception where available",
+          "source FOV / preview",
+          "contact where available"
+        ],
+        "policy": {
+          "selection": "unified motion backend",
+          "body_model": "native-smplh",
+          "source_policy": "supplied-body",
+          "source_policy_version": "unified-provided-body-or-three-point-native-h-v1",
+          "motion_policy_version": "resident-skeleton-surface-wrist-v3",
+          "route": "automatic; provided full body bypasses body reconstruction",
+          "morphology": {
+            "available": true,
+            "source_height_m": 1.7210896611213684,
+            "target_height_m": 1.3189730615495363,
+            "scale_factor": 0.7663592962903311,
+            "large_mismatch": true,
+            "threshold": 0.8,
+            "estimate": true,
+            "reason": "Configured human model neutral-height estimate; actual scale computed from body and robot limbs",
+            "scaling_method": "8-limb uniform similarity about first pelvis floor projection",
+            "scaling_scope": "Source body, operation trajectories and source scene together; robot geometry unchanged"
+          },
+          "scale_choice_required": true,
+          "scale_estimate_unavailable": false,
+          "trajectory_scale": "preserve",
+          "scale_semantics": "match_robot normalizes the interaction; it does not preserve original object dimensions",
+          "refiner_signature": null
+        },
+        "limitations": [
+          "Metadata preflight only; worker validates numerical inputs and route.",
+          "No implicit standalone reconstruction, physics rollout or new calibration.",
+          "Plans are previews; execution rechecks current inputs and records backend result."
+        ],
+        "required_choice": "trajectory_scale",
+        "choices": [
+          "preserve",
+          "match_robot"
+        ]
+      }
+    },
+    {
+      "request": {
+        "workflow": "manipulation",
+        "recording_id": "hiphi-adjusting-adjust-0079",
+        "robot_id": "custom_95e90092ed",
+        "hand_id": "none",
+        "trajectory_scale": "preserve"
+      },
+      "status": 200,
+      "response": {
+        "executable": true,
+        "request": {
+          "workflow": "manipulation",
+          "recording_id": "hiphi-adjusting-adjust-0079",
+          "robot_id": "custom_95e90092ed",
+          "hand_id": "none",
+          "trajectory_scale": "preserve"
+        },
+        "operation": "manipulation",
+        "stages": [
+          "provided full body or three-point EgoAllo SMPL-H",
+          "explicit interaction scale",
+          "fullbody retargeting",
+          "GPU hybrid refinement",
+          "scene perception where available",
+          "source FOV / preview",
+          "contact where available"
+        ],
+        "policy": {
+          "selection": "unified motion backend",
+          "body_model": "native-smplh",
+          "source_policy": "supplied-body",
+          "source_policy_version": "unified-provided-body-or-three-point-native-h-v1",
+          "motion_policy_version": "resident-skeleton-surface-wrist-v3",
+          "route": "automatic; provided full body bypasses body reconstruction",
+          "morphology": {
+            "available": true,
+            "source_height_m": 1.7210896611213684,
+            "target_height_m": 1.3189730615495363,
+            "scale_factor": 0.7663592962903311,
+            "large_mismatch": true,
+            "threshold": 0.8,
+            "estimate": true,
+            "reason": "Configured human model neutral-height estimate; actual scale computed from body and robot limbs",
+            "scaling_method": "8-limb uniform similarity about first pelvis floor projection",
+            "scaling_scope": "Source body, operation trajectories and source scene together; robot geometry unchanged"
+          },
+          "scale_choice_required": false,
+          "scale_estimate_unavailable": false,
+          "trajectory_scale": "preserve",
+          "scale_semantics": "match_robot normalizes the interaction; it does not preserve original object dimensions",
+          "refiner_signature": null
+        },
+        "limitations": [
+          "Metadata preflight only; worker validates numerical inputs and route.",
+          "No implicit standalone reconstruction, physics rollout or new calibration.",
+          "Plans are previews; execution rechecks current inputs and records backend result."
+        ],
+        "required_choice": null,
+        "choices": []
+      }
+    },
+    {
+      "request": {
+        "workflow": "manipulation",
+        "recording_id": "hiphi-adjusting-adjust-0079",
+        "robot_id": "custom_95e90092ed",
+        "hand_id": "none",
+        "trajectory_scale": "match_robot"
+      },
+      "status": 200,
+      "response": {
+        "executable": true,
+        "request": {
+          "workflow": "manipulation",
+          "recording_id": "hiphi-adjusting-adjust-0079",
+          "robot_id": "custom_95e90092ed",
+          "hand_id": "none",
+          "trajectory_scale": "match_robot"
+        },
+        "operation": "manipulation",
+        "stages": [
+          "provided full body or three-point EgoAllo SMPL-H",
+          "explicit interaction scale",
+          "fullbody retargeting",
+          "GPU hybrid refinement",
+          "scene perception where available",
+          "source FOV / preview",
+          "contact where available"
+        ],
+        "policy": {
+          "selection": "unified motion backend",
+          "body_model": "native-smplh",
+          "source_policy": "supplied-body",
+          "source_policy_version": "unified-provided-body-or-three-point-native-h-v1",
+          "motion_policy_version": "resident-skeleton-surface-wrist-v3",
+          "route": "automatic; provided full body bypasses body reconstruction",
+          "morphology": {
+            "available": true,
+            "source_height_m": 1.7210896611213684,
+            "target_height_m": 1.3189730615495363,
+            "scale_factor": 0.7663592962903311,
+            "large_mismatch": true,
+            "threshold": 0.8,
+            "estimate": true,
+            "reason": "Configured human model neutral-height estimate; actual scale computed from body and robot limbs",
+            "scaling_method": "8-limb uniform similarity about first pelvis floor projection",
+            "scaling_scope": "Source body, operation trajectories and source scene together; robot geometry unchanged"
+          },
+          "scale_choice_required": false,
+          "scale_estimate_unavailable": false,
+          "trajectory_scale": "match_robot",
+          "scale_semantics": "match_robot normalizes the interaction; it does not preserve original object dimensions",
+          "refiner_signature": null
+        },
+        "limitations": [
+          "Metadata preflight only; worker validates numerical inputs and route.",
+          "No implicit standalone reconstruction, physics rollout or new calibration.",
+          "Plans are previews; execution rechecks current inputs and records backend result."
+        ],
+        "required_choice": null,
+        "choices": []
+      }
+    },
+    {
+      "request": {
+        "workflow": "manipulation",
+        "recording_id": "hiphi-adjusting-adjust-0079",
+        "robot_id": "g1",
+        "hand_id": "none"
+      },
+      "status": 200,
+      "response": {
+        "executable": false,
+        "request": {
+          "workflow": "manipulation",
+          "recording_id": "hiphi-adjusting-adjust-0079",
+          "robot_id": "g1",
+          "hand_id": "none",
+          "trajectory_scale": null
+        },
+        "operation": "manipulation",
+        "stages": [
+          "provided full body or three-point EgoAllo SMPL-H",
+          "explicit interaction scale",
+          "fullbody retargeting",
+          "GPU hybrid refinement",
+          "scene perception where available",
+          "source FOV / preview",
+          "contact where available"
+        ],
+        "policy": {
+          "selection": "unified motion backend",
+          "body_model": "native-smplh",
+          "source_policy": "supplied-body",
+          "source_policy_version": "unified-provided-body-or-three-point-native-h-v1",
+          "motion_policy_version": "resident-skeleton-surface-wrist-v3",
+          "route": "automatic; provided full body bypasses body reconstruction",
+          "morphology": {
+            "available": true,
+            "source_height_m": 1.7210896611213684,
+            "target_height_m": 1.3228454869574164,
+            "scale_factor": 0.7686092809920909,
+            "large_mismatch": true,
+            "threshold": 0.8,
+            "estimate": true,
+            "reason": "Configured human model neutral-height estimate; actual scale computed from body and robot limbs",
+            "scaling_method": "8-limb uniform similarity about first pelvis floor projection",
+            "scaling_scope": "Source body, operation trajectories and source scene together; robot geometry unchanged"
+          },
+          "scale_choice_required": true,
+          "scale_estimate_unavailable": false,
+          "trajectory_scale": "preserve",
+          "scale_semantics": "match_robot normalizes the interaction; it does not preserve original object dimensions",
+          "refiner_signature": null
+        },
+        "limitations": [
+          "Metadata preflight only; worker validates numerical inputs and route.",
+          "No implicit standalone reconstruction, physics rollout or new calibration.",
+          "Plans are previews; execution rechecks current inputs and records backend result."
+        ],
+        "required_choice": "trajectory_scale",
+        "choices": [
+          "preserve",
+          "match_robot"
+        ]
+      }
+    },
+    {
+      "request": {
+        "workflow": "manipulation",
+        "recording_id": "hiphi-adjusting-adjust-0079",
+        "robot_id": "custom_0fcf5afb28",
+        "hand_id": "none"
+      },
+      "status": 200,
+      "response": {
+        "executable": true,
+        "request": {
+          "workflow": "manipulation",
+          "recording_id": "hiphi-adjusting-adjust-0079",
+          "robot_id": "custom_0fcf5afb28",
+          "hand_id": "none",
+          "trajectory_scale": null
+        },
+        "operation": "manipulation",
+        "stages": [
+          "provided full body or three-point EgoAllo SMPL-H",
+          "explicit interaction scale",
+          "fullbody retargeting",
+          "GPU hybrid refinement",
+          "scene perception where available",
+          "source FOV / preview",
+          "contact where available"
+        ],
+        "policy": {
+          "selection": "unified motion backend",
+          "body_model": "native-smplh",
+          "source_policy": "supplied-body",
+          "source_policy_version": "unified-provided-body-or-three-point-native-h-v1",
+          "motion_policy_version": "resident-skeleton-surface-wrist-v3",
+          "route": "automatic; provided full body bypasses body reconstruction",
+          "morphology": {
+            "available": true,
+            "source_height_m": 1.7210896611213684,
+            "target_height_m": 1.7223289125253154,
+            "scale_factor": 1.000720038840475,
+            "large_mismatch": false,
+            "threshold": 0.8,
+            "estimate": true,
+            "reason": "Configured human model neutral-height estimate; actual scale computed from body and robot limbs",
+            "scaling_method": "8-limb uniform similarity about first pelvis floor projection",
+            "scaling_scope": "Source body, operation trajectories and source scene together; robot geometry unchanged"
+          },
+          "scale_choice_required": false,
+          "scale_estimate_unavailable": false,
+          "trajectory_scale": "preserve",
+          "scale_semantics": "match_robot normalizes the interaction; it does not preserve original object dimensions",
+          "refiner_signature": null
+        },
+        "limitations": [
+          "Metadata preflight only; worker validates numerical inputs and route.",
+          "No implicit standalone reconstruction, physics rollout or new calibration.",
+          "Plans are previews; execution rechecks current inputs and records backend result."
+        ],
+        "required_choice": null,
+        "choices": []
+      }
+    }
+  ],
+  "generation_started": false
+}

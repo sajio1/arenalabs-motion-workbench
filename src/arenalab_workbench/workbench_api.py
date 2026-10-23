@@ -5,6 +5,7 @@ from greenwich_pipelines.input_policy import POLICY as ENCODER_POLICY
 import concurrent.futures,hashlib,json,os,re,subprocess,sys,threading,time,uuid
 from fastapi import FastAPI,HTTPException,Request
 from pydantic import BaseModel
+from typing import Literal
 from arenalab_workbench.hand_uploads import attach_hand_routes
 from arenalab_workbench.job_status import job_view
 from arenalab_workbench.body_prior import folder as body_folder
@@ -21,11 +22,15 @@ class Generate(BaseModel):
     scene_id:str
     robot_id:str
     hand_id:str='wuji'
+    trajectory_scale:Literal['preserve','match_robot']|None=None
+    output_modalities:list[Literal['trajectory','point_cloud','contact','inpaint_fov']]|None=None
 
 class Reconstruct(BaseModel):
     scene_id:str
     robot_id:str='h2'
     hand_id:str='wuji'
+    trajectory_scale:Literal['preserve','match_robot']|None=None
+    output_modalities:list[Literal['trajectory','point_cloud','contact','inpaint_fov']]|None=None
 
 def create_api(config_path=None):
     from arenalab_workbench.robot_registry import roster as load_roster
@@ -37,6 +42,7 @@ def create_api(config_path=None):
     attach_height_routes(app,lock)
     from arenalab_workbench.dataset_io.routes import attach_dataset_routes, require_scene
     attach_dataset_routes(app,lock)
+    from arenalab_workbench.source_requirements import input_requirements
     from arenalab_workbench.scene_geometry import attach_routes
     attach_routes(app)
     for path in folder.glob('*/job.json'):
@@ -49,7 +55,8 @@ def create_api(config_path=None):
     def execute(job):
         destination=folder/job['id'];state=destination/'state.json'
         save(state,dict(status='running',phase='Starting retargeting'))
-        env=os.environ.copy();env.update(ARENA_JOB_ID=job['id'],ARENA_VIEWER_CONFIG=str(config_path),ARENA_GPU_POOL='0,1,2,3',CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2',PYTHONPATH=paths.pythonpath())
+        env=os.environ.copy();env.update(ARENA_JOB_ID=job['id'],ARENA_TRAJECTORY_SCALE=job.get('trajectory_scale','preserve'),ARENA_VIEWER_CONFIG=str(config_path),ARENA_GPU_POOL=os.environ.get('ARENA_GPU_POOL','0,1,2,3'),CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2',PYTHONPATH=paths.pythonpath())
+        if job.get('output_modalities') is not None:env['ARENA_OUTPUT_MODALITIES']=json.dumps(job['output_modalities'])
         try:
             with (destination/'worker.log').open('w') as log:
                 result=subprocess.run([sys.executable,str(Path(__file__).with_name('full_job.py')),job['scene_id'],job['robot_id'],job['hand_id'],'--status',str(state)],env=env,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
@@ -76,54 +83,40 @@ def create_api(config_path=None):
     @app.get('/robots')
     def robots():
         return [dict(id=r['id'],label=r['label'],kind=r['kind'],model_url=r.get('model_url'),supported=supported(r),experimental=r['kind']=='Wheeled',reason=None if supported(r) else 'Physical end-effector and anatomical metadata is required') for r in roster().values()]
-    def enqueue(scene_id,robot_id,hand_id):
+    def enqueue(scene_id,robot_id,hand_id,trajectory_scale=None,output_modalities=None):
         from arenalab_workbench.height_registry import default_id,variant,public_entry
         scene_id=default_id(scene_id) or scene_id
         robot=roster().get(robot_id)
         if not robot:raise HTTPException(400,'Robot is unavailable')
         if not supported(robot):raise HTTPException(409,'Physical end-effector and anatomical metadata is required')
-        from arenalab_workbench.gripper_job import sources as gripper_sources,cached as gripper_cached
-        gripper_source=scene_id in gripper_sources()
         entry=public_entry(scene_id)
         if not entry:raise HTTPException(400,'Recording is not connected')
         if entry['dataset']=='UMI' and not variant(scene_id):raise HTTPException(409,'Set the first trajectory height before generating UMI')
-        expected_hand='robotiq-2f-140' if gripper_source else entry.get('end_effector', 'none' if entry['dataset']=='Nymeria' else 'wuji')
+        from arenalab_workbench.source_requirements import resolve_scale
+        preflight=input_requirements(scene_id,robot_id,config_path)
+        from arenalab_workbench.output_modalities import resolve_outputs
+        try:outputs=resolve_outputs(output_modalities,preflight['output_capabilities'])['effective_outputs']
+        except ValueError as error:raise HTTPException(409,str(error)) from error
+        try:trajectory_scale=resolve_scale(trajectory_scale,preflight)
+        except ValueError as error:raise HTTPException(409,str(error)) from error
+        expected_hand=preflight['hand_id']
         if hand_id!=expected_hand:raise HTTPException(409,'This source requires '+expected_hand)
-        if entry.get('scene_url'):
-            scene=json.loads((paths.store/entry['scene_url'].removeprefix('/assets/')).read_text())
-            validation_path=(paths.store/entry['scene_url'].removeprefix('/assets/')).parent/('robot-'+robot_id)/'validation.json'
-            if gripper_source and gripper_cached(scene_id,robot_id,scene):
-                return dict(status='completed',scene_url=entry['scene_url'],robot_id=robot_id,robot_ready=True)
-            valid=not gripper_source and any(r['id']==robot_id and r.get('encoder_policy')==ENCODER_POLICY for r in scene.get('robots',[]))
-            if robot['kind']=='Wheeled':
-                from arenalab_workbench.wheeled_body import POLICY as MOBILE_POLICY
-                valid=validation_path.exists() and json.loads(validation_path.read_text()).get('policy')==MOBILE_POLICY
-            if validation_path.exists():
-                report=json.loads(validation_path.read_text())
-                if report.get('source_id'):
-                    try:
-                        work=body_folder(scene_id);valid=valid and report.get('human_model')=='smplh' and report.get('human_policy')==__import__('arenalab_workbench.human_reference',fromlist=['SMPLH_POLICY']).SMPLH_POLICY and report.get('encoder_policy')==ENCODER_POLICY and report.get('support_policy')==SUPPORT_POLICY and report['source_id']==scene_id and bool(report.get('source_hashes')) and all((work/name).exists() and hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in report['source_hashes'].items())
-                    except ValueError:valid=False
-            from arenalab_workbench.scene_job import depth_current
-            from arenalab_workbench.depth_store import fov_current
-            if valid and depth_current(scene) and any(r['id']==robot_id for r in scene['robots']) and fov_current(scene,robot_id) and (hand_id=='none' or scene.get('tactile',{}).get('url')):
-                return dict(status='completed',scene_url=entry['scene_url'],robot_id=robot_id,robot_ready=True)
         with lock:
             for job in jobs.values():
-                if job.get('kind')=='full' and job['scene_id']==scene_id and job.get('robot_id')==robot_id and job.get('hand_id')==hand_id:
+                if job.get('kind')=='full' and job['scene_id']==scene_id and job.get('robot_id')==robot_id and job.get('hand_id')==hand_id and job.get('trajectory_scale','preserve')==trajectory_scale and job.get('output_modalities')==outputs:
                     current=view(job)
                     if current['status'] in {'queued','running'}:return current
-            job=dict(id=uuid.uuid4().hex[:16],kind='full',scene_id=scene_id,robot_id=robot_id,hand_id=hand_id,created_at=time.time());jobs[job['id']]=job
+            job=dict(id=uuid.uuid4().hex[:16],kind='full',scene_id=scene_id,robot_id=robot_id,hand_id=hand_id,trajectory_scale=trajectory_scale,output_modalities=outputs,created_at=time.time());jobs[job['id']]=job
             save(folder/job['id']/'job.json',job);save(folder/job['id']/'state.json',dict(status='queued',phase='Waiting for GPU'))
             pool.submit(execute,job);return view(job)
     @app.post('/reconstruct')
     def reconstruct(body:Reconstruct,request:Request):
         require_scene(body.scene_id,request)
-        return enqueue(body.scene_id,body.robot_id,body.hand_id)
+        return enqueue(body.scene_id,body.robot_id,body.hand_id,body.trajectory_scale,body.output_modalities)
     @app.post('/generate')
     def generate(body:Generate,request:Request):
         require_scene(body.scene_id,request)
-        return enqueue(body.scene_id,body.robot_id,body.hand_id)
+        return enqueue(body.scene_id,body.robot_id,body.hand_id,body.trajectory_scale,body.output_modalities)
     @app.get('/jobs/{job_id}')
     def status(job_id:str,request:Request):
         with lock:
@@ -131,5 +124,10 @@ def create_api(config_path=None):
             require_scene(jobs[job_id]['scene_id'],request)
             return view(jobs[job_id])
     app.state.generation_jobs=jobs
+    def requirements(scene_id,request,robot_id=None,workflow='manipulation'):
+        require_scene(scene_id,request)
+        try:return input_requirements(scene_id,robot_id,config_path)
+        except ValueError as error:raise HTTPException(400,str(error)) from error
+    app.state.input_requirements=requirements
     app.state.pool=pool
     return app

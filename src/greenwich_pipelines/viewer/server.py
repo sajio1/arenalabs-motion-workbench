@@ -3,29 +3,67 @@ import argparse,json,os,subprocess,sys,threading,uuid,hashlib
 from concurrent.futures import ThreadPoolExecutor
 from queue import SimpleQueue
 from pathlib import Path
+from typing import Literal
 from fastapi import FastAPI,HTTPException,UploadFile,File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel,ConfigDict,Field
 from .export import array_json,robot_model,motion_payload,join_playback_segments
 from .uploads import unpack_robot,MAX_BYTES
-from .sources import prepare_source
 from .ingest import ingest_humanoid
 from .mobile_ingest import ingest_registered_mobile
 from .robot_deletion import delete_robot_assets
 
 PAGES={'locomotion':'fullbody','localmanipulation':'nymeria','manipulation':'gento'}
-from greenwich_pipelines.code_identity import conversion_code_signature
-CODE_SIGNATURES={pipeline:conversion_code_signature(pipeline) for pipeline in PAGES.values()}
 
-def conversion_signature(clip,robot):
-    source=Path(clip['source']);model=Path(robot['pipeline_row']['xml'])
-    identity=dict(code=CODE_SIGNATURES[PAGES[clip['page']]],pipeline=clip['page'],source=str(source),source_stat=[source.stat().st_size,source.stat().st_mtime_ns],window=clip.get('source_window'),max_seconds=clip.get('max_seconds'),robot=robot['pipeline_row'],model_sha256=hashlib.sha256(model.read_bytes()).hexdigest(),fps=30)
+def source_content_identity(clip):
+    """Hash declared source dependencies without importing a body model or adapter."""
+    from arenalab_workbench.motion_backend import cached_sha
+    supplied=clip.get('motion_source') or (clip.get('manifest') or {}).get('motion_source') or {}
+    pending=[Path(value) for value in (clip.get('source'),supplied.get('path'),supplied.get('objects_path')) if value]
+    result={}
+    while pending:
+        path=pending.pop().resolve()
+        if str(path) in result:continue
+        result[str(path)]=cached_sha(path) if path.is_file() else None
+        if not path.is_file() or path.suffix.lower()!='.json':continue
+        value=json.loads(path.read_text())
+        if not isinstance(value,dict):continue
+        for row in value.get('sources',[]):
+            for key in ('path','options_file'):
+                if row.get(key):pending.append(path.parent/row[key])
+            if (row.get('options') or {}).get('bind_path'):pending.append(path.parent/row['options']['bind_path'])
+        # A source options file may refer to a separate neutral skeleton.
+        if value.get('bind_path'):pending.append(path.parent/value['bind_path'])
+    return result
+
+def conversion_signature(clip,robot,trajectory_scale='preserve',runtime=None):
+    from arenalab_workbench.motion_backend import backend_fingerprint,cached_sha,robot_asset_identity
+    environment=os.environ.copy()
+    if runtime:environment['ARENA_MOTION_RUNTIME']=str(runtime)
+    model=robot.get('pipeline_row',{}).get('xml')
+    module=Path(__file__).parents[2]/'arenalab_workbench/unified_conversion.py'
+    identity=dict(code=backend_fingerprint(environment),adapter_sha256=cached_sha(module) if module.is_file() else None,
+                  pipeline='unified-gpu-hybrid',page=clip['page'],trajectory_scale=trajectory_scale,
+                  source=clip,source_sha256=source_content_identity(clip),robot=robot.get('pipeline_row'),
+                  model_identity=robot_asset_identity(model) if model else None,fps=30)
+    identity['source']={k:v for k,v in clip.items() if k not in {'cache','preview','video'}}
     return hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
 
+def motion_preflight(clip,robot):
+    from arenalab_workbench.source_requirements import motion_preflight as check
+    return check(clip,robot,source_work=None)
+
+def run_conversion(command,**kwargs):
+    from arenalab_workbench.gpu_scheduler import run
+    return run(command,label='unified motion conversion',**kwargs)
+
 class Conversion(BaseModel):
+    model_config=ConfigDict(extra='forbid')
     clip_id:str
     robot_id:str
+    trajectory_scale:Literal['preserve','match_robot']|None=None
+    output_modalities:list[Literal['trajectory']]|None=Field(default=None,min_length=1,max_length=1)
 
 class PhysicalMetadata(BaseModel):
     endpoints:dict[str,str]
@@ -37,7 +75,7 @@ def create_app(config_path):
     robots={r['id']:r for r in config['robots']};clips={c['id']:c for c in config['clips']}
     # Only signed results from this code/policy may populate the active cache.
     for clip in clips.values():
-        if clip['page']=='locomotion':clip['cache']={}
+        clip['cache']={}
     devices=config.get('conversion_devices',[None])
     if not isinstance(devices,list) or not devices or len(set(map(str,devices)))!=len(devices) or (None in devices and len(devices)>1) or any(d is not None and (not isinstance(d,str) or not d.isdecimal()) for d in devices):
         raise ValueError('conversion_devices must be a nonempty list of unique GPU index strings')
@@ -46,7 +84,13 @@ def create_app(config_path):
     jobs={};lock=threading.Lock();video_lock=threading.Lock();pool=ThreadPoolExecutor(max_workers=len(devices));app=FastAPI(title='arenalab Motion Lab')
     conversion_registry=storage/'viewer-conversions.json'
     saved_conversions=json.loads(conversion_registry.read_text()) if conversion_registry.exists() else {}
+    mode_cache={}
     app.state.executor=pool
+    def source_requirements(scene_id,request,robot_id=None,workflow='locomotion'):
+        clip=clips.get(scene_id);robot=robots.get(robot_id)
+        if not clip or not robot or clip['page'] not in robot['pages']:raise HTTPException(404,'Clip or robot unavailable')
+        return motion_preflight(clip,robot)
+    app.state.motion_preflight=source_requirements
     def job_view(job):
         result=job.copy()
         if job['status']=='queued':
@@ -55,7 +99,7 @@ def create_app(config_path):
         return result
     def public_robot(row):return {k:v for k,v in row.items() if k in {'id','label','kind','pages','model_url','neutral_url','status','report','conversion_ready'}}
     def public_clip(row):
-        result={k:v for k,v in row.items() if k in {'id','page','title','family','description','frames','fps','duration','source_name','source_format','preview','cache','version','metadata'}}
+        result={k:v for k,v in row.items() if k in {'id','page','title','family','description','frames','fps','duration','source_name','source_format','preview','cache','version','metadata','has_supplied_body','motion_source_policy','source_body_family','source_evidence','end_effector'}}
         if row.get('video'):
             result['video']={k:v for k,v in row['video'].items() if k not in {'path','browser_transcode'}}
             result['video']['url']=f"/api/source-video/{row['id']}"
@@ -98,29 +142,30 @@ def create_app(config_path):
         try:
             with lock:job.update(status='running',device=device)
             environment=os.environ.copy()
-            if device is not None:environment['CUDA_VISIBLE_DEVICES']=device
+            if device is not None:environment.update(CUDA_VISIBLE_DEVICES=device,ARENA_GPU_POOL=device)
             environment.setdefault('OMP_NUM_THREADS','4')
             environment.setdefault('MKL_NUM_THREADS','4')
             folder=storage/'jobs'/jobid;folder.mkdir(parents=True)
-            roster=folder/'robots.json';array_json(roster,[robot['pipeline_row']])
-            spec=dict(schema='greenwich.job.v1',id='viewer_'+jobid,pipeline=PAGES[clip['page']],source=str(prepare_source(clip,folder)),robots=str(roster),runtime=config['runtime'],output=str(folder/'output'),fps=30)
-            if 'max_seconds' in clip:spec['max_seconds']=clip['max_seconds']
-            array_json(folder/'job.json',spec)
+            environment['ARENA_TRAJECTORY_SCALE']=job['trajectory_scale']
+            environment['ARENA_MOTION_BACKEND']='gpu_hybrid'
+            spec=dict(clip=clip,robot=robot,trajectory_scale=job['trajectory_scale'],output_modalities=['trajectory'],runtime=config['runtime'],output=str(folder/'output'))
+            array_json(folder/'request.json',spec)
             with (folder/'run.log').open('w',encoding='utf-8') as log:
-                result=subprocess.run([sys.executable,'-m','greenwich_pipelines','run',str(folder/'job.json')],stdout=log,stderr=subprocess.STDOUT,cwd=root,env=environment)
+                result=run_conversion([sys.executable,'-m','arenalab_workbench.unified_conversion','--request',str(folder/'request.json')],stdout=log,stderr=subprocess.STDOUT,cwd=root,env=environment)
             if result.returncode:
                 lines=(folder/'run.log').read_text(encoding='utf-8',errors='replace').splitlines()
                 reason=next((line for line in reversed(lines) if line.startswith(('ValueError:', 'RuntimeError:', 'FileNotFoundError:', 'torch.OutOfMemoryError:')) and '/' not in line and '\\' not in line),'Conversion worker exited unexpectedly')
                 raise RuntimeError(f'{reason[:240]} · Task {jobid}')
-            report=json.loads((folder/'output/result.json').read_text(encoding='utf-8'))
-            motions=[a for a in report['artifacts'] if a['kind']=='motion']
-            motions.sort(key=lambda a:a.get('clip',''))
-            payload=join_playback_segments(motion_payload(robot['pipeline_row'],folder/'output'/a['path'],PAGES[clip['page']]) for a in motions)
-            payload.update(encoder_policy=__import__('greenwich_pipelines.input_policy',fromlist=['POLICY']).POLICY if clip['page']=='locomotion' else None,clip_id=clip['id'],robot_id=robot['id'],version='Current pipeline · Motion quality not evaluated')
+            report=json.loads((folder/'output/report.json').read_text(encoding='utf-8'))
+            payload=json.loads((folder/'output/playback.json').read_text(encoding='utf-8'))
+            if not payload.get('frames') or payload.get('fps')!=30:raise ValueError('Unified worker returned invalid playback clock')
+            payload.update(trajectory_scale=job['trajectory_scale'],clip_id=clip['id'],robot_id=robot['id'],version='Unified GPU hybrid · Kinematic reference')
             export=folder/'playback.json';array_json(export,payload);url=f'/assets/jobs/{jobid}/playback.json'
             with lock:
-                clip.setdefault('cache',{})[robot['id']]=url;job.update(status='completed',url=url)
-                saved_conversions[f"{clip['id']}:{robot['id']}"]=dict(clip_id=clip['id'],robot_id=robot['id'],signature=conversion_signature(clip,robot),url=url)
+                if job['trajectory_scale']=='preserve':clip.setdefault('cache',{})[robot['id']]=url
+                mode_cache[(clip['id'],robot['id'],job['trajectory_scale'])]=dict(url=url,signature=job['signature'])
+                job.update(status='completed',url=url,completed_outputs=['trajectory'],**{k:report[k] for k in ('source_policy','source_policy_version','motion_policy_version','solver_status','solver_converged','quality_status') if k in report})
+                saved_conversions[f"{clip['id']}:{robot['id']}:{job['trajectory_scale']}"]=dict(clip_id=clip['id'],robot_id=robot['id'],trajectory_scale=job['trajectory_scale'],signature=job['signature'],url=url)
                 array_json(conversion_registry,saved_conversions)
         except Exception as exc:
             with lock:job.update(status='failed',error=str(exc))
@@ -130,13 +175,22 @@ def create_app(config_path):
     def convert(request:Conversion):
         clip=clips.get(request.clip_id);robot=robots.get(request.robot_id)
         if not clip or not robot or clip['page'] not in robot['pages']:raise HTTPException(400,'Invalid clip / robot pair')
-        cached=clip.get('cache',{}).get(robot['id'])
-        if cached:return dict(status='completed',url=cached,cached=True)
         if not robot.get('conversion_ready'):raise HTTPException(409,robot.get('report',{}).get('message','Mechanical metadata required. Model preview only.'))
+        requirements=motion_preflight(clip,robot) or {};morphology=requirements.get('morphology') or {}
+        if request.trajectory_scale is None and (requirements.get('scale_choice_required') or morphology.get('large_mismatch')):
+            raise HTTPException(409,{'code':'SCALE_CHOICE_REQUIRED','message':'Choose preserve or match_robot before conversion.','field':'trajectory_scale'})
+        if request.trajectory_scale=='match_robot' and not morphology.get('available'):
+            raise HTTPException(409,{'code':'SCALE_ESTIMATE_UNAVAILABLE','message':'Source/robot size estimate is unavailable. Preserve keeps source metres.'})
+        mode=request.trajectory_scale or 'preserve'
+        signature=conversion_signature(clip,robot,mode,config.get('runtime'))
+        cached=mode_cache.get((clip['id'],robot['id'],mode))
+        if cached and cached['signature']==signature and (storage/cached['url'].removeprefix('/assets/')).is_file():
+            return dict(status='completed',url=cached['url'],cached=True,trajectory_scale=mode,output_modalities=['trajectory'],effective_outputs=['trajectory'],completed_outputs=['trajectory'],**{k:requirements[k] for k in ('source_policy','source_policy_version','motion_policy_version') if k in requirements})
         with lock:
-            existing=next((j for j in jobs.values() if j['clip_id']==clip['id'] and j['robot_id']==robot['id'] and j['status'] in {'queued','running'}),None)
+            existing=next((j for j in jobs.values() if j['clip_id']==clip['id'] and j['robot_id']==robot['id'] and j['trajectory_scale']==mode and j['signature']==signature and j['status'] in {'queued','running'}),None)
             if existing:return job_view(existing)
-            jid=uuid.uuid4().hex[:16];job=dict(id=jid,status='queued',clip_id=clip['id'],robot_id=robot['id']);jobs[jid]=job
+            jid=uuid.uuid4().hex[:16];job=dict(id=jid,status='queued',clip_id=clip['id'],robot_id=robot['id'],trajectory_scale=mode,signature=signature,output_modalities=['trajectory'],effective_outputs=['trajectory'],
+                                            **{k:requirements[k] for k in ('source_policy','source_policy_version','motion_policy_version') if k in requirements});jobs[jid]=job
         pool.submit(convert_task,jid,clip,robot)
         with lock:return job_view(job)
     @app.get('/api/jobs/{job_id}')
@@ -214,7 +268,10 @@ def create_app(config_path):
     for entry in saved_conversions.values():
         clip=clips.get(entry['clip_id']);robot=robots.get(entry['robot_id'])
         try:
-            if clip and robot and entry['signature']==conversion_signature(clip,robot) and (storage/entry['url'].removeprefix('/assets/')).is_file():clip.setdefault('cache',{})[robot['id']]=entry['url']
+            mode=entry.get('trajectory_scale','preserve')
+            if clip and robot and entry['signature']==conversion_signature(clip,robot,mode,config.get('runtime')) and (storage/entry['url'].removeprefix('/assets/')).is_file():
+                mode_cache[(clip['id'],robot['id'],mode)]={'url':entry['url'],'signature':entry['signature']}
+                if mode=='preserve':clip.setdefault('cache',{})[robot['id']]=entry['url']
         except (OSError,KeyError):pass
     app.mount('/assets',StaticFiles(directory=storage),name='assets')
     dist=root/'web/dist'

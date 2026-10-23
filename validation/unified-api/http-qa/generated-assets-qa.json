@@ -1,0 +1,329 @@
+{
+  "status": "PASS",
+  "scope": "Read-only public HTTP assets and saved native-FK parity; no GPU or UI render executed",
+  "results": {
+    "A3": {
+      "scene_url": "/assets/manipulation4d/unified/9e68a510ccb68a4de5806717b0cbc0b51cd65c77b489bf59d2a6969eca02d8aa/scene.json",
+      "frames": 300,
+      "fps": 30,
+      "video": null,
+      "source_transform": null,
+      "source_world_to_display": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "robot_scale_mode": "preserve",
+      "solver": {
+        "status": "stopped",
+        "converged": null,
+        "soft": {
+          "status": "VALID_STOPPED",
+          "stop_reason": "iteration_budget_exhausted"
+        },
+        "polish": {
+          "status": "VALID_STOPPED",
+          "stop_reason": "line_search_rejected"
+        },
+        "evidence": "VALID_STOPPED checks motion constraints only; nonlinear KKT/global convergence is not established"
+      },
+      "quality": {
+        "mean_mm": 0.07491992450617987,
+        "p95_mm": 0.192675422329307,
+        "p99_mm": 0.27540584360422166,
+        "max_mm": 0.3607465598303125,
+        "orientation_max_deg": 1.5854079059542376,
+        "minimum_sole_height_mm": 0.9999999999995078
+      },
+      "vertices": {
+        "bytes": 37710000,
+        "sha256": "2cf6dcc66cbf7ec353d0275a3a71b918f7c8e080f59c808ddb5650cede3b2151",
+        "all_finite": true
+      },
+      "faces": {
+        "bytes": 250896,
+        "sha256": "ba3efe72d485634742a3f7f36c6ec5cebe7475182d056da7c3e8f8afb17c4e23",
+        "maximum_vertex_index": 10474
+      },
+      "clock": {
+        "bytes": 6119,
+        "sha256": "4e9eec8fea04765615df02365e91b4ba6651c43e5e60de1a1fc96b0df61d9361",
+        "keys": [
+          "timestamps_s",
+          "source_frame_indices"
+        ],
+        "frames": 300,
+        "exact_fps": 30.000300003000977
+      },
+      "objects": [
+        {
+          "id": "Table_C_1",
+          "mesh": {
+            "bytes": 246316,
+            "sha256": "c556e397d252075b6466dadcdd5f2d452f2d948d5c4165dfe41d667872ba5125",
+            "valid_glb_header": true
+          },
+          "poses": {
+            "bytes": 48443,
+            "sha256": "6238d5ba5ce993deece75f84647f1a7a0ee3e04677a947d4cd20d7c091148760"
+          },
+          "frames": 300,
+          "max_quaternion_norm_error": 2.220446049250313e-16,
+          "clock_matches_body": true
+        }
+      ],
+      "playback": {
+        "frames": 300,
+        "fps": 30,
+        "positions_shape": [
+          300,
+          40,
+          3
+        ],
+        "quaternions_shape": [
+          300,
+          40,
+          4
+        ],
+        "computed_wrist_error_max_mm": 0.3607465598303125,
+        "max_error_report_difference_mm": 0.0
+      },
+      "native_export_parity": {
+        "frames": 300,
+        "body_visual_geoms": 40,
+        "scalar_joints": 31,
+        "visual_position_max_m": 0.0,
+        "visual_rotation_matrix_max_abs": 5.662137425588298e-15,
+        "native_joint_max_abs": 0.0,
+        "tracking_task_position_max_m": 4.440892098500626e-16,
+        "coordinate_policy": "Fixed declared display-to-native rotation only; no fitting, translation alignment or frame offset",
+        "kinematic_only": true
+      },
+      "validation": {
+        "original_priors_unchanged": true,
+        "trajectory_scale": "preserve",
+        "motion_backend": "gpu_hybrid",
+        "scale_transform": {
+          "scale": 1.0,
+          "anchor_xyz_m": [
+            0.0,
+            0.0,
+            0.0024
+          ],
+          "world_up": "z"
+        },
+        "native_export_parity": {
+          "frames": 300,
+          "body_visual_geoms": 40,
+          "scalar_joints": 31,
+          "visual_position_max_m": 0.0,
+          "visual_rotation_matrix_max_abs": 5.662137425588298e-15,
+          "native_joint_max_abs": 0.0,
+          "tracking_task_position_max_m": 4.440892098500626e-16,
+          "coordinate_policy": "Fixed declared display-to-native rotation only; no fitting, translation alignment or frame offset",
+          "kinematic_only": true
+        },
+        "solver": {
+          "status": "stopped",
+          "converged": null,
+          "soft": {
+            "status": "VALID_STOPPED",
+            "stop_reason": "iteration_budget_exhausted"
+          },
+          "polish": {
+            "status": "VALID_STOPPED",
+            "stop_reason": "line_search_rejected"
+          },
+          "evidence": "VALID_STOPPED checks motion constraints only; nonlinear KKT/global convergence is not established"
+        }
+      },
+      "robot_model": {
+        "bytes": 5614440,
+        "sha256": "aebb8f4a8615423c7f4497608f5bb0e49260e4d47972d2b2709082c4058be570",
+        "valid_glb_header": true
+      }
+    },
+    "G1": {
+      "scene_url": "/assets/manipulation4d/unified/f43d68a126b7e8cbf2e493b659c84406f9d48d18259c143bfa4c16d4662e60c2/scene.json",
+      "frames": 300,
+      "fps": 30,
+      "video": null,
+      "source_transform": {
+        "scale": 0.8666085379738271,
+        "anchor_xyz_m": [
+          -2.310277933539282,
+          1.7368609949803608,
+          0.0024
+        ],
+        "world_up": "z",
+        "applied": false
+      },
+      "source_world_to_display": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "robot_scale_mode": "match_robot",
+      "solver": {
+        "status": "stopped",
+        "converged": null,
+        "soft": {
+          "status": "VALID_STOPPED",
+          "stop_reason": "accepted_step_below_2e-4"
+        },
+        "polish": {
+          "status": "VALID_STOPPED",
+          "stop_reason": "accepted_step_below_2e-4"
+        },
+        "evidence": "VALID_STOPPED checks motion constraints only; nonlinear KKT/global convergence is not established"
+      },
+      "quality": {
+        "mean_mm": 0.04217580092460863,
+        "p95_mm": 0.0793573350799122,
+        "p99_mm": 0.09439399636558381,
+        "max_mm": 0.10767689098495128,
+        "orientation_max_deg": 1.4531881681996568,
+        "minimum_sole_height_mm": 1.0000000000000906
+      },
+      "vertices": {
+        "bytes": 37710000,
+        "sha256": "2cf6dcc66cbf7ec353d0275a3a71b918f7c8e080f59c808ddb5650cede3b2151",
+        "all_finite": true
+      },
+      "faces": {
+        "bytes": 250896,
+        "sha256": "ba3efe72d485634742a3f7f36c6ec5cebe7475182d056da7c3e8f8afb17c4e23",
+        "maximum_vertex_index": 10474
+      },
+      "clock": {
+        "bytes": 6119,
+        "sha256": "4e9eec8fea04765615df02365e91b4ba6651c43e5e60de1a1fc96b0df61d9361",
+        "keys": [
+          "timestamps_s",
+          "source_frame_indices"
+        ],
+        "frames": 300,
+        "exact_fps": 30.000300003000977
+      },
+      "objects": [
+        {
+          "id": "Table_C_1",
+          "mesh": {
+            "bytes": 246316,
+            "sha256": "c556e397d252075b6466dadcdd5f2d452f2d948d5c4165dfe41d667872ba5125",
+            "valid_glb_header": true
+          },
+          "poses": {
+            "bytes": 48443,
+            "sha256": "6238d5ba5ce993deece75f84647f1a7a0ee3e04677a947d4cd20d7c091148760"
+          },
+          "frames": 300,
+          "max_quaternion_norm_error": 2.220446049250313e-16,
+          "clock_matches_body": true
+        }
+      ],
+      "playback": {
+        "frames": 300,
+        "fps": 30,
+        "positions_shape": [
+          300,
+          36,
+          3
+        ],
+        "quaternions_shape": [
+          300,
+          36,
+          4
+        ],
+        "computed_wrist_error_max_mm": 0.10767689098495128,
+        "max_error_report_difference_mm": 0.0
+      },
+      "native_export_parity": {
+        "frames": 300,
+        "body_visual_geoms": 36,
+        "scalar_joints": 29,
+        "visual_position_max_m": 0.0,
+        "visual_rotation_matrix_max_abs": 5.218048215738236e-15,
+        "native_joint_max_abs": 0.0,
+        "tracking_task_position_max_m": 4.965068306494546e-16,
+        "coordinate_policy": "Fixed declared display-to-native rotation only; no fitting, translation alignment or frame offset",
+        "kinematic_only": true
+      },
+      "validation": {
+        "original_priors_unchanged": true,
+        "trajectory_scale": "match_robot",
+        "motion_backend": "gpu_hybrid",
+        "scale_transform": {
+          "scale": 0.8666085379738271,
+          "anchor_xyz_m": [
+            -2.310277933539282,
+            1.7368609949803608,
+            0.0024
+          ],
+          "world_up": "z"
+        },
+        "native_export_parity": {
+          "frames": 300,
+          "body_visual_geoms": 36,
+          "scalar_joints": 29,
+          "visual_position_max_m": 0.0,
+          "visual_rotation_matrix_max_abs": 5.218048215738236e-15,
+          "native_joint_max_abs": 0.0,
+          "tracking_task_position_max_m": 4.965068306494546e-16,
+          "coordinate_policy": "Fixed declared display-to-native rotation only; no fitting, translation alignment or frame offset",
+          "kinematic_only": true
+        },
+        "solver": {
+          "status": "stopped",
+          "converged": null,
+          "soft": {
+            "status": "VALID_STOPPED",
+            "stop_reason": "accepted_step_below_2e-4"
+          },
+          "polish": {
+            "status": "VALID_STOPPED",
+            "stop_reason": "accepted_step_below_2e-4"
+          },
+          "evidence": "VALID_STOPPED checks motion constraints only; nonlinear KKT/global convergence is not established"
+        }
+      },
+      "robot_model": {
+        "bytes": 7659500,
+        "sha256": "8f1706ce2c5ed0f30aef820950c21123fcff88b903feca2ec4c290c90b76b580",
+        "valid_glb_header": true
+      }
+    }
+  },
+  "cross_result": {
+    "source_mesh_bytes_identical": true,
+    "source_geometry_raw_and_similarity_applied_once": true,
+    "scaled_wrist_targets_formula": "display_anchor + s*(original_display_target-display_anchor)",
+    "max_scaled_target_error_m": 0.0
+  },
+  "browser_visual_qa": "Unavailable: no connected CUA browser",
+  "generation_started": false
+}

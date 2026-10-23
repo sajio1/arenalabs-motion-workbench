@@ -3,7 +3,7 @@
 No inference, dataset publication, or model-weight packaging happens here.
 """
 from arenalab_workbench.settings import paths
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from urllib.parse import urlsplit
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
@@ -14,7 +14,7 @@ import zipfile
 import numpy as np
 from .storage import STORE, within, read, write
 
-VERSION = 'arenalabs-lerobot-v3.0-3-isaac-replay'
+VERSION = 'arenalabs-lerobot-v3.0-4-native-reference'
 
 
 def asset_path(url):
@@ -83,13 +83,79 @@ def video_stats(path,n):
     return {**{k:v.reshape(3,1,1).tolist() for k,v in dict(min=low,max=high,mean=mean,std=std).items()},'count':[samples]}
 
 
+def native_reference(robot, motion, output, *, scene=None):
+    """Bind native state to the exact producing model, never a current registry guess.
+
+    The customer's model remains local. Only names, reference states and FK
+    validation metadata are exported; no URDF, meshes or physical parameters.
+    Missing legacy provenance returns an explicit unavailable status. The
+    dataset readiness gate refuses to publish that as a complete new export.
+    """
+    validation = read(asset_path(robot['playback_url']).with_name('validation.json'), {})
+    native = validation.get('native_output_dir')
+    if not native:
+        return dict(available=False, reason='No authoritative native output recorded; visual replay remains available')
+    source = Path(native) / 'motion.npz'
+    if not source.is_file():
+        raise ValueError('Recorded native motion is missing; cannot certify this export')
+    candidates = [source.resolve().parent / 'request.json']
+    if validation.get('native_work_dir'):
+        candidates.insert(0, Path(validation['native_work_dir']) / 'request.json')
+    request_path = next((path for path in candidates if path.is_file()), None)
+    if request_path is None:
+        return dict(available=False, reason='Native state retained but producing model contract is unavailable')
+    request = read(request_path)
+    if request.get('robot_id') != robot['id']:
+        raise ValueError('Native motion robot identity differs from selected export')
+    if not request.get('output_dir') or Path(request['output_dir']).resolve() != source.resolve().parent:
+        raise ValueError('Native producing request does not belong to this motion output')
+    row = request.get('row', request.get('robot', {}))
+    row = row.get('pipeline_row', row)
+    model = row.get('xml') or row.get('model')
+    if not model or not Path(model).is_file():
+        raise ValueError('Producing robot model is unavailable; cannot certify native export')
+    from .native_reference import build_native_reference
+    result = build_native_reference(source, model, output, playback=motion, robot_id=robot['id'])
+    summary = dict(available=True, contract='extensions/arenalabs/native_reference/manifest.json',
+                mode='articulated_kinematic_reference', model_included=False,
+                physics_control_validated=False, frames=result['frames'])
+    if scene is not None:
+        from .native_visual import validate_native_visual
+        validate_native_visual(source, model, asset_path(robot['playback_url']), scene, robot, output)
+        summary['visual_validation'] = 'extensions/arenalabs/native_reference/visual-validation.json'
+    return summary
+
+
 def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=None):
     scene_path, output = Path(scene_path), Path(output)
     scene = read(scene_path)
+    selected=scene.get('output_modalities')
+    from arenalab_workbench.job_outputs import filtered_scene, STAGES
+    if (not isinstance(selected,list) or not selected or
+            any(not isinstance(name,str) or name not in STAGES for name in selected) or
+            len(set(selected))!=len(selected)):
+        raise ValueError('EXPORT_CURRENT_FORMAT_REQUIRED: new exports require an explicit valid output selection; regenerate legacy results')
+    if 'trajectory' not in selected:
+        raise ValueError('OUTPUT_TRAJECTORY_NOT_SELECTED: robot dataset export requires selected trajectory')
+    completed=scene.get('completed_outputs')
+    status=scene.get('output_status')
+    generation=scene.get('generation_status')
+    if (not isinstance(completed,list) or any(not isinstance(name,str) for name in completed) or
+            len(set(completed))!=len(completed) or set(completed)!=set(selected) or
+            not isinstance(status,dict) or any(status.get(name)!='completed' for name in selected) or
+            not isinstance(generation,dict) or generation.get('status')!='completed'):
+        raise ValueError('OUTPUTS_INCOMPLETE: every selected output must be recorded complete before export')
+    # Validate the original completion evidence before filtering dependencies.
+    # filtered_scene updates statuses; calling it first would relabel a failed
+    # or pending selected output as complete. Existing ZIPs remain immutable.
+    scene=filtered_scene(scene,{'effective_outputs':selected},
+                         {STAGES[name]:status[name]=='completed' for name in selected})
     robot = next((r for r in scene['robots'] if r['id'] == robot_id), None)
     if robot is None:
         raise ValueError('Generate the selected robot before exporting')
-    if output.exists():
+    archive = output.with_suffix('.zip')
+    pending = archive.with_suffix('.zip.partial')
+    if any(path.exists() or path.is_symlink() for path in (output, archive, pending)):
         raise FileExistsError('Exports are immutable; use a fresh build directory')
     output.mkdir(parents=True)
     motion = read(asset_path(robot['playback_url']))
@@ -112,8 +178,9 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
     statistics={k:stats(v) for k,v in arrays.items()}
     episode = dict(episode_index=[0], tasks=[[task]], length=[n], dataset_from_index=[0], dataset_to_index=[n], **{'data/chunk_index': [0], 'data/file_index': [0], 'meta/episodes/chunk_index': [0], 'meta/episodes/file_index': [0]})
     video_sources=video_sources or {}
-    videos = [('original', video_sources.get('original',scene['video']))]
-    videos += [(f'wrist_{v["side"]}', v) for v in scene.get('wrist_videos', [])]
+    original_video=video_sources.get('original',scene.get('video'))
+    videos = [('original', original_video)] if original_video else []
+    videos += [(f'wrist_{v["side"]}', v) for v in scene.get('wrist_videos', []) if v]
     if scene.get('patch_videos', {}).get(robot_id):
         videos.append(('inpaint', dict(url=scene['patch_videos'][robot_id], start_seconds=0)))
 
@@ -156,22 +223,28 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
                 else:shutil.copyfile(original, target)
                 copied[original] = target.relative_to(output).as_posix()
             return copied[original]
-        if isinstance(value, str) and value.startswith(('/home/', '/opt/', 'C:\\')):
+        if isinstance(value, str) and (Path(value).is_absolute() or PureWindowsPath(value).is_absolute()):
             return Path(value.replace('\\', '/')).name
         return value
 
     snapshot = {**scene, 'robots': [robot], 'patch_videos': {robot_id: scene.get('patch_videos', {}).get(robot_id)} if scene.get('patch_videos', {}).get(robot_id) else {}}
-    native_video=Path(videos[0][1]['path']) if videos[0][1].get('path') else asset_path(videos[0][1]['url'])
-    native_target=extension/'assets/original-native.mp4';native_target.parent.mkdir(exist_ok=True);shutil.copyfile(native_video,native_target)
-    snapshot['video']=dict(url='videos/observation.images.original/chunk-000/file-000.mp4',start_seconds=0,native_original=native_target.relative_to(output).as_posix(),source_clock=videos[0][1].get('frame_times'),source_start_seconds=videos[0][1].get('start_seconds',0))
+    if original_video:
+        native_video=Path(original_video['path']) if original_video.get('path') else asset_path(original_video['url'])
+        native_target=extension/'assets/original-native.mp4';native_target.parent.mkdir(exist_ok=True);shutil.copyfile(native_video,native_target)
+        snapshot['video']=dict(url='videos/observation.images.original/chunk-000/file-000.mp4',start_seconds=0,native_original=native_target.relative_to(output).as_posix(),source_clock=original_video.get('frame_times'),source_start_seconds=original_video.get('start_seconds',0))
+    else:snapshot['video']=None
     for field in ['patch_kinds','patch_depth_policy','patch_unavailable','hand_motion_audit_urls']:
         if field in snapshot:snapshot[field]={robot_id:snapshot[field][robot_id]} if robot_id in snapshot[field] else {}
     write(extension / 'scene.json', portable(snapshot))
     from .replay import build_replay
     replay = build_replay(asset_path(robot['model_url']), motion, extension/'replay')
+    native = native_reference(robot, motion, extension/'native_reference', scene=scene)
+    if not native['available']:
+        raise ValueError('NATIVE_REFERENCE_UNAVAILABLE: ' + native['reason'])
     # Full raw masks, native depth/camera predictions and human motion stay lossless.
     raw_index = []
     for category, folder in raw_sources:
+        if selected is not None and 'point_cloud' not in selected and category in {'perception','calibration'}:continue
         folder = Path(folder)
         if folder.is_file():
             target=extension/'raw'/category/'lens-rectification.npz';target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(folder,target);raw_index.append(target.relative_to(output).as_posix());continue
@@ -197,6 +270,25 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
             if path.suffix=='.json':write(target,portable(read(path)))
             else:shutil.copyfile(path, target)
             raw_index.append(target.relative_to(output).as_posix())
+    # Preserve the exact producing native motion even for direct callers that
+    # did not collect optional raw-source folders. Never mask a misrouted raw
+    # category by overwriting a different motion with the correct one.
+    native_manifest=read(extension/'native_reference/manifest.json')
+    raw_motion=extension/'raw/robot/refined/motion.npz'
+    expected_native_sha=native_manifest['source']['sha256']
+    if raw_motion.exists():
+        if digest(raw_motion)!=expected_native_sha:
+            raise ValueError('RAW_NATIVE_REFERENCE_MISMATCH: collected raw motion belongs to a different native result')
+    else:
+        validation=read(asset_path(robot['playback_url']).with_name('validation.json'),{})
+        authoritative=Path(validation['native_output_dir'])/'motion.npz'
+        if not authoritative.is_file() or digest(authoritative)!=expected_native_sha:
+            raise ValueError('RAW_NATIVE_REFERENCE_MISMATCH: producing motion changed during packaging')
+        raw_motion.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copyfile(authoritative,raw_motion)
+        if digest(raw_motion)!=expected_native_sha:
+            raise ValueError('RAW_NATIVE_REFERENCE_MISMATCH: copied native motion changed during packaging')
+    raw_index=sorted(set(raw_index+[raw_motion.relative_to(output).as_posix()]))
     cloud = scene.get('cloud', {}).get('frames', [])
     clouds = {int(f['source_frame']): i for i, f in enumerate(cloud)}
     keys = sorted(clouds)
@@ -207,15 +299,27 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
         frame_rows.append(dict(frame_index=frame, timestamp=frame / 30, cloud_index=clouds[selected] if selected is not None else None, cloud_source_frame=selected, cloud_observed_this_frame=selected == frame))
     parquet(extension / 'frame_map.parquet', {k: [r[k] for r in frame_rows] for k in frame_rows[0]})
     shutil.copyfile(Path(__file__).with_name('portable_reader.py'), extension/'read_extensions.py')
-    write(extension / 'manifest.json', dict(schema=VERSION, scene_id=scene['id'], robot_id=robot_id, fps=30, frames=n, state_units=motion['joints'].get('units', motion['joints']['unit']), action_semantics='Next-frame retargeted kinematic joint-position reference; final frame repeats. Not measured actuation or executed success.', state_semantics='Generated kinematic playback, not measured robot telemetry', contact_semantics='Retain original status, fps, evidence and nullable per-digit estimates; not measured pressure unless explicitly declared', frame_map='extensions/arenalabs/frame_map.parquet', raw_files=raw_index, missing={k: reason for k, reason in {'point_cloud': None if scene.get('cloud') else 'Not generated', 'inpaint_fov': scene.get('patch_unavailable', {}).get(robot_id,'Not generated') if not scene.get('patch_videos', {}).get(robot_id) else None, 'contact': scene.get('tactile', {}).get('reason') if not scene.get('tactile', {}).get('url') else None}.items() if reason}, source_scene_sha256=digest(scene_path), models_included=False, robot_visual_asset_included=True, model_weights_included=False, replay=dict(stage='extensions/arenalabs/replay/robot.usda', contract='extensions/arenalabs/replay/replay.json', mode=replay['mode'], physics_articulation=False)))
+    write(extension / 'manifest.json', dict(schema=VERSION, scene_id=scene['id'], robot_id=robot_id, fps=30, frames=n, state_units=motion['joints'].get('units', motion['joints'].get('unit')), action_semantics='Next-frame retargeted kinematic joint-position reference; final frame repeats. Not measured actuation or executed success.', state_semantics='Generated kinematic playback, not measured robot telemetry', contact_semantics='Retain original status, fps, evidence and nullable per-digit estimates; not measured pressure unless explicitly declared', frame_map='extensions/arenalabs/frame_map.parquet', raw_files=raw_index, missing={k: reason for k, reason in {'point_cloud': None if scene.get('cloud') else 'Not generated', 'inpaint_fov': scene.get('patch_unavailable', {}).get(robot_id,'Not generated') if not scene.get('patch_videos', {}).get(robot_id) else None, 'contact': scene.get('tactile', {}).get('reason') if not scene.get('tactile', {}).get('url') else None}.items() if reason}, source_scene_sha256=digest(scene_path), models_included=False, robot_visual_asset_included=True, model_weights_included=False, replay=dict(stage='extensions/arenalabs/replay/robot.usda', contract='extensions/arenalabs/replay/replay.json', mode=replay['mode'], physics_articulation=False)))
+    manifest = read(extension / 'manifest.json')
+    manifest['native_reference'] = native
+    from .readiness import _modality_contract, validate_dataset
+    manifest['modalities'] = _modality_contract(output.resolve(), read(extension / 'scene.json'), manifest, robot_id)
+    manifest['readiness'] = dict(status='ready', scope='complete_kinematic_reference_data',
+                                validator='validate_dataset.py', dynamics_validated=False)
+    write(extension / 'manifest.json', manifest)
+    shutil.copyfile(Path(__file__).with_name('readiness.py'), output / 'validate_dataset.py')
     hashes = {p.relative_to(output).as_posix(): digest(p) for p in output.rglob('*') if p.is_file()}
     write(output / 'checksums.json', hashes)
-    archive = output.with_suffix('.zip')
-    with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_STORED, allowZip64=True) as zipped:
+    readiness = validate_dataset(output)
+    with zipfile.ZipFile(pending, 'x', compression=zipfile.ZIP_STORED, allowZip64=True) as zipped:
         for p in sorted(output.rglob('*')):
             if p.is_file():
                 zipped.write(p, p.relative_to(output).as_posix())
-    return dict(path=str(archive), bytes=archive.stat().st_size, sha256=digest(archive), frames=n, robot_id=robot_id, format=VERSION)
+    with zipfile.ZipFile(pending) as zipped:
+        if zipped.testzip() is not None or set(zipped.namelist()) != set(hashes) | {'checksums.json'}:
+            raise ValueError('Final ZIP integrity check failed; export is not ready')
+    pending.rename(archive)
+    return dict(path=str(archive), bytes=archive.stat().st_size, sha256=digest(archive), frames=n, robot_id=robot_id, format=VERSION, ready=True, readiness=readiness)
 
 
 def collect_raw_sources(scene_id, scene, robot_id=None):
@@ -231,15 +335,16 @@ def collect_raw_sources(scene_id, scene, robot_id=None):
         body=folder(scene_id);result.append(('human',str(body)));gripper_work=None
     if robot_id is None and len(scene.get('robots',[]))==1:robot_id=scene['robots'][0]['id']
     if robot_id:
+        selected=next((r for r in scene.get('robots',[]) if r['id']==robot_id),{})
+        validation=read(asset_path(selected['playback_url']).with_name('validation.json'),{}) if selected.get('playback_url') else {}
         if gripper_work:
-            result.append(('robot/refined',str(gripper_work/robot_id)));native=body
+            refined=Path(validation['native_output_dir']) if validation.get('native_output_dir') else gripper_work/robot_id
+            result.append(('robot/refined',str(refined)));native=body
         else:
             native=body/'retarget' if (body/'retarget'/(robot_id+'-result')).exists() else body/'retarget'/robot_id
-            selected=next((r for r in scene.get('robots',[]) if r['id']==robot_id),{})
-            if selected.get('playback_url'):
-                validation=read(asset_path(selected['playback_url']).with_name('validation.json'),{})
-                if validation.get('native_work_dir'):native=Path(validation['native_work_dir'])
-            result.append(('robot/refined',str(native/'operation-accuracy/palm'/robot_id)))
+            if validation.get('native_work_dir'):native=Path(validation['native_work_dir'])
+            refined=Path(validation['native_output_dir']) if validation.get('native_output_dir') else native/'operation-accuracy/palm'/robot_id
+            result.append(('robot/refined',str(refined)))
         for path in (native/(robot_id+'-result')).rglob('prime_original.npz'):
             result.append(('robot/original',str(path.parent)))
         from arenalab_workbench.wheeled_body import POLICY as MOBILE_POLICY
@@ -263,4 +368,4 @@ def collect_video_sources(scene_id,scene):
         return {'original':dict(path=meta['head_video'],start_seconds=meta.get('start_seconds',0))}
     from arenalab_workbench.scene_job import resolve_clip
     _,row=resolve_clip(scene_id)
-    return {'original':dict(row['video'])}
+    return {'original':dict(row['video'])} if row.get('video') else {}

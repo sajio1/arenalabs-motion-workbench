@@ -1,0 +1,29 @@
+{
+  "scope": "API/UI/locomotion dispatch contract tests; no model or GPU execution",
+  "python_tests": "58 passed (API/client/viewer + source-display projection)",
+  "node_tests": "35 passed",
+  "typescript_vite_build": "passed",
+  "source_sha256": {
+    "src/arena_api/__init__.py": "5377ff260af7ce9822606da42dcbdc4f4e5342c57337d2a4b60fdfdd0f4e6450",
+    "src/arena_api/__main__.py": "e82b062f28fddd072317d4deecbafd30c94ef28bbabafa699aec58ee37ef87fd",
+    "src/arena_api/app.py": "bf0a78b121c7b948370c5837377ef36082b5a93f9c8544b6902182aa66ce7dca",
+    "src/arena_api/client.py": "b77e170ef45a5fae16ff191d25d4ae5d48cc993f76ee4779575fb79ad7822486",
+    "src/arena_api/contracts.py": "d92009ba5df063c6163a1285845407d4fb50b2ac00a50b3cd66d59c14ff8e3ec",
+    "src/arena_api/services.py": "b0eb8229cc7f3dfc5438bbef71d03e390be21ca6647467c927d14d15861c5d01",
+    "src/greenwich_pipelines/viewer/server.py": "3c6dff1d7306917579368a862ebda9572acee85cdb8d7845e667d25174403249",
+    "web/src/platform-api.ts": "7ab8c3109374e487e075c3837439ca3f1fab021d95a2c11ff5c8b68aade22a12",
+    "web/src/trajectory-scale.ts": "b1a88aed0210b370c2c002b20be86387c50b8cd98c67e4218fd82b6c4b3a3dd1",
+    "web/src/manipulation4d/source-transform.mjs": "9483d208ba9e70e843681644f7b75a9ff8c35796062349ba37f7b69b1d2c8ef2",
+    "web/src/manipulation4d/stage.ts": "49fb16d50fff7cecd19a5811150ebec5a9a785dfaf3999e4c7213393abde8f0b",
+    "web/src/manipulation4d/main.ts": "295a310454f8d9efdf9955574ea1cd65ed76e551d291801dc190906b5a45b619",
+    "web/src/main.ts": "faf05ea2e074a52137019a47326923783baa97ed5cb09bd3628e49350d3bbd5d",
+    "web/src/manipulation4d/types.ts": "78fd207883c211c04bb7a2bbb75902309630b727e7483a1c75ed9bfe25a3631d",
+    "web/src/manipulation4d/dataset-io.ts": "a755a4539841cb5d88a9a5488f354d23fae48107a338dea0e1fb7d3be4bafe6b",
+    "web/src/manipulation4d/trajectory-height.ts": "ffe4cf9256e91b0cb8be6abe17be1b1b5dec21980b38c3e8de28f637e1504063",
+    "tests/test_platform_api.py": "c55f89b3d50816e2c665775f4a97cf3d5cfd703b472554ca5a4eb1bc5e93e301",
+    "tests/test_platform_client.py": "4fea12e058101a69b4ec379e0797735f4422b02fe747947c64e28181d9f83eb0",
+    "tests/test_viewer.py": "6715e975dd54dac855bd5bc694c569cd5f6001630a807ff2bb9511f1998b4c55",
+    "web/tests/platform-api.test.mjs": "42faa46d6fbc1aedb5c827722b1ae679718f00e1e965c15239542834d40ff498",
+    "web/tests/source-transform.test.mjs": "93cacadafbe841139c66528b7e7506d8b1d091752f98420c42774428567de4a0"
+  }
+}

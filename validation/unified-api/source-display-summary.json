@@ -1,0 +1,21 @@
+{
+  "scope": "Source display basis and FOV world similarity",
+  "python_tests": 58,
+  "web_tests": 35,
+  "typescript_vite_build": "passed",
+  "gpu_render_run": false,
+  "limitations": [
+    "CPU pinhole projection and Three.js transform tests; actual GPU frame/UI QA pending test deployment"
+  ],
+  "files_sha256": {
+    "src/arenalab_workbench/source_display.py": "ecbeb843ae67bb02c807726a7bb375a746d6d7f9c0d3f0adbf4fa34af08f843e",
+    "src/arenalab_workbench/gripper_export.py": "213a1170994b1a5c90a8c1d779abeb77cd6ae9fbbc2fa297f43e1cb9cc2f13f4",
+    "src/arenalab_workbench/gripper_render.py": "59c41648b83b6b051f06dbd2a82e6fb8321f6811018a6e84e9d5b67d7a48611f",
+    "src/arenalab_workbench/render_recording.py": "82f903aad521241bd3340ef4f20c0b6ce8203fbe91e38071c81207e440dcd233",
+    "web/src/manipulation4d/source-transform.mjs": "9483d208ba9e70e843681644f7b75a9ff8c35796062349ba37f7b69b1d2c8ef2",
+    "web/src/manipulation4d/stage.ts": "49fb16d50fff7cecd19a5811150ebec5a9a785dfaf3999e4c7213393abde8f0b",
+    "web/src/manipulation4d/types.ts": "78fd207883c211c04bb7a2bbb75902309630b727e7483a1c75ed9bfe25a3631d",
+    "web/tests/source-transform.test.mjs": "93cacadafbe841139c66528b7e7506d8b1d091752f98420c42774428567de4a0",
+    "tests/workbench/test_source_display.py": "74e4d592878aef8c31dfd1b69b4380d2f073b2a667091c56c18f0ba899744b5c"
+  }
+}

@@ -18,8 +18,9 @@ def test_two_clients_share_worker_but_second_reports_queue_position(tmp_path,mon
         i=len(calls);calls.append(i);entered[i].set()
         assert release[i].wait(10)
         return SimpleNamespace(returncode=1)
-    monkeypatch.setattr(server.subprocess,'run',blocked)
-    monkeypatch.setattr(server,'prepare_source',lambda clip,folder:tmp_path/'source.json')
+    monkeypatch.setattr(server,'run_conversion',blocked)
+    monkeypatch.setattr(server,'motion_preflight',lambda clip,robot:{'morphology':{'available':False}})
+    monkeypatch.setattr(server,'conversion_signature',lambda *args:'fixed-test-signature')
     config=tmp_path/'configs/viewer.json';config.parent.mkdir()
     config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',robots=[dict(id='r',pages=['locomotion'],conversion_ready=True,pipeline_row={})],clips=[dict(id=c,page='locomotion') for c in ['a','b']])))
     app=create_app(config)
@@ -195,7 +196,7 @@ def test_humanoid_upload_creates_shared_persisted_descriptor(tmp_path):
     saved['clips']=[clip];config.write_text(json.dumps(saved))
     registry=json.loads((tmp_path/'store/uploaded/registry.json').read_text());robot=registry[0]
     output=tmp_path/'store/jobs/cached/playback.json';output.parent.mkdir(parents=True);output.write_text('{}')
-    cache=dict(clip_id='source',robot_id=robot['id'],signature=conversion_signature(clip,robot),url='/assets/jobs/cached/playback.json')
+    cache=dict(clip_id='source',robot_id=robot['id'],signature=conversion_signature(clip,robot,runtime='unused'),url='/assets/jobs/cached/playback.json')
     (tmp_path/'store/viewer-conversions.json').write_text(json.dumps({'entry':cache}))
     with TestClient(create_app(config)) as client:
         response=client.post('/api/convert',json=dict(clip_id='source',robot_id=robot['id'])).json()
@@ -219,8 +220,9 @@ def test_failed_conversion_reports_reason_and_task_id(tmp_path,monkeypatch):
     def failed(*args,**kwargs):
         kwargs['stdout'].write('ValueError: Animated non-root translation at Spine2\n')
         return SimpleNamespace(returncode=1)
-    monkeypatch.setattr(server.subprocess,'run',failed)
-    monkeypatch.setattr(server,'prepare_source',lambda clip,folder:tmp_path/'source.json')
+    monkeypatch.setattr(server,'run_conversion',failed)
+    monkeypatch.setattr(server,'motion_preflight',lambda clip,robot:{'morphology':{'available':False}})
+    monkeypatch.setattr(server,'conversion_signature',lambda *args:'fixed-test-signature')
     config=tmp_path/'configs/viewer.json';config.parent.mkdir()
     config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',
         robots=[dict(id='r',pages=['locomotion'],conversion_ready=True,pipeline_row={})],
@@ -250,8 +252,9 @@ def test_four_gpu_workers_are_isolated_and_overflow_stays_queued(tmp_path,monkey
         assert release.wait(10)
         kwargs['stdout'].write('RuntimeError: test worker finished\n')
         return SimpleNamespace(returncode=1)
-    monkeypatch.setattr(server.subprocess,'run',run)
-    monkeypatch.setattr(server,'prepare_source',lambda clip,folder:tmp_path/'source.json')
+    monkeypatch.setattr(server,'run_conversion',run)
+    monkeypatch.setattr(server,'motion_preflight',lambda clip,robot:{'morphology':{'available':False}})
+    monkeypatch.setattr(server,'conversion_signature',lambda *args:'fixed-test-signature')
     config=tmp_path/'configs/viewer.json';config.parent.mkdir()
     config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',conversion_devices=['0','1','2','3'],
         robots=[dict(id='r',pages=['locomotion'],conversion_ready=True,pipeline_row={})],
@@ -274,3 +277,62 @@ def test_four_gpu_workers_are_isolated_and_overflow_stays_queued(tmp_path,monkey
             assert all(client.get('/api/jobs/'+j['id']).json()['status']=='failed' for j in jobs)
     finally:
         release.set();app.state.executor.shutdown(wait=True)
+
+
+def test_unified_worker_scale_modes_are_isolated_and_reused(tmp_path,monkeypatch):
+    import time
+    from types import SimpleNamespace
+    import greenwich_pipelines.viewer.server as server
+    calls=[]
+    monkeypatch.setattr(server,'motion_preflight',lambda clip,robot:{'scale_choice_required':True,'morphology':{'available':True,'large_mismatch':True},'source_policy':'provided-fullbody','source_policy_version':'test-source'})
+    monkeypatch.setattr(server,'conversion_signature',lambda clip,robot,mode='preserve',runtime=None:'signature:'+mode)
+    def run(command,**kwargs):
+        assert command[1:4]==['-m','arenalab_workbench.unified_conversion','--request']
+        request=json.loads(Path(command[4]).read_text());calls.append(request)
+        output=Path(request['output']);output.mkdir()
+        (output/'playback.json').write_text(json.dumps(dict(fps=30,frames=3,positions=[],quaternions=[])))
+        (output/'report.json').write_text(json.dumps(dict(solver_status='VALID_STOPPED',solver_converged=False)))
+        assert kwargs['env']['ARENA_TRAJECTORY_SCALE']==request['trajectory_scale']
+        return SimpleNamespace(returncode=0)
+    monkeypatch.setattr(server,'run_conversion',run)
+    config=tmp_path/'configs/viewer.json';config.parent.mkdir()
+    config.write_text(json.dumps(dict(storage=str(tmp_path/'store'),runtime='unused',robots=[dict(id='r',pages=['locomotion'],conversion_ready=True,pipeline_row={})],clips=[dict(id='a',page='locomotion')])))
+    app=create_app(config)
+    try:
+        with TestClient(app) as client:
+            assert client.post('/api/convert',json=dict(clip_id='a',robot_id='r')).status_code==409
+            assert not calls
+            urls=[]
+            for mode in ['preserve','match_robot']:
+                body=dict(clip_id='a',robot_id='r',trajectory_scale=mode)
+                response=client.post('/api/convert',json=body);assert response.status_code==200
+                job=response.json()
+                for _ in range(100):
+                    value=client.get('/api/jobs/'+job['id']).json()
+                    if value['status'] in {'completed','failed'}:break
+                    time.sleep(.01)
+                assert value['status']=='completed',value
+                assert value['trajectory_scale']==mode and value['solver_converged'] is False
+                urls.append(value['url'])
+                again=client.post('/api/convert',json=body).json()
+                assert again['cached'] and again['url']==urls[-1] and again['trajectory_scale']==mode
+            assert urls[0]!=urls[1] and len(calls)==2
+            catalog=client.get('/api/catalog/locomotion').json()
+            assert catalog['clips'][0]['cache']['r']==urls[0]
+    finally:app.state.executor.shutdown(wait=True)
+
+
+def test_source_manifest_identity_follows_referenced_motion_and_bind_files(tmp_path):
+    from greenwich_pipelines.viewer.server import source_content_identity
+    manifest=tmp_path/'sources.json';motion=tmp_path/'motion.npz';options=tmp_path/'options.json';bind=tmp_path/'rest.json'
+    motion.write_bytes(b'original motion');bind.write_text('{}');options.write_text(json.dumps({'bind_path':'rest.json'}))
+    manifest.write_text(json.dumps({'sources':[{'path':'motion.npz','options_file':'options.json'}]}))
+    clip={'source':str(manifest)}
+    original=source_content_identity(clip)
+    assert set(original)=={str(p) for p in (manifest,motion,options,bind)}
+    motion.write_bytes(b'changed underlying motion')
+    changed=source_content_identity(clip)
+    assert original[str(manifest)]==changed[str(manifest)]
+    assert original[str(motion)]!=changed[str(motion)]
+    bind.write_text('{"neutral":"changed"}')
+    assert changed[str(bind)]!=source_content_identity(clip)[str(bind)]

@@ -1,0 +1,56 @@
+{
+  "scope": "Output selection API, SDK, frontend, robot-free selected result presentation",
+  "api_version": "1.3.0",
+  "python_tests": {
+    "passed": 61,
+    "log": "api-tests.log"
+  },
+  "node_tests": {
+    "passed": 43,
+    "log": "web-tests.log"
+  },
+  "build": {
+    "success": true,
+    "log": "web-build.log"
+  },
+  "browser_visual_validation": {
+    "performed": false,
+    "reason": "CUA reports no available browser surfaces; tests use actual render helpers with a minimal DOM surface, not a browser screenshot."
+  },
+  "source_sha256": {
+    "src/arena_api/__init__.py": "ce2fcb6944ff3ac0a102db0f5db39e4694240a8852b0ec9e5df6af40f3341a81",
+    "src/arena_api/contracts.py": "c252e47e3af175feaf2edc5d5965554a0993986d7b9ebb12882e7656df9a87e8",
+    "src/arena_api/app.py": "0f9a1345020deb2c30b44b34534fbe1d3b4ec30a3f52aa880513e382a2f23908",
+    "src/arena_api/client.py": "7a15414d21051461b67de6f89642b4c711713ca0376372649beb58122246428d",
+    "src/arena_api/__main__.py": "e92b6c7ba362b16f0bb3acc508b81b0d893bf7417c411159f2945e786599af17",
+    "src/greenwich_pipelines/viewer/server.py": "58b3e6e589dea34dbc210231d75b6cae0c552d2f22a20c73a084135a73f0ddd8",
+    "web/src/platform-api.ts": "c6eb38bcc5a9182c64c2e5868bf17978b4304160a99c20427d4831e768316b48",
+    "web/src/trajectory-scale.ts": "5fc2c7f1baf517b6885f268817cf4803ddf2612097ba2e1ba9958524ca0ea5dd",
+    "web/src/output-selector.ts": "30d1d376ece3209dcf167c339c79e9353f776cc3ab9d473917a65bf262138a59",
+    "web/src/manipulation4d/main.ts": "f3b69f6c6a9383aba00bf61f575314103dd120258f454f8ce508fbc954711808",
+    "web/src/manipulation4d/types.ts": "c3d0a31fdb5bb5f6f6135bf7b8616f262ef22fa33e2c2a4b4e00563d3107d8f7",
+    "web/src/manipulation4d/dataset-io.ts": "b72a6ce50369ac01bafbd4bacb722b0efb64996664fe0b86a1194c61f2320e3c",
+    "web/src/manipulation4d/selected-output-view.ts": "2a2d05d68dc23449ce528b8163cee2a380b41cbf5d54d56acda2968b268cc49a",
+    "tests/test_platform_api.py": "52dec72eab280e9116e03a79e628c345df23bc5a7daa3dd3a08f4f149c29bc64",
+    "tests/test_platform_client.py": "935a354c9ae3b0fcb0400bb588962dbc752f3296c528e37df8e7b2911afef566",
+    "web/tests/output-selector.test.mjs": "7185cf0c74b4a742f983534e181aa88d905463cd1eafa2598a67e5abc9da9d45",
+    "web/tests/platform-api.test.mjs": "0c6cfd7c58759c7c40857344e175976979e2d8e384145762f2ba4dbb75d3960e",
+    "web/tests/selected-output-view.test.mjs": "080eb967ad720d08b47b260133af068def29f139c9490b4cbf8ba7d531e7d6b7"
+  },
+  "dist_sha256": {
+    "web/dist/arenalab-logo-transparent.png": "c5397aee776a5da91af468aede1f5d1e9cecfbdf3993289de649eed6e4a47533",
+    "web/dist/arenalab-logo.png": "a656de6eba4507838511d09d920686fb5394c927469acb15c0ef94b883473b89",
+    "web/dist/assets/GLTFLoader-BR7Ne_qF.js": "a9147ab9e53e14d4ca10b9aa2fe9c73f79908d2b1bfd2106305ea9a1ded093ea",
+    "web/dist/assets/depth-decoder.worker-8QnKj61k.js": "c69a7f6dea97155d301be11bc36e9e68bbbf994c7415337c22f4b735294a2563",
+    "web/dist/assets/index-CDnr6-ce.js": "8096a241342bd909dc22a9a9c1bdff0d7d7ea76c2c221cc9791d1cc3ae0e0f9e",
+    "web/dist/assets/main-0v7H25_x.js": "072af0262013c46df130bedb6f2379389e94e07d213d0f415d76dbfceb348a73",
+    "web/dist/assets/main-CQPLwn6Y.css": "a5a30500326ebaedc34a84a4ad999e118e26a64599a657fc4ae3ed19105be1d0",
+    "web/dist/assets/main-DbAdThvD.css": "34981f9688b712291b5848c8bdc40ca841d4db158f926a11b1966ac618569fcd",
+    "web/dist/assets/main-rJiNFDf5.js": "ce243488622b98cf38f4fc1814af014f6dccbf773f6cd65a9da61227a8274646",
+    "web/dist/demo-nav.css": "cbc59aea8e00a7ef589bd5451aaf08b3f2b8296182f0c0e32e6d06c6a4b7bdb6",
+    "web/dist/index.html": "ffe53e822495a361888437c47389ba9311a46dbdc38f4ca57bb9ade45e3fe7d6",
+    "web/dist/operator/api.js": "cbe6372bd6f6270f4b04bb25096c2ad35c0bd899d7627057b6ecba55b45e7131",
+    "web/dist/operator/index.html": "b61a5634ed3c6dd85a5302cc2db80d711a3dfe7fdbb3c9f973061ad2ca79ad9d",
+    "web/dist/operator/viewer.js": "cf0845ac770a97c100fe9adb620510ca625e25e082985d48055ce1f8976dffb4"
+  }
+}

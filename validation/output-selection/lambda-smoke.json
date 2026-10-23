@@ -1,0 +1,634 @@
+{
+  "health": {
+    "status": "ok",
+    "api_version": "1.3.0",
+    "scheduler": "existing platform workers",
+    "job_registry": "sqlite-wal",
+    "calibration_workflow": "deferred"
+  },
+  "hiphi_count": 10,
+  "plans": {
+    "hiphi_trajectory": {
+      "recording": "hiphi-adjusting-adjust-0079",
+      "executable": true,
+      "outputs": {
+        "requested": [
+          "trajectory"
+        ],
+        "effective": [
+          "trajectory"
+        ],
+        "dependencies": {
+          "policy": "unified-output-modalities-v1",
+          "effective_outputs": [
+            "trajectory"
+          ],
+          "body": true,
+          "retarget": true,
+          "scene": false,
+          "contact": false,
+          "render": false,
+          "proximity": false,
+          "source_observations": true,
+          "source_body_for_scene_scale": false,
+          "trajectory_scale": "preserve",
+          "dependency_reasons": {
+            "body": [
+              "trajectory or FOV requires a complete body source"
+            ],
+            "retarget": [
+              "trajectory or FOV requires target robot motion"
+            ],
+            "scene": [],
+            "contact": [],
+            "render": [],
+            "proximity": []
+          }
+        },
+        "available": [
+          {
+            "id": "trajectory",
+            "available": true,
+            "reason": "Registered motion source is available"
+          },
+          {
+            "id": "point_cloud",
+            "available": false,
+            "reason": "No registered source camera input; public preview video does not enable CV"
+          },
+          {
+            "id": "contact",
+            "available": false,
+            "reason": "Contact requires an observed 21-landmark hand stream"
+          },
+          {
+            "id": "inpaint_fov",
+            "available": false,
+            "reason": "No registered source camera input; public preview video does not enable CV"
+          }
+        ],
+        "unavailable": [],
+        "defaulted": false,
+        "error": null
+      }
+    },
+    "hiphi_fov_unavailable": {
+      "recording": "hiphi-adjusting-adjust-0079",
+      "executable": false,
+      "outputs": {
+        "requested": [
+          "inpaint_fov"
+        ],
+        "effective": [],
+        "dependencies": {},
+        "available": [
+          {
+            "id": "trajectory",
+            "available": true,
+            "reason": "Registered motion source is available"
+          },
+          {
+            "id": "point_cloud",
+            "available": false,
+            "reason": "No registered source camera input; public preview video does not enable CV"
+          },
+          {
+            "id": "contact",
+            "available": false,
+            "reason": "Contact requires an observed 21-landmark hand stream"
+          },
+          {
+            "id": "inpaint_fov",
+            "available": false,
+            "reason": "No registered source camera input; public preview video does not enable CV"
+          }
+        ],
+        "unavailable": [
+          "inpaint_fov"
+        ],
+        "defaulted": false,
+        "error": "OUTPUTS_UNAVAILABLE: inpaint_fov: No registered source camera input; public preview video does not enable CV"
+      }
+    },
+    "egodex_trajectory": {
+      "recording": "egodex_add_remove_lid_1",
+      "executable": true,
+      "outputs": {
+        "requested": [
+          "trajectory"
+        ],
+        "effective": [
+          "trajectory"
+        ],
+        "dependencies": {
+          "policy": "unified-output-modalities-v1",
+          "effective_outputs": [
+            "trajectory"
+          ],
+          "body": true,
+          "retarget": true,
+          "scene": false,
+          "contact": false,
+          "render": false,
+          "proximity": false,
+          "source_observations": true,
+          "source_body_for_scene_scale": false,
+          "trajectory_scale": "preserve",
+          "dependency_reasons": {
+            "body": [
+              "trajectory or FOV requires a complete body source"
+            ],
+            "retarget": [
+              "trajectory or FOV requires target robot motion"
+            ],
+            "scene": [],
+            "contact": [],
+            "render": [],
+            "proximity": []
+          }
+        },
+        "available": [
+          {
+            "id": "trajectory",
+            "available": true,
+            "reason": "Registered motion source is available"
+          },
+          {
+            "id": "point_cloud",
+            "available": true,
+            "reason": "Registered source camera input is available"
+          },
+          {
+            "id": "contact",
+            "available": true,
+            "reason": "Registered source camera input is available"
+          },
+          {
+            "id": "inpaint_fov",
+            "available": true,
+            "reason": "Registered camera and supported end-effector renderer are available"
+          }
+        ],
+        "unavailable": [],
+        "defaulted": false,
+        "error": null
+      }
+    },
+    "egodex_point_cloud": {
+      "recording": "egodex_add_remove_lid_1",
+      "executable": true,
+      "outputs": {
+        "requested": [
+          "point_cloud"
+        ],
+        "effective": [
+          "point_cloud"
+        ],
+        "dependencies": {
+          "policy": "unified-output-modalities-v1",
+          "effective_outputs": [
+            "point_cloud"
+          ],
+          "body": false,
+          "retarget": false,
+          "scene": true,
+          "contact": false,
+          "render": false,
+          "proximity": false,
+          "source_observations": true,
+          "source_body_for_scene_scale": false,
+          "trajectory_scale": "preserve",
+          "dependency_reasons": {
+            "body": [],
+            "retarget": [],
+            "scene": [
+              "point cloud or FOV requires registered-camera perception"
+            ],
+            "contact": [],
+            "render": [],
+            "proximity": []
+          }
+        },
+        "available": [
+          {
+            "id": "trajectory",
+            "available": true,
+            "reason": "Registered motion source is available"
+          },
+          {
+            "id": "point_cloud",
+            "available": true,
+            "reason": "Registered source camera input is available"
+          },
+          {
+            "id": "contact",
+            "available": true,
+            "reason": "Registered source camera input is available"
+          },
+          {
+            "id": "inpaint_fov",
+            "available": true,
+            "reason": "Registered camera and supported end-effector renderer are available"
+          }
+        ],
+        "unavailable": [],
+        "defaulted": false,
+        "error": null
+      }
+    },
+    "egodex_contact": {
+      "recording": "egodex_add_remove_lid_1",
+      "executable": true,
+      "outputs": {
+        "requested": [
+          "contact"
+        ],
+        "effective": [
+          "contact"
+        ],
+        "dependencies": {
+          "policy": "unified-output-modalities-v1",
+          "effective_outputs": [
+            "contact"
+          ],
+          "body": false,
+          "retarget": false,
+          "scene": false,
+          "contact": true,
+          "render": false,
+          "proximity": false,
+          "source_observations": true,
+          "source_body_for_scene_scale": false,
+          "trajectory_scale": "preserve",
+          "dependency_reasons": {
+            "body": [],
+            "retarget": [],
+            "scene": [],
+            "contact": [
+              "requested source-video hand contact estimate"
+            ],
+            "render": [],
+            "proximity": []
+          }
+        },
+        "available": [
+          {
+            "id": "trajectory",
+            "available": true,
+            "reason": "Registered motion source is available"
+          },
+          {
+            "id": "point_cloud",
+            "available": true,
+            "reason": "Registered source camera input is available"
+          },
+          {
+            "id": "contact",
+            "available": true,
+            "reason": "Registered source camera input is available"
+          },
+          {
+            "id": "inpaint_fov",
+            "available": true,
+            "reason": "Registered camera and supported end-effector renderer are available"
+          }
+        ],
+        "unavailable": [],
+        "defaulted": false,
+        "error": null
+      }
+    },
+    "egodex_inpaint_fov": {
+      "recording": "egodex_add_remove_lid_1",
+      "executable": true,
+      "outputs": {
+        "requested": [
+          "inpaint_fov"
+        ],
+        "effective": [
+          "inpaint_fov"
+        ],
+        "dependencies": {
+          "policy": "unified-output-modalities-v1",
+          "effective_outputs": [
+            "inpaint_fov"
+          ],
+          "body": true,
+          "retarget": true,
+          "scene": true,
+          "contact": false,
+          "render": true,
+          "proximity": false,
+          "source_observations": true,
+          "source_body_for_scene_scale": false,
+          "trajectory_scale": "preserve",
+          "dependency_reasons": {
+            "body": [
+              "trajectory or FOV requires a complete body source"
+            ],
+            "retarget": [
+              "trajectory or FOV requires target robot motion"
+            ],
+            "scene": [
+              "point cloud or FOV requires registered-camera perception"
+            ],
+            "contact": [],
+            "render": [
+              "requested FOV robot rendering"
+            ],
+            "proximity": []
+          }
+        },
+        "available": [
+          {
+            "id": "trajectory",
+            "available": true,
+            "reason": "Registered motion source is available"
+          },
+          {
+            "id": "point_cloud",
+            "available": true,
+            "reason": "Registered source camera input is available"
+          },
+          {
+            "id": "contact",
+            "available": true,
+            "reason": "Registered source camera input is available"
+          },
+          {
+            "id": "inpaint_fov",
+            "available": true,
+            "reason": "Registered camera and supported end-effector renderer are available"
+          }
+        ],
+        "unavailable": [],
+        "defaulted": false,
+        "error": null
+      }
+    }
+  },
+  "job": {
+    "id": "20d272c3bf97460ea449b1abcd0f85f8",
+    "spec": {
+      "workflow": "manipulation",
+      "recording_id": "hiphi-adjusting-adjust-0079",
+      "robot_id": "g1",
+      "hand_id": "none",
+      "trajectory_scale": "match_robot",
+      "output_modalities": [
+        "trajectory"
+      ]
+    },
+    "result": {
+      "id": "20d272c3bf97460ea449b1abcd0f85f8",
+      "workflow": "manipulation",
+      "status": "succeeded",
+      "created_at": 1792732901.0748427,
+      "updated_at": 1792732983.4203947,
+      "cache_hit": false,
+      "backend_job_id": "23ce966339f340e1",
+      "result": {
+        "completed_outputs": [
+          "trajectory"
+        ],
+        "contact_ready": false,
+        "dependency_plan": {
+          "body": true,
+          "contact": false,
+          "dependency_reasons": {
+            "body": [
+              "trajectory or FOV requires a complete body source"
+            ],
+            "contact": [],
+            "proximity": [],
+            "render": [],
+            "retarget": [
+              "trajectory or FOV requires target robot motion"
+            ],
+            "scene": []
+          },
+          "effective_outputs": [
+            "trajectory"
+          ],
+          "policy": "unified-output-modalities-v1",
+          "proximity": false,
+          "render": false,
+          "retarget": true,
+          "scene": false,
+          "source_body_for_scene_scale": false,
+          "source_observations": true,
+          "trajectory_scale": "match_robot"
+        },
+        "effective_outputs": [
+          "trajectory"
+        ],
+        "elapsed_seconds": 54.114110469818115,
+        "fov_ready": false,
+        "motion_policy_version": "resident-skeleton-surface-wrist-v3",
+        "output_modalities": [
+          "trajectory"
+        ],
+        "output_status": {
+          "trajectory": "completed"
+        },
+        "phase": "Selected outputs ready",
+        "requested_outputs": [
+          "trajectory"
+        ],
+        "revision": 1,
+        "robot_id": "g1",
+        "robot_ready": true,
+        "scene_ready": false,
+        "scene_url": "/assets/manipulation4d/unified/a2c6448ce88c568ecff416e17ff86125d79b4bdb78c5056a4faf053a3b95a401/scene.json",
+        "source_policy": "supplied-body",
+        "source_policy_version": "unified-provided-body-or-three-point-native-h-v1",
+        "status": "completed",
+        "trajectory_scale": "match_robot"
+      },
+      "error": null,
+      "status_url": "/api/v1/jobs/20d272c3bf97460ea449b1abcd0f85f8",
+      "events_url": "/api/v1/jobs/20d272c3bf97460ea449b1abcd0f85f8/events",
+      "physics_status": "not_run",
+      "trajectory_scale": "match_robot",
+      "output_modalities": [
+        "trajectory"
+      ]
+    }
+  },
+  "http_static": {
+    "status": 200,
+    "verified_assets": [
+      {
+        "url": "/web/assets/index-CDnr6-ce.js",
+        "sha256": "8096a241342bd909dc22a9a9c1bdff0d7d7ea76c2c221cc9791d1cc3ae0e0f9e"
+      },
+      {
+        "url": "/web/demo-nav.css",
+        "sha256": "cbc59aea8e00a7ef589bd5451aaf08b3f2b8296182f0c0e32e6d06c6a4b7bdb6"
+      }
+    ]
+  },
+  "playback": {
+    "manifest_url": "/assets/manipulation4d/unified/a2c6448ce88c568ecff416e17ff86125d79b4bdb78c5056a4faf053a3b95a401/scene.json",
+    "output_modalities": [
+      "trajectory"
+    ],
+    "completed_outputs": [
+      "trajectory"
+    ],
+    "robot_ids": [
+      "g1"
+    ],
+    "assessment": {
+      "operation_completed": true,
+      "solver_converged": null,
+      "quality": {
+        "mean_mm": 0.04217580092460863,
+        "p95_mm": 0.0793573350799122,
+        "p99_mm": 0.09439399636558381,
+        "max_mm": 0.10767689098495128,
+        "orientation_max_deg": 1.4531881681996568,
+        "minimum_sole_height_mm": 1.0000000000000906
+      },
+      "quality_status": null,
+      "routing": "Supplied smplx full body; fitted source",
+      "metric_reference": "wrist",
+      "support": null,
+      "support_metric_source": null,
+      "reconstruction_model": null,
+      "original_priors_unchanged": true,
+      "trajectory_scale": "match_robot",
+      "source_policy": "Supplied smplx full body; fitted source",
+      "source_policy_version": "unified-provided-body-or-three-point-native-h-v1",
+      "solver_status": "stopped",
+      "physics_validation": "not_run",
+      "acceptance": "not_evaluated",
+      "warnings": []
+    }
+  },
+  "artifacts": {
+    "items": [
+      {
+        "id": "18bcaad560a273bc145f670f56077c1c63a8bb1f9f09f4343f2a1e39d8cb15ad",
+        "sha256": "c9cb279fefab12bd940305b5df283c816d05e7614df25e9a8fa58e22246e186b",
+        "size": 4881,
+        "kind": "playback_manifest",
+        "download_url": "/api/v1/artifacts/18bcaad560a273bc145f670f56077c1c63a8bb1f9f09f4343f2a1e39d8cb15ad/content"
+      },
+      {
+        "id": "eed502899818fba3d87682b9ee8729e5cd43063d198a9494ceb26d96b1b32e39",
+        "sha256": "ccd8e8278ee67095c1db8913755d8a55c85adc75f45bdab325250f9f64340f52",
+        "size": 1801309,
+        "kind": "robot_motion",
+        "download_url": "/api/v1/artifacts/eed502899818fba3d87682b9ee8729e5cd43063d198a9494ceb26d96b1b32e39/content"
+      },
+      {
+        "id": "03422e1570f5116ab423838c1d1d011e40616ea3b1061ed57c8c442904229951",
+        "sha256": "5095c8d6f2e10d9ebc336d717d716d13b947632e7100530159a2f8adcd35647e",
+        "size": 4235,
+        "kind": "quality_report",
+        "download_url": "/api/v1/artifacts/03422e1570f5116ab423838c1d1d011e40616ea3b1061ed57c8c442904229951/content"
+      },
+      {
+        "id": "249a5da65b05108950af050f4a1c01340256a9412bbf8c9cfca8a6b101d730f4",
+        "sha256": "8f1706ce2c5ed0f30aef820950c21123fcff88b903feca2ec4c290c90b76b580",
+        "size": 7659500,
+        "kind": "robot_visual",
+        "download_url": "/api/v1/artifacts/249a5da65b05108950af050f4a1c01340256a9412bbf8c9cfca8a6b101d730f4/content"
+      }
+    ],
+    "semantics": "Content-identified references. If a legacy path is overwritten, download returns 409 rather than different bytes."
+  },
+  "cache_repeat": {
+    "id": "368100e842f7480ca4d7cd31da9967be",
+    "spec": {
+      "workflow": "manipulation",
+      "recording_id": "hiphi-adjusting-adjust-0079",
+      "robot_id": "g1",
+      "hand_id": "none",
+      "trajectory_scale": "match_robot"
+    },
+    "result": {
+      "id": "368100e842f7480ca4d7cd31da9967be",
+      "workflow": "manipulation",
+      "status": "succeeded",
+      "created_at": 1792732999.6195548,
+      "updated_at": 1792733022.5501184,
+      "cache_hit": false,
+      "backend_job_id": "1216033ec1fc4ce8",
+      "result": {
+        "completed_outputs": [
+          "trajectory"
+        ],
+        "contact_ready": false,
+        "dependency_plan": {
+          "body": true,
+          "contact": false,
+          "dependency_reasons": {
+            "body": [
+              "trajectory or FOV requires a complete body source"
+            ],
+            "contact": [],
+            "proximity": [],
+            "render": [],
+            "retarget": [
+              "trajectory or FOV requires target robot motion"
+            ],
+            "scene": []
+          },
+          "effective_outputs": [
+            "trajectory"
+          ],
+          "policy": "unified-output-modalities-v1",
+          "proximity": false,
+          "render": false,
+          "retarget": true,
+          "scene": false,
+          "source_body_for_scene_scale": false,
+          "source_observations": true,
+          "trajectory_scale": "match_robot"
+        },
+        "effective_outputs": [
+          "trajectory"
+        ],
+        "elapsed_seconds": 1.2283458709716797,
+        "fov_ready": false,
+        "motion_policy_version": "resident-skeleton-surface-wrist-v3",
+        "output_modalities": [
+          "trajectory"
+        ],
+        "output_status": {
+          "trajectory": "completed"
+        },
+        "phase": "Selected outputs ready",
+        "requested_outputs": [
+          "trajectory"
+        ],
+        "revision": 1,
+        "robot_id": "g1",
+        "robot_ready": true,
+        "scene_ready": false,
+        "scene_url": "/assets/manipulation4d/unified/a2c6448ce88c568ecff416e17ff86125d79b4bdb78c5056a4faf053a3b95a401/scene.json",
+        "source_policy": "supplied-body",
+        "source_policy_version": "unified-provided-body-or-three-point-native-h-v1",
+        "status": "completed",
+        "trajectory_scale": "match_robot"
+      },
+      "error": null,
+      "status_url": "/api/v1/jobs/368100e842f7480ca4d7cd31da9967be",
+      "events_url": "/api/v1/jobs/368100e842f7480ca4d7cd31da9967be/events",
+      "physics_status": "not_run",
+      "trajectory_scale": "match_robot",
+      "output_modalities": [
+        "trajectory"
+      ]
+    }
+  },
+  "code_commit": "aca2a8a9496c599b41497afd805d58f21b4caf4b",
+  "scope": {
+    "gpu_task": "HiPhi 300-frame G1 trajectory-only; no WBC rollout",
+    "other_outputs": "deployed read-only plans and mocked-stage dispatch tests, no full CV/contact/FOV GPU run in this feature smoke",
+    "cache_repeat": "omitted outputs resolves to trajectory for motion-only HiPhi; existing artifact cache reused",
+    "visual_review": "Browser surface unavailable; DOM-surface tests and HTTP static-byte checks only"
+  }
+}

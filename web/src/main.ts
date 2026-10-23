@@ -1,3 +1,5 @@
+import {api, apiJson} from './platform-api';
+import {prepareRun} from './trajectory-scale';
 import {demoNavigation,demoBrand} from './demo-nav';
 import {createIcons,icons} from 'lucide';
 import './style.css';
@@ -37,7 +39,7 @@ let playing=true,time=0,speed=1,duration=0,last=performance.now(),dragging=false
 const stage=new Stage(el('viewport'),()=>syncOrbit());
 // Scene state belongs to this page visit only; reloads always use the presets.
 function toast(text:string){el('toast').textContent=text;el('toast').hidden=false;clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>el('toast').hidden=true,6500);}
-async function request(url:string,options?:RequestInit){const r=await fetch(url,options);if(!r.ok){const error=await r.json().catch(()=>({detail:r.statusText}));throw new Error(typeof error.detail==='string'?error.detail:'Request failed');}return r.json();}
+const request=apiJson;
 function robotImage(robot:Robot){return thumbnails.has(robot.id)?`<img class="robot-img" src="${thumbnails.get(robot.id)}" alt="${esc(robot.label)}"/>`:`<div class="robot-img-placeholder">${icon('bot')}</div>`;}
 async function warmThumbnails(robots:Robot[]){for(const robot of robots){if(!robot.model_url||thumbnails.has(robot.id))continue;try{thumbnails.set(robot.id,await stage.thumbnail(robot));renderRobot();}catch(error){console.warn('Robot thumbnail unavailable',robot.id,error);}}}
 function renderRobot(){
@@ -65,7 +67,7 @@ function renderPicker(){
   const id=b.dataset.deleteRobot!,robot=catalog.robots.find(r=>r.id===id)!;
   if(!confirm(`Delete ${robot.label} and its generated motion cache? Original SMPL and source data will be kept.`))return;
   b.disabled=true;
-  try{const response=await fetch(`/api/robots/${encodeURIComponent(id)}`,{method:'DELETE'});const result=await response.json();if(!response.ok)throw new Error(result.detail||'Deletion failed');location.reload();}
+  try{const response=await fetch(`/api/v1/robots/${encodeURIComponent(id)}`,{method:'DELETE'});const result=await response.json();if(!response.ok)throw new Error(result.detail||'Deletion failed');location.reload();}
   catch(error){b.disabled=false;alert((error as Error).message);}
  });
  el('upload-open').onclick=openUpload;
@@ -197,11 +199,13 @@ async function assign(i:number,clip:Clip,robot:Robot){
  const slot=slots[i],token=++slot.token,previous={clip:slot.clip,robot:slot.robot,payload:slot.payload};
  slot.clip=clip;slot.robot=robot;slot.status='loading';slot.message=undefined;selected=i;selectedClip=clip;stage.autoRotate=false;syncOrbit();renderSlots();renderRobot();renderMetadata();renderCatalog();
  try{
-   let result=await request('/api/convert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clip_id:clip.id,robot_id:robot.id})});
+   const spec=await prepareRun({workflow:'locomotion',recording_id:clip.id,robot_id:robot.id},robot.label);
+   if(token!==slot.token)return;
+   let result=await api.start(spec);
    while(result.status!=='completed'){
      if(token!==slot.token)return;if(result.status==='failed')throw new Error(result.error||'Conversion failed');
      slot.status=result.status;slot.message=result.status==='queued'?`Queued · Position ${result.queue_position||1} · Waiting for GPU`:'Generating · GPU running';renderSlots();
-     await new Promise(resolve=>setTimeout(resolve,1000));result=await request(`/api/jobs/${result.id}`);
+     await new Promise(resolve=>setTimeout(resolve,1000));result=await api.job(result.id);
    }
    if(token!==slot.token)return;const payload:Playback=await request(result.url);if(token!==slot.token)return;
    await stage.load(i,robot,payload,()=>token===slot.token);if(token!==slot.token)return;
@@ -217,7 +221,7 @@ function openInspection(robot:Robot){
  const report=robot.report as any;const editable=robot.id.startsWith('custom_')&&robot.conversion_ready&&report?.endpoints;
  el('robot-picker').hidden=true;modal(`<div class="modal-head"><h2>${esc(robot.label)}</h2><button id="modal-close" aria-label="Close">${icon('x')}</button></div><p>${esc(report?.message||robotStatus(robot))}</p><pre>${esc(JSON.stringify(report,null,2))}</pre>${editable?`<details><summary>Physical endpoint / wrist frames</summary><p class="helper">Axes are fixed in each vendor wrist-link frame. Editing invalidates cached results; rerun the motion afterward.</p><textarea id="physical-metadata" aria-label="Physical robot metadata" style="width:100%;height:220px;background:#181818;color:#ddd">${esc(JSON.stringify({endpoints:report.endpoints,palm_frames:report.palm_frames},null,2))}</textarea><button id="save-physical" class="primary">Save physical metadata</button><div id="physical-result" role="status"></div></details>`:''}`);
  if(pendingSelection){const back=document.createElement('button');back.className='picker-back';back.textContent='Back to robot selection';back.onclick=renderPicker;document.querySelector('.modal')!.append(back);}
- el('save-physical')?.addEventListener('click',async()=>{const result=el('physical-result');try{const updated:Robot=await request(`/api/robots/${robot.id}/metadata`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(JSON.parse(el<HTMLTextAreaElement>('physical-metadata').value))});Object.assign(robot,updated);result.textContent='Saved. Rerun motions to use the new frames.';}catch(error){result.textContent=(error as Error).message;}});
+ el('save-physical')?.addEventListener('click',async()=>{const result=el('physical-result');try{const updated:Robot=await request(`/api/v1/robots/${robot.id}/metadata`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(JSON.parse(el<HTMLTextAreaElement>('physical-metadata').value))});Object.assign(robot,updated);result.textContent='Saved. Rerun motions to use the new frames.';}catch(error){result.textContent=(error as Error).message;}});
 }
 function openUpload(){
  el('robot-picker').hidden=true;modal(`<div class="modal-head"><h2>Add your robot.</h2><button id="modal-close" aria-label="Close">${icon('x')}</button></div><p>Upload a URDF, or a ZIP containing the URDF and meshes.<br/>Models stay in your local workspace and join the library after inspection.</p><label class="upload-drop" for="robot-file">${icon('upload')}<strong>Choose a file or drop a robot package here</strong><small>.urdf / .zip · Up to 150 MB</small></label><input id="robot-file" type="file" accept=".urdf,.zip"/><div id="upload-result" class="result"></div><p class="helper">Humanoid topology, endpoints and neutral wrist frames are inferred automatically. Unsupported or ambiguous models receive a specific inspection report.</p>`);
@@ -226,7 +230,7 @@ function openUpload(){
  const drop=document.querySelector<HTMLElement>('.upload-drop')!;drop.ondragover=e=>e.preventDefault();drop.ondrop=e=>{e.preventDefault();if(e.dataTransfer?.files[0])void uploadRobot(e.dataTransfer.files[0]);};
 }
 async function uploadRobot(file:File){const result=el('upload-result');result.textContent='Checking URDF and mesh assets…';try{
- const form=new FormData();form.append('file',file);const robot:Robot=await request(`/api/robots/${page}`,{method:'POST',body:form});catalog.robots.push(robot);void warmThumbnails([robot]);
+ const form=new FormData();form.append('file',file);const robot:Robot=await request(`/api/v1/robots/import/${page}`,{method:'POST',body:form});catalog.robots.push(robot);void warmThumbnails([robot]);
  result.innerHTML=`${esc(robot.label)} · ${esc(robotStatus(robot))}.<br/>${esc(robot.report?.message||'Model inspection complete')}<div class="modal-buttons"><button class="primary" id="upload-done">View robot</button></div>`;
  el('upload-done').textContent='Back to robot selection';el('upload-done').onclick=()=>renderPicker();
  }catch(error){result.textContent=(error as Error).message;}}
@@ -244,13 +248,13 @@ document.addEventListener('dragover',e=>{if(e.dataTransfer?.types.includes('appl
 function animate(){requestAnimationFrame(animate);const now=performance.now();const dt=Math.min((now-last)/1000,.1);last=now;if(playing&&duration>0){time+=dt*speed;if(time>duration)time=0;}
  stage.frame(time);positionLabels();positionPicker();syncVideos();syncTracking();el('time').textContent=`${time.toFixed(2)} / ${duration.toFixed(2)}`;el<HTMLInputElement>('timeline').value=String(time);el('frame-label').textContent=`FRAME ${Math.floor(time*30).toString().padStart(3,'0')} · 30 HZ`;
 }
-async function boot(){try{catalog=await request(`/api/catalog/${page}`);defaultRobot=catalog.robots.find(r=>r.id==='g1')||catalog.robots[0];if(!defaultRobot)throw new Error('No robot configured for this pipeline');
+async function boot(){try{await api.session();catalog=await request(`/api/v1/catalogs/${page}`);defaultRobot=catalog.robots.find(r=>r.id==='g1')||catalog.robots[0];if(!defaultRobot)throw new Error('No robot configured for this pipeline');
  slots=Array.from({length:3},(_,index)=>({index,robot:defaultRobot,status:'empty',token:0}));
  selectedClip=catalog.clips[0];renderCatalog();renderRobot();renderMetadata();renderSlots();el('boot').remove();animate();void warmThumbnails(catalog.robots);
  if(catalog.presets?.length){await Promise.all(catalog.presets.slice(0,3).map(async(s,i)=>{const clip=catalog.clips.find(c=>c.id===s.clip_id),robot=resolveRobot(s.robot_id);if(clip&&robot)await assign(i,clip,robot);}));}
  else if(catalog.clips.length){const clip=catalog.clips.find(c=>c.cache&&Object.keys(c.cache).length>=2)||catalog.clips[0];await assign(0,clip,defaultRobot);const other=catalog.robots.find(r=>r.id!==defaultRobot.id&&clip.cache?.[r.id]);if(other)await assign(1,clip,other);}
  time=0;
- setInterval(async()=>{try{const fresh:Catalog=await request(`/api/catalog/${page}`);if(dragging)return;let changed=false;for(const clip of catalog.clips){const cache=fresh.clips.find(c=>c.id===clip.id)?.cache;if(JSON.stringify(clip.cache)!==JSON.stringify(cache)){clip.cache=cache;changed=true;}}if(changed)renderCatalog();}catch{}},15000);
+ setInterval(async()=>{try{const fresh:Catalog=await request(`/api/v1/catalogs/${page}`);if(dragging)return;let changed=false;for(const clip of catalog.clips){const cache=fresh.clips.find(c=>c.id===clip.id)?.cache;if(JSON.stringify(clip.cache)!==JSON.stringify(cache)){clip.cache=cache;changed=true;}}if(changed)renderCatalog();}catch{}},15000);
  selected=null;renderRobot();renderSlots();renderMetadata();stage.autoRotate=true;syncOrbit();
  }catch(error){el('boot').innerHTML=`<div class="fatal">Workspace could not be loaded<br/>${esc((error as Error).message)}<br/><small>Run prepare_motion_lab.py before starting the local service.</small></div>`;}}
 void boot();

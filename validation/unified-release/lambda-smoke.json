@@ -1,0 +1,102 @@
+[
+  {
+    "robot": "custom_0fcf5afb28",
+    "frames": 300,
+    "trajectory_scale": "preserve",
+    "quality": {
+      "mean_mm": 0.07491992450617987,
+      "p95_mm": 0.192675422329307,
+      "p99_mm": 0.27540584360422166,
+      "max_mm": 0.3607465598303125,
+      "orientation_max_deg": 1.5854079059542376,
+      "minimum_sole_height_mm": 0.9999999999995078
+    },
+    "solver": {
+      "status": "stopped",
+      "converged": null,
+      "soft": {
+        "status": "VALID_STOPPED",
+        "stop_reason": "iteration_budget_exhausted"
+      },
+      "polish": {
+        "status": "VALID_STOPPED",
+        "stop_reason": "line_search_rejected"
+      },
+      "evidence": "VALID_STOPPED checks motion constraints only; nonlinear KKT/global convergence is not established"
+    },
+    "timing": {
+      "full_job_seconds": 135.47263741493225,
+      "numerical_wall_s": 98.11002388014458,
+      "refinement_active_s": 56.42353996294551
+    },
+    "hardware": {
+      "gpu": "NVIDIA RTX A6000",
+      "torch": "2.7.0",
+      "cuda": "12.8",
+      "peak_torch_allocated_mib": 975.93603515625
+    },
+    "native_export_parity": {
+      "frames": 300,
+      "body_visual_geoms": 40,
+      "scalar_joints": 31,
+      "visual_position_max_m": 0.0,
+      "visual_rotation_matrix_max_abs": 5.662137425588298e-15,
+      "native_joint_max_abs": 0.0,
+      "tracking_task_position_max_m": 4.440892098500626e-16,
+      "coordinate_policy": "Fixed declared display-to-native rotation only; no fitting, translation alignment or frame offset",
+      "kinematic_only": true
+    },
+    "code_fingerprint": "5adf79016db26fcd0574a05faa837252e933c48981bd739d3ffd01d6da02d847",
+    "scene_url": "/assets/manipulation4d/unified/9e68a510ccb68a4de5806717b0cbc0b51cd65c77b489bf59d2a6969eca02d8aa/scene.json"
+  },
+  {
+    "robot": "g1",
+    "frames": 300,
+    "trajectory_scale": "match_robot",
+    "quality": {
+      "mean_mm": 0.04217580092460863,
+      "p95_mm": 0.0793573350799122,
+      "p99_mm": 0.09439399636558381,
+      "max_mm": 0.10767689098495128,
+      "orientation_max_deg": 1.4531881681996568,
+      "minimum_sole_height_mm": 1.0000000000000906
+    },
+    "solver": {
+      "status": "stopped",
+      "converged": null,
+      "soft": {
+        "status": "VALID_STOPPED",
+        "stop_reason": "accepted_step_below_2e-4"
+      },
+      "polish": {
+        "status": "VALID_STOPPED",
+        "stop_reason": "accepted_step_below_2e-4"
+      },
+      "evidence": "VALID_STOPPED checks motion constraints only; nonlinear KKT/global convergence is not established"
+    },
+    "timing": {
+      "full_job_seconds": 54.37743091583252,
+      "numerical_wall_s": 43.5942799791228,
+      "refinement_active_s": 19.896565874479712
+    },
+    "hardware": {
+      "gpu": "NVIDIA RTX A6000",
+      "torch": "2.7.0",
+      "cuda": "12.8",
+      "peak_torch_allocated_mib": 959.5205078125
+    },
+    "native_export_parity": {
+      "frames": 300,
+      "body_visual_geoms": 36,
+      "scalar_joints": 29,
+      "visual_position_max_m": 0.0,
+      "visual_rotation_matrix_max_abs": 5.218048215738236e-15,
+      "native_joint_max_abs": 0.0,
+      "tracking_task_position_max_m": 4.965068306494546e-16,
+      "coordinate_policy": "Fixed declared display-to-native rotation only; no fitting, translation alignment or frame offset",
+      "kinematic_only": true
+    },
+    "code_fingerprint": "c7a6f6830fc8ac06d730fcf24ba5ce93470aba7298c4acbdf3352f5b16d1f1f1",
+    "scene_url": "/assets/manipulation4d/unified/f43d68a126b7e8cbf2e493b659c84406f9d48d18259c143bfa4c16d4662e60c2/scene.json"
+  }
+]

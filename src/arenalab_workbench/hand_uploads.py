@@ -1,6 +1,6 @@
 """Persist and inspect end-effector packages without inventing mounting frames."""
 from pathlib import Path
-import hashlib,json,threading,uuid,xml.etree.ElementTree as ET
+import hashlib,json,threading,uuid,zipfile,xml.etree.ElementTree as ET
 from fastapi import UploadFile,File,HTTPException
 from greenwich_pipelines.viewer.uploads import unpack_robot,MAX_BYTES
 from greenwich_pipelines.viewer.export import robot_model
@@ -36,4 +36,6 @@ def attach_hand_routes(app,storage):
                 if existing:return existing
                 registry.parent.mkdir(parents=True,exist_ok=True);temporary=registry.with_suffix('.tmp');temporary.write_text(json.dumps([*current,row],indent=2));temporary.replace(registry)
             return row
+        except zipfile.BadZipFile as error:
+            raise HTTPException(400,'Package is not a valid ZIP archive') from error
         except (ValueError,ET.ParseError) as error:raise HTTPException(400,str(error)) from error

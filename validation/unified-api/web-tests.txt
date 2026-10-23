@@ -1,0 +1,224 @@
+
+> arenalab-motion-lab@0.1.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: browser restores exact calibrated points, excludes invalid depth, preserves source clock
+ok 1 - browser restores exact calibrated points, excludes invalid depth, preserves source clock
+  ---
+  duration_ms: 1.056112
+  type: 'test'
+  ...
+# Subtest: truncated packet cannot be presented as a valid observation
+ok 2 - truncated packet cannot be presented as a valid observation
+  ---
+  duration_ms: 0.290585
+  type: 'test'
+  ...
+# Subtest: source human cloud uses the same calibrated transform and remains a separate layer
+ok 3 - source human cloud uses the same calibrated transform and remains a separate layer
+  ---
+  duration_ms: 0.268224
+  type: 'test'
+  ...
+# Subtest: far seek prioritizes the new window and discards late aborted responses
+ok 4 - far seek prioritizes the new window and discards late aborted responses
+  ---
+  duration_ms: 3.453342
+  type: 'test'
+  ...
+# Subtest: repeated scrubbing deduplicates requests and keeps the current frame in a bounded cache
+ok 5 - repeated scrubbing deduplicates requests and keeps the current frame in a bounded cache
+  ---
+  duration_ms: 0.642045
+  type: 'test'
+  ...
+# Subtest: a failed frame waits for explicit retry instead of issuing an animation-frame retry storm
+ok 6 - a failed frame waits for explicit retry instead of issuing an animation-frame retry storm
+  ---
+  duration_ms: 0.963077
+  type: 'test'
+  ...
+# Subtest: changing recordings cancels in-flight work and cannot refill the disposed cache
+ok 7 - changing recordings cancels in-flight work and cannot refill the disposed cache
+  ---
+  duration_ms: 0.412584
+  type: 'test'
+  ...
+# Subtest: playback fills a runway before starting and after starvation; paused seeks stay immediate
+ok 8 - playback fills a runway before starting and after starvation; paused seeks stay immediate
+  ---
+  duration_ms: 0.66033
+  type: 'test'
+  ...
+# Subtest: dense clouds shrink the prefetch horizon to the byte budget without refetch loops
+ok 9 - dense clouds shrink the prefetch horizon to the byte budget without refetch loops
+  ---
+  duration_ms: 0.397627
+  type: 'test'
+  ...
+# Subtest: a short tail can play without waiting for a full initial runway
+ok 10 - a short tail can play without waiting for a full initial runway
+  ---
+  duration_ms: 0.317436
+  type: 'test'
+  ...
+# Subtest: the tail prefetches the next loop before playback wraps to zero
+ok 11 - the tail prefetches the next loop before playback wraps to zero
+  ---
+  duration_ms: 0.317145
+  type: 'test'
+  ...
+# Subtest: whole-clip export preserves native order, precision and relative timestamps
+ok 12 - whole-clip export preserves native order, precision and relative timestamps
+  ---
+  duration_ms: 0.796024
+  type: 'test'
+  ...
+# Subtest: current frame reads both joints and leaves unavailable signals empty
+ok 13 - current frame reads both joints and leaves unavailable signals empty
+  ---
+  duration_ms: 0.136897
+  type: 'test'
+  ...
+# Subtest: incomplete and nonfinite state arrays cannot be downloaded as valid states
+ok 14 - incomplete and nonfinite state arrays cannot be downloaded as valid states
+  ---
+  duration_ms: 0.170821
+  type: 'test'
+  ...
+# Subtest: mobile robot export distinguishes slide meters from hinge radians
+ok 15 - mobile robot export distinguishes slide meters from hinge radians
+  ---
+  duration_ms: 0.131116
+  type: 'test'
+  ...
+# Subtest: simultaneous submissions share a session, a request and its task identity
+ok 16 - simultaneous submissions share a session, a request and its task identity
+  ---
+  duration_ms: 51.689054
+  type: 'test'
+  ...
+# Subtest: ambiguous network failure retains the same submission key for retry
+ok 17 - ambiguous network failure retains the same submission key for retry
+  ---
+  duration_ms: 13.05934
+  type: 'test'
+  ...
+# Subtest: media transport preserves numeric motion buffers and canonical geometry references
+ok 18 - media transport preserves numeric motion buffers and canonical geometry references
+  ---
+  duration_ms: 9.34547
+  type: 'test'
+  ...
+# Subtest: interrupted and unknown tasks are not presented as completed
+ok 19 - interrupted and unknown tasks are not presented as completed
+  ---
+  duration_ms: 8.248191
+  type: 'test'
+  ...
+# Subtest: plan exposes required scale choice and preserves source policy
+ok 20 - plan exposes required scale choice and preserves source policy
+  ---
+  duration_ms: 11.563603
+  type: 'test'
+  ...
+# Subtest: scale modes have different identities while reordered retries retain their key
+ok 21 - scale modes have different identities while reordered retries retain their key
+  ---
+  duration_ms: 6.336503
+  type: 'test'
+  ...
+# Subtest: structured preflight rejection is readable and releases only a known rejected key
+ok 22 - structured preflight rejection is readable and releases only a known rejected key
+  ---
+  duration_ms: 5.874366
+  type: 'test'
+  ...
+# Subtest: expired session response resets the session promise without silent resubmission
+ok 23 - expired session response resets the session promise without silent resubmission
+  ---
+  duration_ms: 7.409507
+  type: 'test'
+  ...
+# Subtest: source similarity commutes with the manipulation raw-Z-up to display basis
+ok 24 - source similarity commutes with the manipulation raw-Z-up to display basis
+  ---
+  duration_ms: 0.85763
+  type: 'test'
+  ...
+# Subtest: manipulation: declared basis aligns source body/object and camera with numerical world
+ok 25 - manipulation: declared basis aligns source body/object and camera with numerical world
+  ---
+  duration_ms: 0.811473
+  type: 'test'
+  ...
+# Subtest: gripper: declared basis aligns source body/object and camera with numerical world
+ok 26 - gripper: declared basis aligns source body/object and camera with numerical world
+  ---
+  duration_ms: 0.210124
+  type: 'test'
+  ...
+# Subtest: invalid display basis is rejected instead of silently rotating the source incorrectly
+ok 27 - invalid display basis is rejected instead of silently rotating the source incorrectly
+  ---
+  duration_ms: 0.25001
+  type: 'test'
+  ...
+# Subtest: already transformed source is never scaled twice and invalid transforms fail explicitly
+ok 28 - already transformed source is never scaled twice and invalid transforms fail explicitly
+  ---
+  duration_ms: 0.163818
+  type: 'test'
+  ...
+# Subtest: original object-local axes, camera position and body share one similarity; robot stays outside it
+ok 29 - original object-local axes, camera position and body share one similarity; robot stays outside it
+  ---
+  duration_ms: 0.291157
+  type: 'test'
+  ...
+# Subtest: one seconds clock clamps each clip without stretching or independent looping
+ok 30 - one seconds clock clamps each clip without stretching or independent looping
+  ---
+  duration_ms: 0.465694
+  type: 'test'
+  ...
+# Subtest: package duplicates prefer usable model; equal labels do not merge distinct models
+ok 31 - package duplicates prefer usable model; equal labels do not merge distinct models
+  ---
+  duration_ms: 0.360406
+  type: 'test'
+  ...
+# Subtest: categories use dataset activity metadata without changing filenames
+ok 32 - categories use dataset activity metadata without changing filenames
+  ---
+  duration_ms: 0.429556
+  type: 'test'
+  ...
+# Subtest: global robot selection and selected slot remain independent
+ok 33 - global robot selection and selected slot remain independent
+  ---
+  duration_ms: 0.10648
+  type: 'test'
+  ...
+# Subtest: family and filenames searchable; metadata cannot inject markup
+ok 34 - family and filenames searchable; metadata cannot inject markup
+  ---
+  duration_ms: 0.335329
+  type: 'test'
+  ...
+# Subtest: small chart retains a single-frame error spike and both hands
+ok 35 - small chart retains a single-frame error spike and both hands
+  ---
+  duration_ms: 1.352188
+  type: 'test'
+  ...
+1..35
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 322.841971
