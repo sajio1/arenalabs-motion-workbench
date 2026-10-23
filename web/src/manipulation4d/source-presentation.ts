@@ -67,6 +67,17 @@ export function sceneSourceMetadata(scene:SceneAsset,recording?:RecordingSourceM
  return metadata;
 }
 
+/** Raw recording metadata and a saved scene's working source are different layers. */
+export function sourceInputBadges(recording?:RecordingSourceMetadata,scene?:SceneAsset){
+ const raw=recordingSourcePresentation(recording??{});
+ const bound=scene&&recordingSourcePresentation(sceneSourceMetadata(scene,recording));
+ const separate=bound&&bound.label!=='Source type unspecified'&&bound.label!==raw.label;
+ return {
+  raw:{text:'Raw input: '+raw.label,detail:raw.detail.replace(/^Input:/,'Raw input:')},
+  scene:separate?{text:'Scene input: '+bound.label,detail:'Source bound to this saved scene; this may be an intermediate reconstruction or a historical source.'}:undefined,
+ };
+}
+
 /** A historical URL must not populate the current recording's cached badge. */
 export function recordingSceneCacheKey(recording:{id:string;scene_url?:string},sceneUrl=recording.scene_url){
  const canonical=(url:string)=>url.replace(/^\/api\/v1\/media\//,'/assets/');

@@ -121,3 +121,35 @@ test('cached badges use the current scene URL, never recording ID alone',()=>{
  assert.equal(recordingSceneCacheKey(recording,'/api/v1/media/manipulation4d/current/scene.json'),recordingSceneCacheKey(recording));
  assert.equal(recordingSceneCacheKey({id:'same'}),undefined);
 });
+
+const {sourceInputBadges}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('RAW DATA keeps observed input when the saved scene uses reconstructed SMPL-H',()=>{
+ const recording={source_family:'observations',source_format:'observed_head_wrists',source_policy:'three-point-egoallo'};
+ const scene={id:'egodex',source_body:{source_family:'smplh',source_evidence:'reconstructed',vertices_url:'saved-h.bin'},robots:[{id:'a3'}]};
+ const original=structuredClone(scene),badges=sourceInputBadges(recording,scene);
+ assert.equal(badges.raw.text,'Raw input: Observed head + wrists');
+ assert.equal(badges.scene.text,'Scene input: SMPL-H · reconstructed');
+ assert.ok(badges.scene.detail.includes('intermediate reconstruction'));
+ assert.deepEqual(scene,original);
+});
+test('current G1 raw input stays distinct from a historical SMPL-X scene input',()=>{
+ const recording={source_family:'robot',source_robot_id:'g1',source_stage:'post_rl'};
+ const scene={source_body:{source_family:'smplx',source_evidence:'reconstructed',vertices_url:'old.bin'},source_transform:{scale:.7}};
+ const badges=sourceInputBadges(recording,scene);
+ assert.equal(badges.raw.text,'Raw input: G1 · post-RL simulation');
+ assert.equal(badges.scene.text,'Scene input: SMPL-X · reconstructed');
+ assert.equal(scene.source_transform.scale,.7);
+});
+test('raw previews and matching bound inputs do not add a redundant scene badge',()=>{
+ const recording={source_family:'robot',source_robot_id:'g1',source_stage:'post_rl'};
+ assert.equal(sourceInputBadges(recording).scene,undefined);
+ assert.equal(sourceInputBadges(recording,{robots:[],geometry:{}}).scene,undefined);
+ assert.equal(sourceInputBadges(recording,{source_robot:{...recording}}).scene,undefined);
+ assert.equal(sourceInputBadges({source_body_family:'smplh',source_evidence:'recorded'},{source_body:{source_family:'smplh',source_evidence:'recorded'}}).scene,undefined);
+});
+test('missing catalog metadata never relabels a scene intermediate as raw input',()=>{
+ const badges=sourceInputBadges(undefined,{source_body:{source_family:'smplh',source_evidence:'reconstructed'}});
+ assert.equal(badges.raw.text,'Raw input: Source type unspecified');
+ assert.equal(badges.scene.text,'Scene input: SMPL-H · reconstructed');
+ assert.deepEqual(sourceInputBadges(undefined),{raw:{text:'Raw input: Source type unspecified',detail:'The recording does not declare its motion source type.'},scene:undefined});
+});
