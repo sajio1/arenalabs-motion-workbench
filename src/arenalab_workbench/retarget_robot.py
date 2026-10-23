@@ -4,6 +4,7 @@ Each recording supplies its own immutable body prior and observed source hands.
 Explicit work/output paths are mandatory; another recording is never a fallback. No robot identity selects solver settings or mounting behavior.
 """
 from arenalab_workbench.settings import paths
+from arenalab_workbench.human_reference import artifact_names, SMPLH_POLICY
 from pathlib import Path
 import argparse,hashlib,json,os,subprocess,sys,time
 from arenalab_workbench.refinement_runtime import run_refinement
@@ -37,9 +38,9 @@ def run(robot_id,status_path=None):
     spec,*_=build_from_mjcf(row['xml'],row['body']);ids=resolve_endpoints(spec,row.get('endpoints'))
     row['endpoints']={role:spec.joint_names[i] for role,i in zip(ROLES,ids)}
     no_hand=json.loads((SOURCE/'input_manifest.json').read_text()).get('end_effector')=='none'
-    source_hashes={name:hashlib.sha256((SOURCE/name).read_bytes()).hexdigest() for name in ['canonical.npz','smplx_motion.npz','observations.npz','source_hands.npz','operation-accuracy/source-targets.npz'] if (SOURCE/name).exists()}
+    source_hashes={name:hashlib.sha256((SOURCE/name).read_bytes()).hexdigest() for name in artifact_names(SOURCE)}
     WORK.mkdir(parents=True,exist_ok=True);(WORK/'operation-accuracy').mkdir(exist_ok=True)
-    for name in ['canonical.npz','smplx_motion.npz','observations.npz','source_hands.npz','sources.json']:
+    for name in ['canonical.npz','smplh_motion.npz','human_reference.json','observations.npz','source_hands.npz','sources.json']:
         destination=WORK/name
         if (SOURCE/name).exists() and not destination.exists():destination.symlink_to(SOURCE/name)
     destination=WORK/'operation-accuracy/source-targets.npz'
@@ -101,10 +102,10 @@ def export_result(robot_id,robot,row,output,angles,hashes,source_hashes,status_p
         current['robots']=[r for r in current['robots'] if r['id']!=robot_id]+[result]
         if 'ground_height_m' in motion:
             from arenalab_workbench.support_reference import POLICY
-            current['geometry']['ground']=dict(height_m=float(motion['ground_height_m']),estimated=True,policy=POLICY,provenance='User-declared floor' if json.loads((SOURCE/'input_manifest.json').read_text()).get('height_calibration') else 'SMPL-X reconstructed low/slow soles; not a measured floor',height_calibration=json.loads((SOURCE/'input_manifest.json').read_text()).get('height_calibration'))
+            current['geometry']['ground']=dict(height_m=float(motion['ground_height_m']),estimated=True,policy=POLICY,provenance='User-declared floor' if json.loads((SOURCE/'input_manifest.json').read_text()).get('height_calibration') else 'SMPL-H reconstructed low/slow soles; not a measured floor',height_calibration=json.loads((SOURCE/'input_manifest.json').read_text()).get('height_calibration'))
     merge_scene(DEST/'scene.json',update)
     assert all(hashlib.sha256((SOURCE/name).read_bytes()).hexdigest()==digest for name,digest in source_hashes.items()),'Source targets or priors changed'
-    write(folder/'validation.json',dict(source_id=json.loads((SOURCE/'input_manifest.json').read_text())['clip'],source_hashes=source_hashes,original_priors_unchanged=True,raw_sha256=hashes,quality=result['quality'],policy='same palm-reference refinement for every humanoid',hardware_calibration=False,encoder_policy=__import__('greenwich_pipelines.input_policy',fromlist=['POLICY']).POLICY,support_policy=__import__('arenalab_workbench.support_reference', fromlist=['*']).POLICY))
+    write(folder/'validation.json',dict(human_model='smplh',human_policy=SMPLH_POLICY,source_id=json.loads((SOURCE/'input_manifest.json').read_text())['clip'],source_hashes=source_hashes,original_priors_unchanged=True,raw_sha256=hashes,quality=result['quality'],policy='same palm-reference refinement for every humanoid',hardware_calibration=False,encoder_policy=__import__('greenwich_pipelines.input_policy',fromlist=['POLICY']).POLICY,support_policy=__import__('arenalab_workbench.support_reference', fromlist=['*']).POLICY))
     if status_path:write(status_path,dict(status='completed',phase='Ready',scene_url=PUBLIC+'/scene.json',robot_id=robot_id))
     print('RETARGET_COMPLETE',json.dumps(result),flush=True)
 

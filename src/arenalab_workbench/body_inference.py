@@ -4,19 +4,23 @@ from pathlib import Path
 import json,subprocess,time,shutil,os,signal
 from arenalab_workbench.egoallo_runtime import gpu_environment
 from arenalab_workbench.window_plan import digest,save_json
+from arenalab_workbench.human_reference import family_for_work, SMPLH_POLICY
 
 def run(root,status=None):
     root=Path(root);code=Path(__file__).parent
     output=root/'windowed-v1';source_hash=digest(root/'observations.npz')
+    family=family_for_work(root)
     identity=dict(observations_sha256=source_hash,
         denoiser_sha256=digest(root/'egoallo_checkpoint_april13/checkpoints_3000000/model.safetensors'),
-        smplh_sha256=digest(root/'model.npz'),smplx_sha256=digest(root/'SMPLX_NEUTRAL.npz'))
+        smplh_sha256=digest(root/'model.npz'))
+    identity.update(human_family='smplh',export_policy=SMPLH_POLICY)
     identity_path=root/'inference_identity.json'
     if identity_path.exists() and json.loads(identity_path.read_text())!=identity:
         raise RuntimeError('Inputs or model weights changed; refusing stale checkpoints')
     save_json(identity_path,identity)
-    env=gpu_environment();env.update(ARENA_EGO_WORKDIR=str(root),ARENA_WINDOW_OUTPUT=str(output),
+    env=os.environ.copy();env.update(ARENA_EGO_WORKDIR=str(root),ARENA_WINDOW_OUTPUT=str(output),
         PYTHONPATH=paths.pythonpath(),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2',EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'))
+    env=gpu_environment(env)
     python=str(paths.egoallo_python)
     complete=False
     if (output/'progress.json').exists() and (output/'manifest.json').exists():
@@ -36,7 +40,7 @@ def run(root,status=None):
                 if status:
                     progress=output/'progress.json'
                     value=json.loads(progress.read_text()) if progress.exists() else {}
-                    phase=f"Recovering SMPL-X · window {value.get('window',1)}/{value.get('total_windows','…')} · {value.get('completed_frames',0)} frames saved"
+                    phase=f"Recovering {family.upper()} · window {value.get('window',1)}/{value.get('total_windows','…')} · {value.get('completed_frames',0)} frames saved"
                     if rid:
                         stream_path=root/'frame-stream'/rid/'progress.json'
                         if stream_path.exists():
@@ -62,8 +66,11 @@ def run(root,status=None):
         if digest(dest)!=digest(result):raise RuntimeError('Refusing to replace an immutable body prior')
     else:shutil.copyfile(result,dest)
     if not (root/'canonical.npz').exists():
-        if status:save_json(status,dict(status='running',phase='Transferring the continuous body prior to SMPL-X'))
-        with (root/'transfer_smplx.py.log').open('a') as log:
-            subprocess.run([python,str(code/'transfer_smplx.py')],env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
+        script='emit_smplh.py'
+        if status:save_json(status,dict(status='running',phase='Exporting native SMPL-H'))
+        with (root/(script+'.log')).open('a') as log:
+            subprocess.run([python,str(code/script)],env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
     assert digest(root/'observations.npz')==source_hash
+    if not all((root/name).exists() for name in ['canonical.npz','smplh_motion.npz','human_reference.json','human_validation.json','sources.json']):
+        raise RuntimeError('Incomplete native H export; preserve this workspace and use a fresh export directory')
     return root

@@ -7,6 +7,7 @@ from greenwich_pipelines.pipelines.nymeria.embodiment_exact import load_robot
 from greenwich_pipelines.pipelines.nymeria.physical_fk import PhysicalFK
 from greenwich_pipelines.pipelines.nymeria.sole_geometry import sole_surface
 from arenalab_workbench.support_reference import support_reference
+from arenalab_workbench.human_reference import load_reference, support_model
 
 def audit(work, robot, path):
     row_path=work/'retarget'/f'{robot}-robot.json'
@@ -22,7 +23,7 @@ def audit(work, robot, path):
     error=float(np.max(np.abs(world-d['world_position_cm']/100)))
     if error>1e-6:raise ValueError('Independent FK differs from exported motion')
     floor=float(d['ground_height_m']) if 'ground_height_m' in d else 0.
-    _,conf,_,_=support_reference(np.load(work/'smplx_motion.npz'),np.load(work/'SMPLX_NEUTRAL.npz',allow_pickle=True))
+    _,conf,_,_=support_reference(load_reference(work),support_model(work))
     corners=(np.einsum('tfij,fkj->tfki',R[:,ids],soles)+world[:,ids,None])[...,1]-floor
     envelope=(np.einsum('tfij,fkj->tfki',R[:,ids],hulls)+world[:,ids,None])[...,1]-floor
     mask=conf>.7; span=np.ptp(corners,axis=-1)

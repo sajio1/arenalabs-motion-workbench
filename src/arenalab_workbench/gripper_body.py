@@ -1,15 +1,16 @@
-"""Head + two gripper observations -> existing EgoAllo and SMPL-X stages."""
+"""Head + two gripper observations -> native EgoAllo and SMPL-H stages."""
 from arenalab_workbench.settings import paths
 from pathlib import Path
 import os,sys,subprocess,json,hashlib
 import numpy as np
 from arenalab_workbench.gripper_source import ROOT,save,digest
 from arenalab_workbench.egoallo_runtime import gpu_environment
-POLICY='gripper-head-two-ee-smplx-v1'
+from arenalab_workbench.human_reference import family_for_work
+POLICY='gripper-head-two-ee-smplh-v2'
 def body_path(work):
  work=Path(work);meta=json.loads((work/'source.json').read_text());cal=meta.get('head_calibration')
  suffix=hashlib.sha256(json.dumps(cal,sort_keys=True).encode()).hexdigest()[:12] if cal else None
- return work/('body-camera-'+suffix if suffix else 'body')
+ return work/('body-smplh-v2-camera-'+suffix if suffix else 'body-smplh-v2')
 
 def prepare(work):
  work=Path(work);body=body_path(work);body.mkdir(exist_ok=True)
@@ -34,16 +35,17 @@ def prepare(work):
  save(body/'input_manifest.json',dict(clip=work.name,frames=n,fps=30,dataset=meta['dataset'],policy=POLICY,body_inputs=['camera/head pose','left gripper reference pose','right gripper reference pose'],excluded=['recorded whole-body joints','recorded pelvis pose as prior','recorded feet','recorded human SMPL'],source_sha256=digest(work/'source.npz'),source_trajectory_edited=False,height_calibration=meta.get('height_calibration'),reference=meta['target_reference'],head_calibration=calibration,head_reference_audit=audit,head_proxy='Declared lower-neck camera mount plus neutral SMPL-H neck-to-CPF anatomy' if calibration else 'Source camera/device pose; no invented pupil translation'))
  (body/'operation-accuracy').mkdir(exist_ok=True);np.savez_compressed(body/'operation-accuracy/source-targets.npz',points=points[:,:,None])
  base=paths.egoallo
- for name in ['model.npz','SMPLX_NEUTRAL.npz','egoallo_checkpoint_april13']:
+ for name in ['model.npz','egoallo_checkpoint_april13']:
   if not (body/name).exists():(body/name).symlink_to(base/name)
  return body
 
 def run(work):
  work=Path(work);body=body_path(work)
+ if body.exists():family_for_work(body)
  if (body/'prior-ready.json').exists():
   report=json.loads((body/'prior-ready.json').read_text());assert report['source_sha256']==digest(work/'source.npz');assert all(digest(body/k)==v for k,v in report['raw_sha256'].items());return body
  body=prepare(work)
  from arenalab_workbench.body_inference import run as infer
  infer(body)
- save(body/'prior-ready.json',dict(policy=POLICY,body_window_policy='egoallo-window-300-overlap-60-v1-candidate',source_sha256=digest(work/'source.npz'),raw_sha256={k:digest(body/k) for k in ['observations.npz','egoallo_smplh.npz','smplx_motion.npz','canonical.npz']},source_trajectory_edited=False));return body
+ save(body/'prior-ready.json',dict(policy=POLICY,body_window_policy='egoallo-window-300-overlap-60-v1-candidate',source_sha256=digest(work/'source.npz'),raw_sha256={k:digest(body/k) for k in ['observations.npz','egoallo_smplh.npz','smplh_motion.npz','canonical.npz']},source_trajectory_edited=False));return body
 if __name__=='__main__':print(run(sys.argv[1]),flush=True)

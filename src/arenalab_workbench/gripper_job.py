@@ -1,4 +1,4 @@
-"""Queue entry for head + two EE -> SMPL-X -> robot + gripper generation."""
+"""Queue entry for head + two EE -> SMPL-H -> robot + gripper generation."""
 from arenalab_workbench.settings import paths
 from pathlib import Path
 from greenwich_pipelines.input_policy import POLICY as ENCODER_POLICY
@@ -9,7 +9,7 @@ from arenalab_workbench.gpu_scheduler import run as gpu_run, resource_lock, merg
 from arenalab_workbench.progressive_job import Progress, initialize, merge_perception
 from arenalab_workbench.scene_job import depth_current
 from arenalab_workbench.depth_store import fov_current
-POLICY='gripper-head-two-ee-smplx-housing-v3'
+POLICY='gripper-head-two-ee-smplh-housing-v4'
 from arenalab_workbench.gripper_registry import REGISTRY, sources
 
 def cached(scene_id,rid,scene,require_visual=True):

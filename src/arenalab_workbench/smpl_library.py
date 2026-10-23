@@ -4,6 +4,7 @@ Assets reference immutable existing body outputs, not robot-result caches. Run
 against a frozen copy of the current body pipeline; leave the web service alone.
 """
 from arenalab_workbench.settings import paths
+from arenalab_workbench.human_reference import motion_path,family_for_work
 from pathlib import Path
 import argparse, hashlib, json, os, subprocess, sys, time, uuid
 
@@ -38,7 +39,7 @@ def identity(context):
 def verified(work):
     work = Path(work)
     receipt = json.loads((work / 'prior-ready.json').read_text())
-    required = {'canonical.npz', 'smplx_motion.npz', 'egoallo_smplh.npz', 'observations.npz'}
+    required = {'canonical.npz', motion_path(work).name, 'egoallo_smplh.npz', 'observations.npz'}
     hashes = receipt.get('raw_sha256', {})
     if not required.issubset(hashes):
         raise ValueError('Body receipt is missing required immutable artifacts')
@@ -50,7 +51,7 @@ def verified(work):
 
 def plan():
     import numpy as np
-    from arenalab_workbench.body_prior import folder, POLICY
+    from arenalab_workbench.body_prior import folder, POLICY, policy_for
     from arenalab_workbench.gripper_body import body_path
     from arenalab_workbench.gripper_registry import sources
     from arenalab_workbench.scene_job import resolve_clip
@@ -71,7 +72,7 @@ def plan():
                 context = dict(dataset=entry['dataset'], source_sha256=digest(source_work/'source.npz'),
                     frames=frames, fps=30, source_window=meta.get('source_frame_range'),
                     floor_z_m=floor, height_calibration=meta.get('height_calibration'),
-                    head_calibration=meta.get('head_calibration'), policy='gripper-head-two-ee-smplx-v1')
+                    head_calibration=meta.get('head_calibration'), policy='gripper-head-two-ee-smplh-v1')
                 kind = 'gripper'
             else:
                 public, row = resolve_clip(sid); work = folder(sid); source_work = None
@@ -79,7 +80,7 @@ def plan():
                     frames=int(row['frames']), fps=row['fps'], source_window=row.get('source_window'),
                     floor_z_m=float(public.get('height_calibration', {}).get('floor_z_m', 0.)),
                     height_calibration=public.get('height_calibration'), head_calibration=None,
-                    policy=POLICY + ('-nymeria-sparse-nohand-window-v2' if entry['dataset']=='Nymeria' else ''))
+                    policy=policy_for(entry['dataset']) + ('-nymeria-sparse-nohand-window-v2' if entry['dataset']=='Nymeria' else ''))
                 kind = 'body'
             key = identity(context)
             candidate = dict(id=sid, title=entry['title'], work=str(work), kind=kind,
@@ -100,7 +101,7 @@ def plan():
 def audit(work, expected_frames):
     import numpy as np
     receipt = verified(work)
-    with np.load(Path(work)/'smplx_motion.npz') as data:
+    with np.load(motion_path(work)) as data:
         joints = data['joints']; times = data['timestamps_s']
         if len(joints) != expected_frames or len(times) != expected_frames:
             raise ValueError('Human-motion frame count differs from source')
@@ -160,7 +161,7 @@ def run(manifest_path, gpu):
                     if abs(report['floor_z_m']-asset['context']['floor_z_m'])>1e-9:
                         raise ValueError('Saved body floor differs from requested height; regenerate a version')
                     descriptor=dict(schema=SCHEMA,asset_id=asset['asset_id'],
-                        label='SMPL-X human motion',input=asset['context'],work=str(work),
+                        label=family_for_work(work).upper()+' human motion',input=asset['context'],work=str(work),
                         aliases=[r['id'] for r in asset['entries']],audit=report,
                         paths={name:str(work/name) for name in report['raw_sha256']},
                         saved_at=time.time(),robot_independent=True)

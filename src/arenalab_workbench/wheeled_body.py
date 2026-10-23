@@ -1,16 +1,17 @@
+from arenalab_workbench.human_reference import load_reference,support_model,artifact_names
 from pathlib import Path
 import json,time,hashlib
 import numpy as np,mujoco
 from scipy.optimize import least_squares
 from scipy.spatial.transform import Rotation
 from arenalab_workbench.support_reference import support_reference
-POLICY='native-shoulder-frame-contact-velocity-bounded-six-v11'
+POLICY='native-shoulder-frame-contact-velocity-bounded-six-smplh-v12'
 def solve(row,bodywork,out,targets,desired,offsets):
- bodywork=Path(bodywork);out=Path(out);m=mujoco.MjModel.from_xml_path(row['xml']);meta=json.loads(Path(row['metadata']).read_text());h=np.load(bodywork/'smplx_motion.npz');n=len(targets)
- source_hashes={k:hashlib.sha256((bodywork/k).read_bytes()).hexdigest() for k in ['canonical.npz','observations.npz','smplx_motion.npz','operation-accuracy/source-targets.npz']}
+ bodywork=Path(bodywork);out=Path(out);m=mujoco.MjModel.from_xml_path(row['xml']);meta=json.loads(Path(row['metadata']).read_text());h=load_reference(bodywork);n=len(targets)
+ source_hashes={k:hashlib.sha256((bodywork/k).read_bytes()).hexdigest() for k in artifact_names(bodywork)}
  from arenalab_workbench.wheeled_prior import prepare
  raw=prepare(row,bodywork,out,targets,desired,offsets);rawhash=hashlib.sha256(raw.read_bytes()).hexdigest();prior=np.load(raw)
- floor,_,_,ground=support_reference(h,np.load(bodywork/'SMPLX_NEUTRAL.npz',allow_pickle=True));basez=floor+meta['ground_offset']
+ floor,_,_,ground=support_reference(h,support_model(bodywork));basez=floor+meta['ground_offset']
  basis=np.array([[0,0,1],[1,0,0],[0,1,0.]])
  rootR=h['global_rotation'][:,0]@basis.T;yaw=np.unwrap(np.arctan2(rootR[:,1,0],rootR[:,0,0]));baseR=Rotation.from_euler('z',yaw).as_matrix()
  root=np.c_[h['joints'][:,0,:2],np.full(n,basez)]

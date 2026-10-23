@@ -1,4 +1,4 @@
-"""Per-recording immutable body priors, using existing EgoAllo/SMPL-X stages."""
+"""Per-recording immutable body priors, using native EgoAllo/SMPL-H stages."""
 from arenalab_workbench.settings import paths
 from pathlib import Path
 import hashlib,json,os,subprocess,sys,time
@@ -6,16 +6,20 @@ import numpy as np,h5py
 from scipy.spatial.transform import Rotation
 from arenalab_workbench.scene_job import resolve_clip,policy_key,save
 from arenalab_workbench.egoallo_runtime import gpu_environment
+from arenalab_workbench.human_reference import requested_family, motion_path, SMPLH_POLICY, family_for_work
 ROOT=Path(os.environ.get('ARENA_WORKBENCH_ROOT',str(paths.workbench)))
 BASE=paths.egoallo
 POLICY='observed-palm-body-v2'
+
+def policy_for(dataset):
+ return POLICY+'-'+SMPLH_POLICY
 
 def folder(scene_id):
  from arenalab_workbench.height_registry import variant
  custom=variant(scene_id)
  if custom:return Path(custom['body_work'])
  public,row=resolve_clip(scene_id)
- version=POLICY+('-nymeria-sparse-nohand-window-v2' if public['dataset']=='Nymeria' else '')
+ version=policy_for(public['dataset'])+('-nymeria-sparse-nohand-window-v2' if public['dataset']=='Nymeria' else '')
  # Body identity must not depend on DA3/SAM versions or visual artifacts.
  source_hash=hashlib.sha256(Path(row['source']).read_bytes()).hexdigest()
  identity=dict(policy=version,source_sha256=source_hash,window=row.get('source_window'),frames=row['frames'],fps=row['fps'],dataset=public['dataset'])
@@ -26,7 +30,7 @@ def folder(scene_id):
  for ready_path in sorted((ROOT/'body-jobs').glob('*/prior-ready.json')):
   try:
    ready=json.loads(ready_path.read_text());manifest=json.loads(ready_path.with_name('input_manifest.json').read_text())
-   if ready.get('policy')!=POLICY or ready.get('scene_id')!=scene_id:continue
+   if ready.get('policy')!=policy_for(public['dataset']) or ready.get('scene_id')!=scene_id:continue
    if public['dataset']=='Nymeria' and not (ready_path.parent/'windowed-v1').exists():continue
    if manifest.get('source_sha256')==source_hash and manifest.get('source_window')==row.get('source_window') and manifest.get('frames')==row['frames']:return ready_path.parent
   except (OSError,ValueError):continue
@@ -46,7 +50,9 @@ def prepare(scene_id):
  if public['dataset']=='Nymeria':
   from arenalab_workbench.nymeria_body import prepare as prepare_nymeria
   prepare_nymeria(public,row,work,save)
-  for name in ['model.npz','SMPLX_NEUTRAL.npz','egoallo_checkpoint_april13']:
+  manifest=json.loads((work/'input_manifest.json').read_text());manifest['human_model']=requested_family(public['dataset']);save(work/'input_manifest.json',manifest)
+  required=['model.npz','egoallo_checkpoint_april13']
+  for name in required:
    if not (work/name).exists():(work/name).symlink_to(BASE/name,target_is_directory=(BASE/name).is_dir())
   return work
  if public['dataset']!='EgoDex' and not upload:raise ValueError('Head/wrist source adapter is not connected for this recording format')
@@ -69,12 +75,13 @@ def prepare(scene_id):
  (work/'operation-accuracy').mkdir(exist_ok=True)
  np.savez_compressed(work/'operation-accuracy/source-targets.npz',points=np.concatenate([palm[:,:,None],tips,tips[:,:,:2].mean(2)[:,:,None]],2))
  save(work/'input_manifest.json',dict(dataset=public['dataset'],end_effector=public.get('end_effector','wuji'),clip=scene_id,source=row['source'],source_window=row.get('source_window'),frames=n,fps=30,video=row['video'],source_sha256=hashlib.sha256(Path(row['source']).read_bytes()).hexdigest(),source_trajectory_edited=False,cpf_policy='Source optical camera as uncalibrated pupil proxy; no translation extrinsic',floor_policy='EgoDex ARKit source Y=0, declared basis conversion only',fingers='Observed EgoDex 21 landmarks per hand'))
- for name in ['model.npz','SMPLX_NEUTRAL.npz','egoallo_checkpoint_april13','wuji']:
+ for name in ['model.npz','egoallo_checkpoint_april13','wuji']:
   if not (work/name).exists():(work/name).symlink_to(BASE/name,target_is_directory=(BASE/name).is_dir())
  return work
 
 def run(scene_id,status=None):
  work=folder(scene_id)
+ if work.exists():family_for_work(work)
  if (work/'prior-ready.json').exists():
   ready=json.loads((work/'prior-ready.json').read_text())
   assert all(hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in ready['raw_sha256'].items()),'Immutable body prior changed'
@@ -89,16 +96,17 @@ def run(scene_id,status=None):
  if json.loads((work/'input_manifest.json').read_text())['dataset'] in ('Nymeria','EgoDex','Uploaded'):
   from arenalab_workbench.body_inference import run as infer
   infer(work,status)
-  names=['canonical.npz','egoallo_smplh.npz','smplx_motion.npz','observations.npz']
+  names=['canonical.npz','egoallo_smplh.npz',motion_path(work).name,'observations.npz']
+  if (work/'human_reference.json').exists():names.append('human_reference.json')
   if (work/'source_hands.npz').exists():names.append('source_hands.npz')
-  save(work/'prior-ready.json',dict(scene_id=scene_id,policy=POLICY,body_window_policy='300-frame-60-overlap-committed-frame-stream',raw_sha256={name:hashlib.sha256((work/name).read_bytes()).hexdigest() for name in names},source_trajectory_edited=False))
+  save(work/'prior-ready.json',dict(scene_id=scene_id,policy=policy_for(json.loads((work/'input_manifest.json').read_text())['dataset']),body_window_policy='300-frame-60-overlap-committed-frame-stream',raw_sha256={name:hashlib.sha256((work/name).read_bytes()).hexdigest() for name in names},source_trajectory_edited=False))
   return work
  env=os.environ.copy();env.update(CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2',PYTHONPATH=paths.pythonpath(),ARENA_EGO_WORKDIR=str(work),XLA_PYTHON_CLIENT_PREALLOCATE='false')
  env=gpu_environment(env)
- for script,phase in [('run_egoallo.py','Reconstructing body prior from head and hands'),('transfer_smplx.py','Transferring body prior to SMPL-X')]:
+ for script,phase in [('run_egoallo.py','Reconstructing body prior from head and hands'),('emit_smplh.py','Exporting native SMPL-H')]:
   if status:save(status,dict(status='running',phase=phase,started_at=time.time()))
   with (work/(script+'.log')).open('w') as log:subprocess.run([str(BASE/'venv/bin/python'),str(Path(__file__).with_name(script))],env=env,cwd=work,stdout=log,stderr=subprocess.STDOUT,check=True)
- save(work/'prior-ready.json',dict(scene_id=scene_id,policy=POLICY,raw_sha256={name:hashlib.sha256((work/name).read_bytes()).hexdigest() for name in ['canonical.npz','egoallo_smplh.npz','smplx_motion.npz','source_hands.npz','observations.npz']},source_trajectory_edited=False))
+ save(work/'prior-ready.json',dict(scene_id=scene_id,policy=policy_for(json.loads((work/'input_manifest.json').read_text())['dataset']),raw_sha256={name:hashlib.sha256((work/name).read_bytes()).hexdigest() for name in ['canonical.npz','egoallo_smplh.npz','smplh_motion.npz','source_hands.npz','observations.npz']},source_trajectory_edited=False))
  return work
 if __name__=='__main__':
  import argparse

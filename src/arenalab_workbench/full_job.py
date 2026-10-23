@@ -74,7 +74,7 @@ def _run(scene_id,robot_id,hand_id,status):
  stages=[('retarget_robot.py',[robot_id],'Retargeting body, palms and Wuji fingers'),('render_recording.py',[robot_id],'Rendering robot arms and hands in source FOV'),('contact_recording.py',[],'Estimating individual finger contact from video')]
  if hand_id=='none':stages=[('retarget_robot.py',[robot_id],'Retargeting body and observed wrists; no dexterous hand')]
  if mobile:
-  stages=[('wheeled_job.py',[robot_id,str(work),str(destination),hand_id],'Retargeting SMPL-X to native mobile body'),('mobile_render_job.py',[str(work),str(destination),robot_id],'Rendering native robot arms and end effector')]+([] if hand_id=='none' else [('contact_recording.py',[],'Estimating individual finger contact from video')])
+  stages=[('wheeled_job.py',[robot_id,str(work),str(destination),hand_id],'Retargeting SMPL-H to native mobile body'),('mobile_render_job.py',[str(work),str(destination),robot_id],'Rendering native robot arms and end effector')]+([] if hand_id=='none' else [('contact_recording.py',[],'Estimating individual finger contact from video')])
  def execute_stage(task):
   script,args,phase=task
   stage_started=time.time()
@@ -82,7 +82,7 @@ def _run(scene_id,robot_id,hand_id,status):
   if script=='retarget_robot.py' and validation.exists():
    report=json.loads(validation.read_text())
    native_ready=(Path(env['ARENA_RETARGET_WORK'])/'operation-accuracy/palm'/robot_id/'motion.npz').exists()
-   if native_ready and report.get('encoder_policy')==ENCODER_POLICY and report.get('support_policy')==SUPPORT_POLICY and report.get('source_id')==scene_id and all(hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in report.get('source_hashes',{}).items()) and report.get('source_hashes'):
+   if native_ready and report.get('human_model')=='smplh' and report.get('human_policy')==__import__('arenalab_workbench.human_reference',fromlist=['SMPLH_POLICY']).SMPLH_POLICY and report.get('encoder_policy')==ENCODER_POLICY and report.get('support_policy')==SUPPORT_POLICY and report.get('source_id')==scene_id and all(hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in report.get('source_hashes',{}).items()) and report.get('source_hashes'):
     save(status.with_name(status.stem+'-'+script+'.json'),dict(status='completed',phase=phase,cache_hit=True,seconds=time.time()-stage_started));return
   nonlocal robot_regenerated
   if script=='retarget_robot.py':robot_regenerated=True

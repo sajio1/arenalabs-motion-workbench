@@ -102,7 +102,7 @@ def create_api(config_path=None):
                 report=json.loads(validation_path.read_text())
                 if report.get('source_id'):
                     try:
-                        work=body_folder(scene_id);valid=valid and report.get('encoder_policy')==ENCODER_POLICY and report.get('support_policy')==SUPPORT_POLICY and report['source_id']==scene_id and bool(report.get('source_hashes')) and all((work/name).exists() and hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in report['source_hashes'].items())
+                        work=body_folder(scene_id);valid=valid and report.get('human_model')=='smplh' and report.get('human_policy')==__import__('arenalab_workbench.human_reference',fromlist=['SMPLH_POLICY']).SMPLH_POLICY and report.get('encoder_policy')==ENCODER_POLICY and report.get('support_policy')==SUPPORT_POLICY and report['source_id']==scene_id and bool(report.get('source_hashes')) and all((work/name).exists() and hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in report['source_hashes'].items())
                     except ValueError:valid=False
             from arenalab_workbench.scene_job import depth_current
             from arenalab_workbench.depth_store import fov_current

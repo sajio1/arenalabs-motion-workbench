@@ -106,7 +106,7 @@ def run(robot,bodywork,dest,hand,gripper_work=None):
         manifest['geometry']['mobile_base']='Planar kinematic base trajectory; fixed vendor wheel joints do not supply wheel actuation'
         manifest['generation_status']=dict(status='running',phase='Robot ready; completing modalities',robot_id=rid,hand_id=hand)
     merge_scene(dest/'scene.json',update)
-    report=json.loads((out/'wheeled-validation.json').read_text());report.update(encoder_policy=__import__('greenwich_pipelines.input_policy',fromlist=['POLICY']).POLICY,hand=hand,display_from_zup=C.tolist(),independent_fk_max_error_m=max(disagreement))
+    report=json.loads((out/'wheeled-validation.json').read_text());report.update(human_model='smplh',human_policy=__import__('arenalab_workbench.human_reference',fromlist=['SMPLH_POLICY']).SMPLH_POLICY,encoder_policy=__import__('greenwich_pipelines.input_policy',fromlist=['POLICY']).POLICY,hand=hand,display_from_zup=C.tolist(),independent_fk_max_error_m=max(disagreement))
     if gripper_work:
         import hashlib
         report.update(policy=__import__('arenalab_workbench.gripper_job', fromlist=['POLICY']).POLICY,head_calibration=json.loads((Path(gripper_work)/'source.json').read_text()).get('head_calibration'),solver_policy=POLICY,source_sha256=hashlib.sha256((Path(gripper_work)/'source.npz').read_bytes()).hexdigest())

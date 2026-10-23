@@ -1,4 +1,4 @@
-"""Reuse SMPL-X -> AlphaMotion -> operation refinement with gripper TCP metadata."""
+"""Reuse SMPL-H -> AlphaMotion -> operation refinement with gripper TCP metadata."""
 from arenalab_workbench.settings import paths
 from pathlib import Path
 import os,json,sys,subprocess,time
@@ -37,5 +37,5 @@ def run(work,rid):
  priors={str(p):digest(p) for p in (bodywork/(rid+'-result')).rglob('prime_original.npz')}
  if not priors:raise ValueError('Missing original AlphaMotion prior')
  with (out/'refine.log').open('w') as log:run_refinement([sys.executable,str(Path(__file__).with_name('refine_operation.py')),rid],env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
- assert all(digest(k)==v for k,v in priors.items());save(out/'provenance.json',dict(source_sha256=digest(work/'source.npz'),original_priors=priors,body_prior='Head and two grippers -> EgoAllo -> SMPL-X',source_trajectory_edited=False));print('GRIPPER_COMPLETE',work.name,rid,flush=True)
+ assert all(digest(k)==v for k,v in priors.items());save(out/'provenance.json',dict(source_sha256=digest(work/'source.npz'),original_priors=priors,body_prior='Head and two grippers -> EgoAllo -> SMPL-H',source_trajectory_edited=False));print('GRIPPER_COMPLETE',work.name,rid,flush=True)
 if __name__=='__main__':run(*sys.argv[1:])

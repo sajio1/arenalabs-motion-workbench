@@ -14,7 +14,7 @@ def test_smpl_library():
                    dict(height_calibration={'minimum_height_cm':80})]:
         assert identity(base)!=identity({**base,**change}),change
     with TemporaryDirectory() as folder:
-        root=Path(folder);names=['canonical.npz','smplx_motion.npz','egoallo_smplh.npz','observations.npz']
+        root=Path(folder);names=['canonical.npz','smplh_motion.npz','egoallo_smplh.npz','observations.npz']
         for name in names:(root/name).write_bytes(b'immutable-'+name.encode())
         (root/'prior-ready.json').write_text(json.dumps(dict(raw_sha256={name:digest(root/name) for name in names})))
         verified(root)

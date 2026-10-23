@@ -1,7 +1,7 @@
 # Recording uploads and complete dataset downloads
 
 The workbench uses one generation path for uploaded recordings and presets:
-observed head + hands/end effectors → windowed EgoAllo/SMPL-X → six-point
+observed head + hands/end effectors → windowed EgoAllo/native SMPL-H → six-point
 AlphaMotion (pelvis, head, both hands, both feet) → original robot refinement.
 Depth inference, Qwen/SAM 3.1, FOV compositing and contact estimation remain independent
 saved stages. Downloading an episode runs no inference.

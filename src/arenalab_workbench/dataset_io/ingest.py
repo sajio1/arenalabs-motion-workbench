@@ -139,6 +139,6 @@ def prepare_body(record, work):
     (work / 'operation-accuracy').mkdir(exist_ok=True)
     np.savez_compressed(work / 'operation-accuracy/source-targets.npz', points=targets)
     write(work / 'input_manifest.json', dict(dataset='Uploaded', clip=record['public']['id'], frames=len(p), fps=30, end_effector=mode, source_sha256=hashlib.sha256(Path(record['source_row']['source']).read_bytes()).hexdigest(), source_trajectory_edited=False, source_window=None, video=record['source_row']['video'], cpf_policy='User-declared optical head camera used as head proxy', floor_policy='User-declared floor'))
-    for name in ['model.npz', 'SMPLX_NEUTRAL.npz', 'egoallo_checkpoint_april13', 'wuji']:
+    for name in ['model.npz', 'egoallo_checkpoint_april13', 'wuji']:
         if not (work / name).exists():
             (work / name).symlink_to(BASE / name, target_is_directory=(BASE / name).is_dir())

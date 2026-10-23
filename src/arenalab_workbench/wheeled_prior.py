@@ -1,10 +1,11 @@
-"""SMPL-X-conditioned mobile manipulation with immutable world-space goals.
+"""SMPL-H-conditioned mobile manipulation with immutable world-space goals.
 
 Uses native mixed hinge/slide FK. A planar chassis is optimized jointly with the
 torso and arms. Wheel actuation is not inferred from fixed visual wheel links.
 """
 from arenalab_workbench.settings import paths
 from pathlib import Path
+from arenalab_workbench.human_reference import load_reference,support_model,artifact_names
 import json,hashlib,time
 import numpy as np
 import torch,mujoco
@@ -15,7 +16,7 @@ from greenwich_pipelines.runtime import load_model,configure
 from arenalab_workbench.support_reference import support_reference
 
 
-POLICY='smplx-six-encode-fixed-base-light-refine-v5'
+POLICY='smplh-six-encode-fixed-base-light-refine-v5'
 
 def prepare(row,bodywork,out,targets,desired,offsets):
     configure(str(paths.config / 'runtime.cloud.json'))
@@ -23,15 +24,15 @@ def prepare(row,bodywork,out,targets,desired,offsets):
     bodywork=Path(bodywork);out=Path(out);out.mkdir(parents=True,exist_ok=True)
     meta=json.loads(Path(row['metadata']).read_text());model=mujoco.MjModel.from_xml_path(row['xml'])
     if model.jnt_type[0]!=mujoco.mjtJoint.mjJNT_FREE:raise ValueError('Planar chassis requires a free root in native metadata')
-    inputs={name:hashlib.sha256((bodywork/name).read_bytes()).hexdigest() for name in ['canonical.npz','smplx_motion.npz','observations.npz','operation-accuracy/source-targets.npz']}
-    human=np.load(bodywork/'smplx_motion.npz');n=len(targets)
-    floor,_,_,floor_report=support_reference(human,np.load(bodywork/'SMPLX_NEUTRAL.npz',allow_pickle=True))
+    inputs={name:hashlib.sha256((bodywork/name).read_bytes()).hexdigest() for name in artifact_names(bodywork)}
+    human=load_reference(bodywork);n=len(targets)
+    floor,_,_,floor_report=support_reference(human,support_model(bodywork))
     base_z=float(floor+meta['ground_offset'])
     ids=[model.body(w).id for w in meta['wrists']];torso=model.body(meta['torso']).id
     emb=g.load_from_xml(row['xml'],row['body']);spec=emb.spec;keep,frame=g.build_merge(model)
     wi=[next(i for i,b in enumerate(keep) if frame[b]==bid or b==bid) for bid in ids]
     ti=next(i for i,b in enumerate(keep) if frame[b]==torso or b==torso)
-    # SMPL-X anatomical +Z faces forward, +Y points up in its local frame.
+    # SMPL-H anatomical +Z faces forward, +Y points up in its local frame.
     basis=np.array([[0.,0,1],[1,0,0],[0,1,0]])
     pelvisR=human['global_rotation'][:,0]@basis.T
     yaw=np.unwrap(np.arctan2(pelvisR[:,1,0],pelvisR[:,0,0]))
@@ -48,7 +49,7 @@ def prepare(row,bodywork,out,targets,desired,offsets):
     from alphamotion.embodiment.dof_features import ball_dof
     from alphamotion.engine.spatial import fk_pos
     clip=MotionClip.load(bodywork/'canonical.npz')
-    human_spec=SkeletonSpec('sdk_smplx',clip.parents,clip.rest_offsets_cm.astype(np.float32),clip.names)
+    human_spec=SkeletonSpec('sdk_smplh',clip.parents,clip.rest_offsets_cm.astype(np.float32),clip.names)
     hd,_=ball_dof(len(clip.names))
     gr=clip.global_rotation;gp=clip.world_position_cm-clip.world_position_cm[:,:1]
     r6=g.matrix_to_rot6d(torch.tensor(gr,dtype=torch.float32))

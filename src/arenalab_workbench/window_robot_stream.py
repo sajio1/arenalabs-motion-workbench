@@ -57,11 +57,11 @@ def worker(root,rid):
         if not (folder/'robot.npz').exists():
             beta=np.asarray(json.loads((output/'shape.json').read_text())['betas'],np.float32);count=end-start
             np.savez_compressed(folder/'committed-input.npz',local_quats=q[start:end],betas=beta)
-            for name in ['model.npz','SMPLX_NEUTRAL.npz']:
+            for name in ['model.npz']:
                 if not (folder/name).exists():(folder/name).symlink_to(root/name)
             original=json.loads((root/'input_manifest.json').read_text());save_json(folder/'input_manifest.json',{**original,'frames':count})
             env=os.environ.copy();env['ARENA_EGO_WORKDIR']=str(folder)
-            with (folder/'transfer.log').open('w') as log:subprocess.run([str(paths.egoallo_python),str(Path(__file__).with_name('emit_body_window.py')),str(root),str(folder),str(start),str(end)],env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
+            with (folder/'native-h-export.log').open('w') as log:subprocess.run([str(paths.egoallo_python),str(Path(__file__).with_name('emit_body_window.py')),str(root),str(folder),str(start),str(end)],env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
             clip=MotionClip.load(folder/'canonical.npz');human=SkeletonSpec('stream_'+str(start),clip.parents,clip.rest_offsets_cm.astype(np.float32),clip.names);hd,_=ball_dof(len(clip.names));gp=clip.world_position_cm-clip.world_position_cm[:,:1]
             r6=c.matrix_to_rot6d(torch.tensor(clip.global_rotation,dtype=torch.float32));pose=torch.cat([r6,torch.tensor(gp/np.linalg.norm(gp,axis=-1).max(),dtype=torch.float32)],-1).to(device)
             roles=[clip.names.index(k) for k in ['Hips','Head','LeftHand','RightHand','LeftFoot','RightFoot']]

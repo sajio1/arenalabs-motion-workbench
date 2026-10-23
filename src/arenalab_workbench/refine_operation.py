@@ -1,12 +1,13 @@
 """Production observed-reference/body-prior refinement shared by robot adapters.
 
 All robots share this policy. Original wrists are absolute metric targets;
-SMPL-X supplies lower-body posture and motion, never replacement observations.
+SMPL-H supplies lower-body posture and motion, never replacement observations.
 """
 from pathlib import Path
 import os,sys,json,hashlib,time
 import numpy as np
 import torch
+from arenalab_workbench.human_reference import load_reference, support_model
 from scipy.optimize import minimize
 from scipy.ndimage import gaussian_filter1d
 from greenwich_pipelines.pipelines.nymeria.embodiment_exact import load_robot
@@ -28,7 +29,7 @@ body=load_robot(row);fk=PhysicalFK(body,device,torch.float64)
 path=next((root/(label+'-result')).rglob('motion.npz'))
 d=dict(np.load(path));raw_path=path.with_name('prime_original.npz')
 raw_hash=hashlib.sha256(raw_path.read_bytes()).hexdigest()
-obs=np.load(root/'observations.npz');human=np.load(root/'smplx_motion.npz')
+obs=np.load(root/'observations.npz');human=load_reference(root)
 names=list(body.spec.joint_names);n=len(d['q'])
 ids=[names.index(row['endpoints'][r]) for r in ('left_wrist','right_wrist','left_ankle','right_ankle')]
 body_frames=BodyFrames(body,fk,ids[:2],ids[2:])
@@ -100,7 +101,7 @@ knee_branch_low=cast([min(c['straight_q_deg'],c['branch_end_q_deg'])*np.pi/180 f
 knee_branch_high=cast([max(c['straight_q_deg'],c['branch_end_q_deg'])*np.pi/180 for c in calibration])
 # Geometry-derived support plane; raw source and model priors remain immutable.
 from arenalab_workbench.support_reference import support_reference
-floor_height, support_confidence, support_clearance, support_metadata = support_reference(human, np.load(Path(os.environ.get('ARENA_SOURCE_WORK',str(root)))/'SMPLX_NEUTRAL.npz',allow_pickle=True))
+floor_height, support_confidence, support_clearance, support_metadata = support_reference(human, support_model(Path(os.environ.get('ARENA_SOURCE_WORK',str(root)))))
 source_manifest=json.loads((Path(os.environ.get('ARENA_SOURCE_WORK',str(root)))/'input_manifest.json').read_text())
 height_calibration=source_manifest.get('height_calibration')
 if height_calibration:
@@ -191,5 +192,5 @@ with torch.no_grad():
  loss,terms,R,w,h,k,e,a=evaluate();array=lambda x:x.detach().cpu().numpy()
  out=dict(d);out.update(ground_height_m=np.array(floor_height),support_confidence=support_confidence,ground_estimated=np.array(True),q=array(fk.expand_angles(u)),rot6d=array(matrix_to_rot6d(R)),root_t=array(g)*100,world_position_cm=array(w)*100,sole_surface_height_cm=array(h)*100,support_surface_height_cm=array(h)*100,observed_wrist_position_yup_m=array(target),observed_wrist_rotation_yup=array(desired),wrist_error_m=array(e.norm(dim=-1)),wrist_error_deg=array(a)*180/np.pi,knee_flexion_rad=array(k),source_knee_flexion_rad=array(knee_target),refiner='observed-operation-reference-point-experiment',operation_reference=mode,operation_target_yup_m=array(operation_targets),operation_local_yup_m=array(operation_local))
  dest=Path(os.environ.get('ARENA_OUTPUTDIR',root/'observed-refinement'/label));dest.mkdir(parents=True,exist_ok=True);np.savez_compressed(dest/'motion.npz',**out)
- report=dict(compute_backend=backend,support_reference=support_metadata,knee_morphology_bias_deg=float(knee_bias.detach())*180/np.pi,policy=policy,body_frames=body_frames.metadata,knee_calibration=calibration,robot=label,seconds=time.time()-start,source='Original observed operation landmarks; unchanged SMPL-X body prior',operation_reference=mode,raw_sha256=raw_hash,original_prior_unchanged=hashlib.sha256(raw_path.read_bytes()).hexdigest()==raw_hash,iterations=int(res.nit),optimizer_success=bool(res.success),message=str(res.message),wrist_position_error_cm=stats(array(e.norm(dim=-1))*100),wrist_orientation_error_deg=stats(array(a)*180/np.pi),minimum_foot_height_cm=float(h.min())*100,knee_range_deg=np.rad2deg(np.stack([array(k).min(0),array(k).max(0)])).tolist(),prior_knee_range_deg=np.rad2deg(np.stack([array(knee_target).min(0),array(knee_target).max(0)])).tolist(),root_vertical_acceleration_m_s2=stats(np.abs(np.diff(array(g)[:,1],n=2)*900)),terms={key:float(v) for key,v in terms.items()},history=history,physical_validation=False)
+ report=dict(compute_backend=backend,support_reference=support_metadata,knee_morphology_bias_deg=float(knee_bias.detach())*180/np.pi,policy=policy,body_frames=body_frames.metadata,knee_calibration=calibration,robot=label,seconds=time.time()-start,source='Original observed operation landmarks; unchanged SMPL-H body prior',operation_reference=mode,raw_sha256=raw_hash,original_prior_unchanged=hashlib.sha256(raw_path.read_bytes()).hexdigest()==raw_hash,iterations=int(res.nit),optimizer_success=bool(res.success),message=str(res.message),wrist_position_error_cm=stats(array(e.norm(dim=-1))*100),wrist_orientation_error_deg=stats(array(a)*180/np.pi),minimum_foot_height_cm=float(h.min())*100,knee_range_deg=np.rad2deg(np.stack([array(k).min(0),array(k).max(0)])).tolist(),prior_knee_range_deg=np.rad2deg(np.stack([array(knee_target).min(0),array(knee_target).max(0)])).tolist(),root_vertical_acceleration_m_s2=stats(np.abs(np.diff(array(g)[:,1],n=2)*900)),terms={key:float(v) for key,v in terms.items()},history=history,physical_validation=False)
  (dest/'report.json').write_text(json.dumps(report,indent=2));print('DONE',json.dumps({key:v for key,v in report.items() if key!='history'}),flush=True)

@@ -32,7 +32,7 @@ the target robot reuses the saved human prior and scene estimates.
 
 ```text
 Video + measured head/camera and bilateral hand/gripper trajectories
-    ├── windowed EgoAllo (CUDA PyTorch + CUDA JAX) → SMPL-H → SMPL-X
+    ├── windowed EgoAllo (CUDA PyTorch + CUDA JAX) → native SMPL-H
     │       → six-point AlphaMotion → original robot refinement → joint states
     └── video frames + optical camera poses → MapAnything depth
             + Qwen object proposals → SAM 3.1 masks
