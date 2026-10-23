@@ -1,0 +1,248 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___________________________ test_scene_export[False] ___________________________
+
+compact = False
+
+    @pytest.mark.parametrize('compact',[False,True])
+    def test_scene_export(compact):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);out=root/'public';out.mkdir();(root/'masks').mkdir();n=24;T=n//2;H=W=16
+            def save(name,value):(root/name).write_text(json.dumps(value))
+            save('manifest.json',dict(source=dict(frames=n),public=dict(id='fixture',title='fixture',dataset='Synthetic test',video=dict(url='/fixture.mp4',start_seconds=0)),destination=str(out),url='/fixture/',source_sha256='unchanged'))
+            save('preparation.json',{});save('semantic.json',dict(objects=['container','tool'],task='Fixture',provenance='Fixture'));save('prompts.json',[['object-01','container'],['object-02','tool'],['human-hand','hand']]);save('depth.json',dict(source_trajectory_edited=False))
+            K=np.array([[100.,0,480],[0,100.,270],[0,0,1]])
+            k=np.diag([W/960,H/540,1])@K;pose=np.repeat(np.eye(4)[None],n,0);np.savez(root/'cameras.npz',poses=pose,intrinsic=K)
+            np.savez(root/'depth.npz',depth=np.ones((T,H,W)),conf=np.ones((T,H,W)),images=np.zeros((T,H,W,3),dtype='u1'),intrinsics=np.repeat(k[None],T,0),extrinsics=pose[:T,:3],ids=np.arange(T)*2)
+            if compact:
+                zarr=pytest.importorskip('zarr');pytest.importorskip('pyarrow');import cv2
+                store=zarr.open_group(str(root/'depth.zarr'),mode='w')
+                with np.load(root/'depth.npz') as values:
+                    for name in values.files:
+                        if name!='images':store.create_dataset(name,data=values[name])
+                store.create_dataset('preprocessing_affine',data=np.repeat(np.diag([W/960,H/540,1])[None],T,0))
+                save('depth-store.json',dict(path='depth.zarr'))
+                (root/'frames').mkdir()
+                for i in range(T):cv2.imwrite(str(root/'frames'/f'{i:05d}.jpg'),np.zeros((540,960,3),dtype='u1'))
+            mask=np.zeros((T,540,960),dtype='u2');mask[:,70:200,120:360]=1;mask[:,320:450,600:840]=2
+            np.savez(root/'masks/object-01-masks.npz',masks=mask,frame_indices=np.arange(T))
+            tool=np.zeros_like(mask);tool[:,70:200,600:840]=1;np.savez(root/'masks/object-02-masks.npz',masks=tool,frame_indices=np.arange(T))
+            hand=np.zeros_like(mask);hand[:,380:,0:200]=1;np.savez(root/'masks/human-hand-masks.npz',masks=hand,frame_indices=np.arange(T))
+>           subprocess.run([sys.executable,'-m','arenalab_workbench.export_scene_cloud',str(root)],check=True,stdout=subprocess.DEVNULL)
+
+/tmp/arena-platform-base-tests/tests/workbench/test_scene_export.py:34:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+input = None, capture_output = False, timeout = None, check = True
+popenargs = (['/home/arenalabs/real2sim/local/arenalabs-research/runtime/python/bin/python', '-m', 'arenalab_workbench.export_scene_cloud', '/tmp/tmp0rjq4ah4'],)
+kwargs = {'stdout': -3}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['/home/arenalabs/real2sim/local/arenalabs-research/runtime/python/bin/python', '-m', 'arenalab_workbench.export_scene_cloud', '/tmp/tmp0rjq4ah4']' returned non-zero exit status 1.
+
+../../../.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py:571: CalledProcessError
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/tmp/arena-platform-base-tests/src/arenalab_workbench/export_scene_cloud.py", line 54, in <module>
+    alignment=register(work,row,depth,reference_human)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/arena-platform-base-tests/src/arenalab_workbench/hand_alignment.py", line 109, in register
+    anchors=observed_anchors(row)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/arena-platform-base-tests/src/arenalab_workbench/hand_alignment.py", line 80, in observed_anchors
+    source=Path(row['source']);n=int(row['frames']);start=int(row.get('source_window',{}).get('start_frame',0))
+                ~~~^^^^^^^^^^
+KeyError: 'source'
+___________________________ test_scene_export[True] ____________________________
+
+compact = True
+
+    @pytest.mark.parametrize('compact',[False,True])
+    def test_scene_export(compact):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);out=root/'public';out.mkdir();(root/'masks').mkdir();n=24;T=n//2;H=W=16
+            def save(name,value):(root/name).write_text(json.dumps(value))
+            save('manifest.json',dict(source=dict(frames=n),public=dict(id='fixture',title='fixture',dataset='Synthetic test',video=dict(url='/fixture.mp4',start_seconds=0)),destination=str(out),url='/fixture/',source_sha256='unchanged'))
+            save('preparation.json',{});save('semantic.json',dict(objects=['container','tool'],task='Fixture',provenance='Fixture'));save('prompts.json',[['object-01','container'],['object-02','tool'],['human-hand','hand']]);save('depth.json',dict(source_trajectory_edited=False))
+            K=np.array([[100.,0,480],[0,100.,270],[0,0,1]])
+            k=np.diag([W/960,H/540,1])@K;pose=np.repeat(np.eye(4)[None],n,0);np.savez(root/'cameras.npz',poses=pose,intrinsic=K)
+            np.savez(root/'depth.npz',depth=np.ones((T,H,W)),conf=np.ones((T,H,W)),images=np.zeros((T,H,W,3),dtype='u1'),intrinsics=np.repeat(k[None],T,0),extrinsics=pose[:T,:3],ids=np.arange(T)*2)
+            if compact:
+                zarr=pytest.importorskip('zarr');pytest.importorskip('pyarrow');import cv2
+                store=zarr.open_group(str(root/'depth.zarr'),mode='w')
+                with np.load(root/'depth.npz') as values:
+                    for name in values.files:
+                        if name!='images':store.create_dataset(name,data=values[name])
+                store.create_dataset('preprocessing_affine',data=np.repeat(np.diag([W/960,H/540,1])[None],T,0))
+                save('depth-store.json',dict(path='depth.zarr'))
+                (root/'frames').mkdir()
+                for i in range(T):cv2.imwrite(str(root/'frames'/f'{i:05d}.jpg'),np.zeros((540,960,3),dtype='u1'))
+            mask=np.zeros((T,540,960),dtype='u2');mask[:,70:200,120:360]=1;mask[:,320:450,600:840]=2
+            np.savez(root/'masks/object-01-masks.npz',masks=mask,frame_indices=np.arange(T))
+            tool=np.zeros_like(mask);tool[:,70:200,600:840]=1;np.savez(root/'masks/object-02-masks.npz',masks=tool,frame_indices=np.arange(T))
+            hand=np.zeros_like(mask);hand[:,380:,0:200]=1;np.savez(root/'masks/human-hand-masks.npz',masks=hand,frame_indices=np.arange(T))
+>           subprocess.run([sys.executable,'-m','arenalab_workbench.export_scene_cloud',str(root)],check=True,stdout=subprocess.DEVNULL)
+
+/tmp/arena-platform-base-tests/tests/workbench/test_scene_export.py:34:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+input = None, capture_output = False, timeout = None, check = True
+popenargs = (['/home/arenalabs/real2sim/local/arenalabs-research/runtime/python/bin/python', '-m', 'arenalab_workbench.export_scene_cloud', '/tmp/tmpqe5z490j'],)
+kwargs = {'stdout': -3}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['/home/arenalabs/real2sim/local/arenalabs-research/runtime/python/bin/python', '-m', 'arenalab_workbench.export_scene_cloud', '/tmp/tmpqe5z490j']' returned non-zero exit status 1.
+
+../../../.local/share/uv/python/cpython-3.12.12-linux-x86_64-gnu/lib/python3.12/subprocess.py:571: CalledProcessError
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/tmp/arena-platform-base-tests/src/arenalab_workbench/export_scene_cloud.py", line 54, in <module>
+    alignment=register(work,row,depth,reference_human)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/arena-platform-base-tests/src/arenalab_workbench/hand_alignment.py", line 109, in register
+    anchors=observed_anchors(row)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/arena-platform-base-tests/src/arenalab_workbench/hand_alignment.py", line 80, in observed_anchors
+    source=Path(row['source']);n=int(row['frames']);start=int(row.get('source_window',{}).get('start_frame',0))
+                ~~~^^^^^^^^^^
+KeyError: 'source'
+=========================== short test summary info ============================
+FAILED ../../../../../tmp/arena-platform-base-tests/tests/workbench/test_scene_export.py::test_scene_export[False]
+FAILED ../../../../../tmp/arena-platform-base-tests/tests/workbench/test_scene_export.py::test_scene_export[True]
+2 failed in 0.42s

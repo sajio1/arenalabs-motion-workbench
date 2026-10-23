@@ -12,6 +12,7 @@ class Generate(BaseModel):
     scene_id:str
     robot_id:str
     hand_id:str='none'
+    trajectory_scale:str|None=None
 
 def fixtures(tmp_path, database=None):
     viewer=FastAPI();workbench=FastAPI();calls=[];states={}
@@ -215,3 +216,91 @@ def test_locomotion_and_export_use_same_job_envelope(tmp_path):
     states[export['backend_job_id']]={'status':'completed','download_url':'/api/4d/exports/export-1/download'}
     result=c.get('/jobs/'+export['id']+'/download',follow_redirects=False)
     assert result.status_code==200 and result.content==b'PK\x03\x04'
+
+
+def install_preflight(app, *, available=True, mismatch=True):
+    seen=[]
+    def preflight(scene_id,request,robot_id=None,workflow='manipulation'):
+        seen.append((scene_id,robot_id,workflow))
+        return {'hand_id':'none','source_policy':'provided-fullbody',
+                'source_body_family':'smplx',
+                'source_policy_version':'source-v1','motion_policy_version':'hybrid-v1',
+                'scale_choice_required':mismatch,
+                'morphology':{'available':available,'source_height_m':1.8,'target_height_m':1.2,
+                              'scale_factor':2/3,'large_mismatch':mismatch,'threshold':.2,
+                              'private_model_path':'/never/expose/model'}}
+    app.state.services.workbench.state.input_requirements=preflight
+    app.state.services.viewer.state.motion_preflight=preflight
+    return seen
+
+
+def test_size_preflight_requires_explicit_choice_without_dispatch(tmp_path):
+    c,calls,_,_,app=fixtures(tmp_path);seen=install_preflight(app)
+    result=c.post('/plans',json=spec())
+    assert result.status_code==200
+    plan=result.json()
+    assert plan['executable'] is False and plan['required_choice']=='trajectory_scale'
+    assert plan['choices']==['preserve','match_robot']
+    assert plan['policy']['source_policy']=='provided-fullbody'
+    assert plan['policy']['body_model']=='provided'
+    assert plan['policy']['generated_body_model'] is None
+    assert plan['policy']['source_body_family']=='smplx'
+    assert 'private_model_path' not in plan['policy']['morphology']
+    rejected=post(c)
+    assert rejected.status_code==409 and rejected.json()['detail']['code']=='SCALE_CHOICE_REQUIRED'
+    assert not calls and seen==[('clip','x2','manipulation')]*2
+
+
+@pytest.mark.parametrize('mode',['preserve','match_robot'])
+@pytest.mark.parametrize('workflow',['manipulation','locomotion'])
+def test_explicit_scale_reaches_both_workers_and_job_results(tmp_path,mode,workflow):
+    c,calls,states,_,app=fixtures(tmp_path);seen=install_preflight(app)
+    body=spec(workflow=workflow,trajectory_scale=mode)
+    if workflow=='locomotion':body.pop('hand_id')
+    plan=c.post('/plans',json=body).json();assert plan['executable']
+    result=post(c,body).json()
+    assert calls[-1]['trajectory_scale']==mode and result['trajectory_scale']==mode
+    assert result['result']['source_policy_version']=='source-v1'
+    assert seen[-1]==('clip','x2',workflow)
+    if workflow=='manipulation':
+        states[result['backend_job_id']]={'status':'completed','scene_url':'/assets/scene/scene.json'}
+        result=c.get('/jobs/'+result['id']).json()
+        assert result['result']['source_policy_version']=='source-v1' and result['trajectory_scale']==mode
+
+
+def test_scale_choice_is_part_of_idempotency_identity(tmp_path):
+    c,calls,_,_,app=fixtures(tmp_path);install_preflight(app)
+    assert post(c,spec(trajectory_scale='preserve')).status_code==202
+    assert post(c,spec(trajectory_scale='match_robot')).status_code==409
+    assert len(calls)==1
+    assert post(c,spec(trajectory_scale='match_robot'),key='other-scale').status_code==202
+    assert len(calls)==2
+
+
+def test_unknown_size_never_auto_scales_and_cannot_claim_match(tmp_path):
+    c,calls,_,_,app=fixtures(tmp_path);install_preflight(app,available=False,mismatch=False)
+    plan=c.post('/plans',json=spec()).json()
+    assert plan['executable'] and not plan['policy']['morphology']['available']
+    assert plan['policy']['trajectory_scale']=='preserve'
+    assert post(c).status_code==202 and calls[0]['trajectory_scale']=='preserve'
+    plan=c.post('/plans',json=spec(trajectory_scale='match_robot')).json()
+    assert not plan['executable'] and plan['policy']['scale_estimate_unavailable']
+    rejected=post(c,spec(trajectory_scale='match_robot'),key='match')
+    assert rejected.status_code==409 and rejected.json()['detail']['code']=='SCALE_ESTIMATE_UNAVAILABLE'
+    assert len(calls)==1
+
+
+def test_old_preflight_signature_and_invalid_overrides(tmp_path):
+    c,calls,_,_,app=fixtures(tmp_path)
+    app.state.services.workbench.state.input_requirements=lambda scene_id,request:{'hand_id':'none'}
+    assert post(c).status_code==202 and calls[0]['trajectory_scale']=='preserve'
+    assert post(c,spec(trajectory_scale='automatic'),key='invalid').status_code==422
+    assert post(c,spec(hand_tolerance_mm=8),key='tolerance').status_code==422
+    assert post(c,spec(source_mode='reconstruct'),key='source').status_code==422
+
+
+def test_export_keeps_saved_scale_selection_without_new_generation_preflight(tmp_path):
+    c,calls,_,_,app=fixtures(tmp_path);install_preflight(app,available=False,mismatch=True)
+    body={'workflow':'export','recording_id':'clip','robot_id':'x2','trajectory_scale':'match_robot'}
+    assert c.post('/plans',json=body).json()['executable']
+    assert post(c,body).status_code==202 and calls[-1]['trajectory_scale']=='match_robot'

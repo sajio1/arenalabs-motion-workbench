@@ -22,7 +22,8 @@ export function showRecordingUpload(onImported:(clip:LibraryClip)=>void){
 export async function downloadEpisode(scene:SceneAsset,robot:string){
  const element=dialog('Download dataset',`<p>${escape(scene.title)}</p><p>LeRobot v3 episode + lossless ArenaLabs extensions</p><ul><li>Whole-body joint states, action references and synchronized camera videos</li><li>Available point clouds, segmentation masks, 3D boxes and semantic labels</li><li>Original FOV and available robot FOV composite, wrist cameras and camera calibration</li><li>Available contact estimates and SMPL-H motion, with provenance and checksums</li></ul><p>Unavailable modalities remain explicitly marked. Contact estimates are not measured pressure. Actions are kinematic references.</p><p role="status">Preparing export…</p><footer><a data-download hidden>Download ZIP</a></footer>`);
  const status=element.querySelector('[role=status]')!;
- try{let job=await api.start({workflow:'export',recording_id:scene.id,robot_id:robot});
+ try{const selected=scene.robots.find(row=>row.id===robot);
+ let job=await api.start({workflow:'export',recording_id:scene.id,robot_id:robot,trajectory_scale:selected?.trajectory_scale});
  while(element.isConnected&&(job.status==='queued'||job.status==='running')){status.textContent=job.phase||'Packaging saved results; no new inference…';await new Promise(r=>setTimeout(r,1500));job=await api.job(job.id);}
  if(!element.isConnected)return;if(job.status!=='completed')throw new Error(job.error||'Export failed');
  status.textContent=`Ready · ${(job.bytes/1024**2).toFixed(1)} MiB · ${job.frames} frames`;const link=element.querySelector<HTMLAnchorElement>('[data-download]')!;link.href=job.download_url;link.download='';link.textContent='Download complete dataset ZIP';link.hidden=false;

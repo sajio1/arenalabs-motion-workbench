@@ -12,6 +12,8 @@ def main():
     for name in ['plan','run']:
         p=sub.add_parser(name);p.add_argument('--workflow',choices=['manipulation','locomotion','export'],required=True)
         p.add_argument('--recording',required=True);p.add_argument('--robot',required=True);p.add_argument('--hand')
+        p.add_argument('--trajectory-scale',choices=['preserve','match_robot'],
+                       help='Explicitly preserve source metres or normalize interaction size to the robot')
         if name=='run':p.add_argument('--key',required=True)
     args=parser.parse_args()
     with ArenaClient(args.url,workspace_token=os.environ.get('ARENA_WORKSPACE_TOKEN')) as client:
@@ -20,6 +22,7 @@ def main():
         if args.command in {'plan','run'}:
             spec=dict(workflow=args.workflow,recording_id=args.recording,robot_id=args.robot)
             if args.hand is not None:spec['hand_id']=args.hand
+            if args.trajectory_scale is not None:spec['trajectory_scale']=args.trajectory_scale
             result=client.plan(**spec) if args.command=='plan' else client.run(idempotency_key=args.key,**spec)
         elif args.command=='recordings':result=client.recordings(args.workflow,limit=args.limit)
         elif args.command=='job':result=client.job(args.id)

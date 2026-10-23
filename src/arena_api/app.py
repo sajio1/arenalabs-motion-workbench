@@ -26,10 +26,11 @@ COOKIE = 'arena_workspace'
 TERMINAL = {'succeeded','failed','cancelled','interrupted','outcome_unknown'}
 OPERATIONS = {
     'manipulation': dict(target='workbench',path='/generate',status='/jobs/',stages=[
-        'source adaptation','native SMPL-H where required','robot retargeting',
-        'shared refinement','scene perception where available','source FOV / preview','contact where available']),
+        'provided full body or three-point EgoAllo SMPL-H','explicit interaction scale',
+        'fullbody retargeting','GPU hybrid refinement','scene perception where available','source FOV / preview','contact where available']),
     'locomotion': dict(target='viewer',path='/api/convert',status='/api/jobs/',stages=[
-        'source adaptation','fullbody retargeting','existing locomotion refinement','playback']),
+        'provided full body or three-point EgoAllo SMPL-H','explicit interaction scale',
+        'fullbody retargeting','GPU hybrid refinement','playback']),
     'export': dict(target='workbench',path='/exports',status='/exports/',stages=[
         'validate generated result','named-joint motion and models','modalities and provenance','archive']),
 }
@@ -55,8 +56,42 @@ def sanitize(value):
     allowed={'status','phase','error','url','scene_url','robot_id','robot_ready',
              'cache_hit','cached','download_url','frames','fps','bytes','queue_position',
              'seconds','elapsed_seconds','body_ready','scene_ready','fov_ready','contact_ready',
-             'sha256','format','robot_motion','revision','warnings','progress'}
+             'sha256','format','robot_motion','revision','warnings','progress',
+             'trajectory_scale','source_policy','source_policy_version','motion_policy_version',
+             'scale_factor','solver_status','solver_converged','quality_status'}
     return {k:v for k,v in value.items() if k in allowed}
+
+def request_spec(body):
+    """Keep pre-upgrade idempotency identities when the new optional field is absent."""
+    value=body.model_dump()
+    if value.get('trajectory_scale') is None:value.pop('trajectory_scale',None)
+    return value
+
+def preflight_policy(requirements, body):
+    requirements=requirements or {}
+    raw=requirements.get('morphology') or {}
+    # Never publish internal model/source paths supplied by a worker helper.
+    allowed={'available','source_height_m','target_height_m','scale_factor','large_mismatch',
+             'threshold','threshold_ratio','ratio','reason','method','basis','status','estimate','scaling_method','scaling_scope'}
+    morphology={k:v for k,v in raw.items() if k in allowed}
+    morphology.setdefault('available',False)
+    morphology.setdefault('reason','Source/robot size is not known before reconstruction' if not morphology['available'] else None)
+    required=bool(requirements.get('scale_choice_required') or morphology.get('large_mismatch'))
+    unresolved=body.workflow!='export' and required and body.trajectory_scale is None
+    unavailable=(body.workflow!='export' and body.trajectory_scale=='match_robot' and not morphology['available'])
+    resolved=body.trajectory_scale if body.workflow=='export' else body.trajectory_scale or 'preserve'
+    source_policy=requirements.get('source_policy','auto-provided-fullbody-or-egoallo-three-point')
+    provided=source_policy in {'supplied-body','provided-fullbody'}
+    return {'selection':'unified motion backend','body_model':'provided' if provided else 'native-smplh' if source_policy=='three-point-egoallo' else 'automatic',
+            'generated_body_model':None if provided else 'native-smplh',
+            'source_body_family':requirements.get('source_body_family'),
+            'source_policy':source_policy,
+            'source_policy_version':requirements.get('source_policy_version'),
+            'motion_policy_version':requirements.get('motion_policy_version',requirements.get('pipeline_version')),
+            'route':requirements.get('route','automatic; provided full body bypasses body reconstruction'),
+            'morphology':morphology,'scale_choice_required':unresolved,
+            'scale_estimate_unavailable':unavailable,'trajectory_scale':resolved,
+            'scale_semantics':'match_robot normalizes the interaction; it does not preserve original object dimensions'}
 
 def public_job(row):
     result=json.loads(row['result'])
@@ -66,6 +101,7 @@ def public_job(row):
                    created_at=row['created'],updated_at=row['updated'],backend_job_id=row['backend_id'],
                    result=result,error=json.loads(row['error']) if row['error'] else None,
                    cache_hit=bool(result.get('cache_hit') or result.get('cached')),
+                   trajectory_scale=result.get('trajectory_scale',json.loads(row['request']).get('trajectory_scale')),
                    status_url=PREFIX+'/jobs/'+row['id'],events_url=PREFIX+'/jobs/'+row['id']+'/events')
 
 def create_api(viewer, workbench, *, storage, database, operator_root=None, bridge=None):
@@ -73,7 +109,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
     registry=Store(database)
     services=bridge or PlatformServices(viewer,workbench)
     app=FastAPI(title='ArenaLabs Platform API',version=__version__,
-                description='Shared platform operations for the website and external clients. Native SMPL-H, existing shared refinement and numerical policies are unchanged. Recalibration UI and live physics rollout are not part of this release.')
+                description='Shared platform operations for the website and external clients. Provided full-body motion or native SMPL-H reconstructed from head and hands feeds the unified GPU hybrid refiner. Interaction scaling is explicit. Live physics rollout is not part of this release.')
     app.state.registry=registry
     app.state.services=services
     app.state.bridge=services  # Compatibility for callers inspecting bound application instances.
@@ -117,8 +153,13 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
 
     @app.get('/capabilities',tags=['platform'])
     def capabilities():
-        return {'api_version':__version__,'workflows':OPERATIONS,'body_model':'native-smplh',
+        return {'api_version':__version__,'workflows':OPERATIONS,'body_model':'source-provided-or-native-smplh',
+                'generated_body_model':'native-smplh','provided_body_families':['smpl','smplh','smplx'],
                 'fps':30,'foot_objective':'soft guide; reasonable grounding; residual sliding accepted',
+                'source_policy':'auto-provided-fullbody-or-egoallo-three-point',
+                'trajectory_scale':{'choices':['preserve','match_robot'],'omitted':'preserve unless a known large mismatch requires an explicit choice',
+                                    'match_robot':'normalized interaction, including scene geometry; not original physical object dimensions'},
+                'refinement':'GPU hybrid; fixed common policy; no public hand-tolerance override',
                 'recalibration_ui':False,'live_physics_rollout':False,
                 'independent_stage_execution':False,
                 'stage_access':'Existing numerical stages execute inside the established workflow. Result modalities are separately readable.',
@@ -177,8 +218,10 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
         robot=next((r for r in robots if r['id']==body.robot_id),None)
         if not robot:raise HTTPException(404,'Robot unavailable')
         if body.workflow!='export' and not robot.get(ready):raise HTTPException(409,'Robot metadata is not ready')
+        requirements=dict(await services.input_requirements(body.recording_id,request,robot_id=body.robot_id,workflow=body.workflow) or {})
+        if (source or {}).get('source_body_family'):
+            requirements.setdefault('source_body_family',source['source_body_family'])
         if body.workflow=='manipulation':
-            requirements=await services.input_requirements(body.recording_id,request)
             # Dataset labels cannot distinguish GRAIL six-pose recordings from
             # measured real-robot grippers. The queue owns those semantics.
             expected=(requirements or {}).get('hand_id',(source or {}).get('end_effector'))
@@ -186,14 +229,16 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
                 raise HTTPException(409,'Source requires hand_id='+expected)
             if requirements and requirements.get('requires_initial_height'):
                 raise HTTPException(409,'Set the first trajectory height before generating UMI')
-        return source,robot
+        return source,robot,preflight_policy(requirements,body)
 
     @app.post('/plans',response_model=PlanView,tags=['workflows'])
     async def plan(body:RunRequest,request:Request):
-        source,robot=await check(body,request)
-        return PlanView(executable=True,request=body,operation=body.workflow,stages=OPERATIONS[body.workflow]['stages'],
-                        policy={'selection':'current deployed pipeline','refiner_signature':robot.get('refiner_signature'),
-                                'body_model':'native-smplh','route':'resolved by current worker using source measurements and target topology'},
+        source,robot,policy=await check(body,request)
+        policy['refiner_signature']=robot.get('refiner_signature')
+        required=policy['scale_choice_required']
+        return PlanView(executable=not (required or policy['scale_estimate_unavailable']),request=body,operation=body.workflow,stages=OPERATIONS[body.workflow]['stages'],
+                        policy=policy,required_choice='trajectory_scale' if required else None,
+                        choices=['preserve','match_robot'] if required else [],
                         limitations=['Metadata preflight only; worker validates numerical inputs and route.',
                                      'No implicit standalone reconstruction, physics rollout or new calibration.',
                                      'Plans are previews; execution rechecks current inputs and records backend result.'])
@@ -212,18 +257,28 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
             raise
         status={'completed':'succeeded','interrupted':'interrupted','failed':'failed','queued':'queued','running':'running'}.get(raw.get('status'),'running')
         error={'code':'BACKEND_FAILED','detail':raw.get('error','Current workflow did not complete')} if status in {'failed','interrupted'} else None
-        return registry.update(row['id'],status=status,result=sanitize(raw),error=error)
+        # Worker progress often omits immutable submission metadata.
+        previous=json.loads(row['result'])
+        retained={k:v for k,v in previous.items() if k in {'trajectory_scale','source_policy','source_policy_version','motion_policy_version'}}
+        return registry.update(row['id'],status=status,result={**retained,**sanitize(raw)},error=error)
 
     async def submit(body,request,key):
         who=owner(request)
         if not 1<=len(key)<=160:raise HTTPException(422,'Idempotency-Key must contain 1–160 characters')
-        row,fresh=registry.create(who,key,body.model_dump())
+        row,fresh=registry.create(who,key,request_spec(body))
         if not fresh:return public_job(await refresh(row,request))
         op=OPERATIONS[body.workflow]
         payload={'robot_id':body.robot_id,('clip_id' if body.workflow=='locomotion' else 'scene_id'):body.recording_id}
         if body.workflow=='manipulation':payload['hand_id']=body.hand_id
         try:
-            await check(body,request)
+            _,_,policy=await check(body,request)
+            if policy['scale_choice_required']:
+                raise HTTPException(409,{'code':'SCALE_CHOICE_REQUIRED','message':'Choose preserve or match_robot for this source and robot.',
+                                         'field':'trajectory_scale','choices':['preserve','match_robot'],'morphology':policy['morphology']})
+            if policy['scale_estimate_unavailable']:
+                raise HTTPException(409,{'code':'SCALE_ESTIMATE_UNAVAILABLE','message':'Robot matching is unavailable until a source/robot size estimate exists. Preserve keeps source metres.',
+                                         'field':'trajectory_scale','morphology':policy['morphology']})
+            if policy['trajectory_scale'] is not None:payload['trajectory_scale']=policy['trajectory_scale']
             raw=await services.submit(body.workflow,request,payload)
         except HTTPException as exc:
             registry.update(row['id'],status='failed',error={'code':'SUBMISSION_REJECTED','http_status':exc.status_code,'detail':exc.detail})
@@ -233,7 +288,8 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
             logging.exception('Platform dispatch outcome unknown: job=%s operation=%s',row['id'],body.workflow)
             registry.update(row['id'],status='outcome_unknown',error={'code':'DISPATCH_OUTCOME_UNKNOWN','detail':'Inspect backend before resubmitting'})
             raise HTTPException(502,'Submission outcome unknown; query this idempotency key again')
-        result=sanitize(raw)
+        result={k:policy[k] for k in ('trajectory_scale','source_policy','source_policy_version','motion_policy_version')}
+        result.update(sanitize(raw))
         status='succeeded' if raw.get('status')=='completed' else raw.get('status','queued')
         backend_id=raw.get('id')
         if status=='succeeded' and not backend_id:result['cache_hit']=True
@@ -246,7 +302,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
     @app.post('/batches',status_code=202,tags=['workflows'])
     async def batch(body:BatchRequest,request:Request,idempotency_key:str=Header(...,alias='Idempotency-Key')):
         if not 1<=len(idempotency_key)<=128:raise HTTPException(422,'Batch key must contain 1–128 characters')
-        registry.claim_batch(owner(request),idempotency_key,body.model_dump())
+        registry.claim_batch(owner(request),idempotency_key,{'items':[request_spec(item) for item in body.items]})
         # Each item has a stable identity. A partial batch is safe to submit again.
         items=[]
         for index,item in enumerate(body.items):
@@ -337,6 +393,10 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
                     'support_metric_source':'refiner report; not an independent physical measurement' if support else None,
                     'reconstruction_model':validation.get('human_model'),
                     'original_priors_unchanged':validation.get('original_priors_unchanged'),
+                    'trajectory_scale':(selected or {}).get('trajectory_scale',json.loads(row['result']).get('trajectory_scale')),
+                    'source_policy':(selected or {}).get('source_policy',json.loads(row['result']).get('source_policy')),
+                    'source_policy_version':(selected or {}).get('source_policy_version',json.loads(row['result']).get('source_policy_version')),
+                    'solver_status':solver.get('status'),
                     'physics_validation':'not_run',
                     'acceptance':'not_evaluated',
                     'warnings':(['SOLVER_NOT_CONVERGED'] if solver.get('converged') is False else [])}

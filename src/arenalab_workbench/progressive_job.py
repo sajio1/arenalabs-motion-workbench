@@ -28,7 +28,7 @@ def initialize(path, public, frames):
         if path.exists():return
         write(path,dict(id=public['id'],title=public['title'],dataset=public['dataset'],
             fps=30,frames=frames,duration=(frames-1)/30,world='Source world',
-            video=public['video'],end_effector=public.get('end_effector'),uploaded=public.get('uploaded',False),robots=[],objects=[],wrist_videos=[],
+            video=public.get('video'),end_effector=public.get('end_effector'),uploaded=public.get('uploaded',False),robots=[],objects=[],wrist_videos=[],
             semantic=dict(task='',objects=[],provenance='Generation in progress'),
             tactile=dict(status='unavailable',reason='Contact generation pending'),
             geometry=dict(source_trajectory_edited=False)))

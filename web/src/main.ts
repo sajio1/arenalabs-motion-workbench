@@ -1,4 +1,5 @@
 import {api, apiJson} from './platform-api';
+import {prepareRun} from './trajectory-scale';
 import {demoNavigation,demoBrand} from './demo-nav';
 import {createIcons,icons} from 'lucide';
 import './style.css';
@@ -198,7 +199,9 @@ async function assign(i:number,clip:Clip,robot:Robot){
  const slot=slots[i],token=++slot.token,previous={clip:slot.clip,robot:slot.robot,payload:slot.payload};
  slot.clip=clip;slot.robot=robot;slot.status='loading';slot.message=undefined;selected=i;selectedClip=clip;stage.autoRotate=false;syncOrbit();renderSlots();renderRobot();renderMetadata();renderCatalog();
  try{
-   let result=await api.start({workflow:'locomotion',recording_id:clip.id,robot_id:robot.id});
+   const spec=await prepareRun({workflow:'locomotion',recording_id:clip.id,robot_id:robot.id},robot.label);
+   if(token!==slot.token)return;
+   let result=await api.start(spec);
    while(result.status!=='completed'){
      if(token!==slot.token)return;if(result.status==='failed')throw new Error(result.error||'Conversion failed');
      slot.status=result.status;slot.message=result.status==='queued'?`Queued · Position ${result.queue_position||1} · Waiting for GPU`:'Generating · GPU running';renderSlots();

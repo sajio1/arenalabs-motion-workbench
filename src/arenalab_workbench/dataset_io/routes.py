@@ -13,6 +13,7 @@ import numpy as np
 from fastapi import File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
+from typing import Literal
 from . import storage as s
 from .ingest import MAX_ARCHIVE, unpack, validate_normalized
 
@@ -20,6 +21,7 @@ from .ingest import MAX_ARCHIVE, unpack, validate_normalized
 class ExportRequest(BaseModel):
     scene_id: str
     robot_id: str
+    trajectory_scale: Literal['preserve','match_robot']|None = None
 
 
 def require_scene(scene_id, request):
@@ -41,27 +43,41 @@ def import_recording(archive, ident, workspace):
     manifest, arrays, video = validate_normalized(package)
     dest = s.STORE / 'manipulation4d/uploads' / ident
     s.mark_private(dest, workspace)
-    public_video = dest / 'source/original.mp4'
-    public_video.parent.mkdir(exist_ok=True)
-    stream=json.loads(subprocess.check_output(['ffprobe','-v','error','-select_streams','v:0','-show_entries','stream=codec_name,pix_fmt','-of','json',str(video)]))['streams'][0]
-    if stream.get('codec_name')=='h264' and stream.get('pix_fmt') in {'yuv420p','yuvj420p'}:shutil.copyfile(video, public_video)
-    else:
-        # Ubuntu's installed FFmpeg can predate -fps_mode. -vsync 0 has the
-        # same timestamp-preserving behavior across the supported binaries.
-        encoded=subprocess.run(['ffmpeg','-v','error','-nostdin','-y','-i',str(video),'-map','0:v:0','-an','-c:v','libx264','-pix_fmt','yuv420p','-vsync','0','-movflags','+faststart',str(public_video)],capture_output=True)
-        if encoded.returncode:
-            raise ValueError('Video could not be encoded for browser playback; check the video codec and frames')
+    public_video = None
+    if video is not None:
+        public_video = dest / 'source/original.mp4'
+        public_video.parent.mkdir(exist_ok=True)
+        stream=json.loads(subprocess.check_output(['ffprobe','-v','error','-select_streams','v:0','-show_entries','stream=codec_name,pix_fmt','-of','json',str(video)]))['streams'][0]
+        if stream.get('codec_name')=='h264' and stream.get('pix_fmt') in {'yuv420p','yuvj420p'}:shutil.copyfile(video, public_video)
+        else:
+            # Ubuntu's installed FFmpeg can predate -fps_mode. -vsync 0 has the
+            # same timestamp-preserving behavior across the supported binaries.
+            encoded=subprocess.run(['ffmpeg','-v','error','-nostdin','-y','-i',str(video),'-map','0:v:0','-an','-c:v','libx264','-pix_fmt','yuv420p','-vsync','0','-movflags','+faststart',str(public_video)],capture_output=True)
+            if encoded.returncode:
+                raise ValueError('Video could not be encoded for browser playback; check the video codec and frames')
     mode = manifest['end_effector']
     n = len(arrays['timestamps_s'])
     np.savez_compressed(work / 'observations-normalized.npz', **arrays)
-    video_url = '/assets/' + public_video.relative_to(s.STORE).as_posix()
+    video_url = '/assets/' + public_video.relative_to(s.STORE).as_posix() if public_video else None
     public = dict(id=ident, title=str(manifest.get('title', 'Uploaded recording'))[:160], dataset='Uploaded', end_effector=mode, family='My recordings', duration=(n-1)/30, owner=workspace, uploaded=True, video=dict(url=video_url, start_seconds=float(manifest.get('video_start_seconds', 0))))
-    source_row = dict(id=ident, source=str(work / 'observations-normalized.npz'), frames=n, fps=30, video=dict(path=str(video), start_seconds=public['video']['start_seconds']), metadata=dict(upload_schema=manifest['schema']))
+    if video is None:
+        public['video'] = None
+    supplied = manifest.get('_resolved_motion_source')
+    if supplied is not None:
+        public.update(has_supplied_body=True, source_body_family=supplied['family'], source_evidence=supplied['evidence'], motion_source_policy='supplied-body22-surface-v1')
+    source_row = dict(id=ident, source=str(work / 'observations-normalized.npz'), frames=n, fps=30, video=dict(path=str(video), start_seconds=public['video']['start_seconds']) if video is not None else None, metadata=dict(upload_schema=manifest['schema']))
     record = dict(public=public, source_row=source_row, manifest=manifest, destination=str(dest), archive_sha256=file_digest(archive))
+    if supplied is not None:
+        record['motion_source'] = supplied
+        record['body_adapter'] = 'supplied-body'
+        source_row['observations_source'] = source_row['source']
     if mode == 'robotiq-2f-140':
-        source = dict(camera=arrays['camera'], intrinsic=arrays['intrinsic'], tcp_zup=arrays['wrist_position'], tool_R_zup=arrays['ee_rotation'], width_m=arrays['width_m'], floor_z=arrays['floor_z'])
+        source = dict(camera=arrays['camera'], intrinsic=arrays['intrinsic'], tcp_zup=arrays['wrist_position'], tool_R_zup=arrays['ee_rotation'], width_m=arrays['width_m'], floor_z=arrays['floor_z'], timestamps_s=arrays['timestamps_s'])
         np.savez_compressed(work / 'source.npz', **source)
         s.write(work / 'source.json', dict(dataset='Uploaded', frames=n, fps=30, task=public['title'], head_video=str(video), start_seconds=public['video']['start_seconds'], wrist_videos=[], target_reference=manifest.get('ee_reference', 'User-declared fixed gripper housing frame'), width_provenance='User-declared gripper width in metres', floor_provenance='User-declared floor_z_m', source_sha256=record['archive_sha256'], source_trajectory_edited=False, camera_image_size=manifest['image_size']))
+        if supplied is not None:
+            metadata=s.read(work/'source.json');metadata['motion_source']=supplied
+            s.write(work/'source.json',metadata)
         record['gripper'] = dict(work=str(work), destination=str(dest))
     elif mode == 'wuji':
         # Convert declared source observations to the established EgoDex schema;
@@ -85,7 +101,8 @@ def import_recording(archive, ident, workspace):
                     f['transforms/'+name] = transform
                     f['confidences/'+name] = arrays['hand_confidence'][:, si, j]
         source_row['source'] = str(hdf)
-        record['body_adapter'] = 'egodex'
+        if supplied is None:
+            record['body_adapter'] = 'egodex'
     with resource_lock('user-recording-registry'):
         registry = s.uploads()
         registry[ident] = record
@@ -178,12 +195,18 @@ def attach_dataset_routes(app, lock):
             raise HTTPException(409, 'Generate a robot result before downloading')
         from .export import asset_path, collect_raw_sources, collect_video_sources
         scene_path = asset_path(public['scene_url'])
+        if body.trajectory_scale is not None:
+            from arenalab_workbench.unified_scene import scene_key
+            key=scene_key(sid,body.trajectory_scale,body.robot_id)
+            candidate=s.STORE/'manipulation4d/unified'/key/'scene.json'
+            if candidate.is_file():scene_path=candidate
+            else:raise HTTPException(409,'Generate the requested trajectory scale version before downloading')
         scene = s.read(scene_path)
         for job in getattr(app.state,'generation_jobs',{}).values():
             if job.get('scene_id')==sid and job.get('robot_id')==body.robot_id:
                 current=s.read(s.ROOT/'queue'/job['id']/'state.json',{})
                 if current.get('status') in {'queued','running'}:raise HTTPException(409,'Generation is still running; download after the remaining modalities finish')
-        if not any(r['id'] == body.robot_id for r in scene['robots']):
+        if not any(r['id'] == body.robot_id and (body.trajectory_scale is None or r.get('trajectory_scale','preserve')==body.trajectory_scale) for r in scene['robots']):
             raise HTTPException(409, 'Generate the selected robot first')
         ident = uuid.uuid4().hex
         directory = s.ROOT / 'dataset-exports' / ident

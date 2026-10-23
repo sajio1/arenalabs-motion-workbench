@@ -32,6 +32,7 @@ namespaces = true
 
 [tool.setuptools.package-data]
 alphamotion = ["assets/**/*"]
+arenalab_motion = ["PROVENANCE.json"]
 "greenwich_pipelines.pipelines.nymeria" = ["official/nymeriaplus/loaders/xsens.py"]
 
 [tool.pytest.ini_options]

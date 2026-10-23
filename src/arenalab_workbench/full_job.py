@@ -26,11 +26,21 @@ def _run(scene_id,robot_id,hand_id,status):
  if hand_id!=expected:raise ValueError('Source requires '+expected)
  # Run body inference independently from scene perception, using a separate status.
  work=body_folder(scene_id)
- scene_url=public.get('scene_url') or '/assets/manipulation4d/progressive/'+hashlib.sha256(scene_id.encode()).hexdigest()+'/scene.json'
+ mode=os.environ.get('ARENA_TRAJECTORY_SCALE','preserve')
+ from arenalab_workbench.unified_scene import scene_key
+ version=scene_key(scene_id,mode,robot_id)
+ scene_url='/assets/manipulation4d/unified/'+version+'/scene.json'
+ previous_scene=public.get('scene_url')
  destination=(STORE/scene_url.removeprefix('/assets/')).parent
  from arenalab_workbench.dataset_io.storage import mark_private
  mark_private(destination,public.get('owner'))
  initialize(destination/'scene.json',public,int(row['frames']))
+ has_video=bool(row.get('video') and Path(row['video'].get('path','')).is_file())
+ if previous_scene and previous_scene!=scene_url:
+  previous_path=STORE/previous_scene.removeprefix('/assets/')
+  if previous_path.is_file():
+   previous=json.loads(previous_path.read_text())
+   if depth_current(previous):merge_perception(destination/'scene.json',previous)
  progress=Progress(status,scene_url,robot_id)
  progress.write('running','Preparing shared body and scene')
  def recover_body():
@@ -41,11 +51,14 @@ def _run(scene_id,robot_id,hand_id,status):
     runner=subprocess.run if (work/'prior-ready.json').exists() else gpu_run
     body_env=os.environ.copy()
     from arenalab_workbench.robot_registry import roster
-    if roster()[robot_id]['kind']!='Wheeled':body_env['ARENA_STREAM_ROBOT_ID']=robot_id
+    body_env.pop('ARENA_STREAM_ROBOT_ID',None)  # Only the unified backend publishes target motion.
     runner([sys.executable,str(Path(__file__).with_name('body_prior.py')),scene_id,'--status',str(status.with_name('body-stage.json'))],env=body_env,stdout=log,stderr=subprocess.STDOUT,check=True)
   save(status.with_name('body-timing.json'),dict(cache_hit=cache_hit,lock_wait_seconds=acquired-requested,seconds=time.time()-acquired))
   return work
  def recover_scene():
+  if not has_video:
+   merge_scene(destination/'scene.json',lambda scene:scene.setdefault('geometry',{}).update(status='unavailable',reason='No registered source camera input; CV reconstruction was not performed'))
+   return json.loads((destination/'scene.json').read_text())
   with resource_lock('scene:'+scene_id):
    current=json.loads((destination/'scene.json').read_text())
    source_hash=current.get('geometry',{}).get('source_sha256')
@@ -72,18 +85,13 @@ def _run(scene_id,robot_id,hand_id,status):
   if native_dir and Path(native_dir).resolve().is_relative_to(work.resolve()):env['ARENA_RETARGET_WORK']=native_dir
  robot_regenerated=False
  stages=[('retarget_robot.py',[robot_id],'Retargeting body, palms and Wuji fingers'),('render_recording.py',[robot_id],'Rendering robot arms and hands in source FOV'),('contact_recording.py',[],'Estimating individual finger contact from video')]
- if hand_id=='none':stages=[('retarget_robot.py',[robot_id],'Retargeting body and observed wrists; no dexterous hand')]
+ if hand_id=='none' or not has_video:stages=[('retarget_robot.py',[robot_id],'Retargeting body and observed wrists; no dexterous hand')]
  if mobile:
   stages=[('wheeled_job.py',[robot_id,str(work),str(destination),hand_id],'Retargeting SMPL-H to native mobile body'),('mobile_render_job.py',[str(work),str(destination),robot_id],'Rendering native robot arms and end effector')]+([] if hand_id=='none' else [('contact_recording.py',[],'Estimating individual finger contact from video')])
  def execute_stage(task):
   script,args,phase=task
   stage_started=time.time()
   validation=destination/('robot-'+robot_id)/'validation.json'
-  if script=='retarget_robot.py' and validation.exists():
-   report=json.loads(validation.read_text())
-   native_ready=(Path(env['ARENA_RETARGET_WORK'])/'operation-accuracy/palm'/robot_id/'motion.npz').exists()
-   if native_ready and report.get('human_model')=='smplh' and report.get('human_policy')==__import__('arenalab_workbench.human_reference',fromlist=['SMPLH_POLICY']).SMPLH_POLICY and report.get('encoder_policy')==ENCODER_POLICY and report.get('support_policy')==SUPPORT_POLICY and report.get('source_id')==scene_id and all(hashlib.sha256((work/name).read_bytes()).hexdigest()==value for name,value in report.get('source_hashes',{}).items()) and report.get('source_hashes'):
-    save(status.with_name(status.stem+'-'+script+'.json'),dict(status='completed',phase=phase,cache_hit=True,seconds=time.time()-stage_started));return
   nonlocal robot_regenerated
   if script=='retarget_robot.py':robot_regenerated=True
   render_receipt=destination/('robot-'+robot_id)/'render-cache.json'
@@ -119,7 +127,7 @@ def _run(scene_id,robot_id,hand_id,status):
     reason=next((line.strip() for line in reversed(lines) if re.match(r'[\w.]+(?:Error|Exception):',line)), 'Contact subprocess exited with code '+str(error.returncode))
     raise RuntimeError('Finger contact estimation failed: '+reason) from error
    return staging/'video-contact.json'
- contact_future=branches.submit(visual_contact) if hand_id=='wuji' else None
+ contact_future=branches.submit(visual_contact) if hand_id=='wuji' and has_video else None
  try:
   execute_stage(stages[0])
   if robot_regenerated:merge_scene(destination/'scene.json',lambda scene:scene.get('patch_videos',{}).pop(robot_id,None))
@@ -143,7 +151,7 @@ def _run(scene_id,robot_id,hand_id,status):
    progress.publish('contact','Contact ready')
   def finish(scene):
    if hand_id=='none':scene['tactile']={'status':'unavailable','reason':'No dexterous hand requested for this recording'}
-   scene['generation_status']=dict(status='completed',robot_id=robot_id,hand_id=hand_id,seconds=time.time()-started)
+   scene['generation_status']=dict(status='completed',robot_id=robot_id,hand_id=hand_id,trajectory_scale=mode,pipeline_version='resident-skeleton-surface-wrist-v3',seconds=time.time()-started)
   merge_scene(destination/'scene.json',finish)
   progress.complete()
   return scene_url

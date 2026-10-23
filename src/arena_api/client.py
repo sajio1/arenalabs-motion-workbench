@@ -30,10 +30,21 @@ class ArenaClient:
     def recordings(self,workflow='manipulation',**filters):return self.request('GET','recordings',params={'workflow':workflow,**filters})
     def robots(self):return self.request('GET','robots')
     def end_effectors(self):return self.request('GET','end-effectors')
-    def plan(self,**spec):return self.request('POST','plans',json=spec)
+    def plan(self,**spec):
+        """Metadata preflight; executable=false can require trajectory_scale.
+
+        Use preserve or match_robot explicitly after considering morphology.
+        Provided full-body sources bypass EgoAllo automatically; no source or
+        solver override is exposed by this client.
+        """
+        return self.request('POST','plans',json=spec)
 
     def run(self,*,idempotency_key,**spec):
-        """Caller keeps the key across network retries; no hidden retry/new key."""
+        """Keep the key across retries, including the identical trajectory_scale.
+
+        Changing scale mode requires a new key. No hidden retry, scaling,
+        solver-tolerance override or new workspace is performed.
+        """
         return self.request('POST','runs',json=spec,headers={'Idempotency-Key':idempotency_key})
 
     def batch(self,items,*,idempotency_key):

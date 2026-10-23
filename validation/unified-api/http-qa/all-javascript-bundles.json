@@ -1,0 +1,32 @@
+[
+  {
+    "url": "/web/assets/GLTFLoader-j6Th2aHC.js",
+    "status": 200,
+    "sha256": "93d5c851502c057206733fe73e6c4c04cd786efa985116fe20a0b90006538847",
+    "matches_local": true
+  },
+  {
+    "url": "/web/assets/depth-decoder.worker-8QnKj61k.js",
+    "status": 200,
+    "sha256": "c69a7f6dea97155d301be11bc36e9e68bbbf994c7415337c22f4b735294a2563",
+    "matches_local": true
+  },
+  {
+    "url": "/web/assets/index-BpybcwdK.js",
+    "status": 200,
+    "sha256": "a998b02e195c32af555f54de316925de272c46bae185a6c81bc71f5d68a644d0",
+    "matches_local": true
+  },
+  {
+    "url": "/web/assets/main-Bh_nut2p.js",
+    "status": 200,
+    "sha256": "25830fe5be3965b429330575e7164c55ddd1bfc4c13441345f35a4307f4ab3af",
+    "matches_local": true
+  },
+  {
+    "url": "/web/assets/main-Cy1vTh55.js",
+    "status": 200,
+    "sha256": "00c58fdf10b204b1b8461cdc8d5fca61f0839f4335b50ef6e576585b1f5478c9",
+    "matches_local": true
+  }
+]

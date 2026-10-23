@@ -10,6 +10,9 @@ class RunRequest(Contract):
     recording_id: str = Field(min_length=1, max_length=200, pattern=r'^[\w.:-]+$')
     robot_id: str = Field(min_length=1, max_length=100, pattern=r'^[\w.-]+$')
     hand_id: str | None = Field(default=None, max_length=100, pattern=r'^[\w.-]+$')
+    trajectory_scale: Literal['preserve', 'match_robot'] | None = Field(
+        default=None, description='Preserve source metres or explicitly normalize the interaction to the robot. '
+        'An omitted choice never enables scaling; a known large mismatch requires a choice before generation.')
 
     @model_validator(mode='after')
     def explicit_selection(self):
@@ -35,6 +38,7 @@ class JobView(Contract):
     status_url: str
     events_url: str
     physics_status: str = 'not_run'
+    trajectory_scale: Literal['preserve', 'match_robot'] | None = None
 
 class PlanView(Contract):
     executable: bool
@@ -43,3 +47,5 @@ class PlanView(Contract):
     stages: list[str]
     policy: dict[str, Any]
     limitations: list[str]
+    required_choice: Literal['trajectory_scale'] | None = None
+    choices: list[str] = Field(default_factory=list)

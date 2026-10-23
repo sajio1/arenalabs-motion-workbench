@@ -9,7 +9,7 @@ from arenalab_workbench.gpu_scheduler import run as gpu_run, resource_lock, merg
 from arenalab_workbench.progressive_job import Progress, initialize, merge_perception
 from arenalab_workbench.scene_job import depth_current
 from arenalab_workbench.depth_store import fov_current
-POLICY='gripper-head-two-ee-smplh-housing-v4'
+POLICY='gripper-unified-resident-v3'
 from arenalab_workbench.gripper_registry import REGISTRY, sources
 
 def cached(scene_id,rid,scene,require_visual=True):
@@ -23,11 +23,15 @@ def cached(scene_id,rid,scene,require_visual=True):
  report=json.loads(p.read_text());return report.get('encoder_policy')==ENCODER_POLICY and report.get('head_calibration')==json.loads((work/'source.json').read_text()).get('head_calibration') and report.get('policy')==POLICY and report.get('source_sha256')==digest(work/'source.npz') and any(r['id']==rid and r.get('hand')=='robotiq-2f-140' for r in scene['robots']) and (dest/('robot-'+rid)/'model.glb').exists() and (dest/('robot-'+rid)/'playback.json').exists() and (not require_visual or (fov_current(scene,rid) and scene.get('geometry',{}).get('visual_policy')=='gripper-visual-v4' and depth_current(scene)))
 def run(scene_id,rid,hand,status):
  if hand!='robotiq-2f-140':raise ValueError('Gripper source requires a mapped gripper end effector')
- row=sources()[scene_id];work=Path(row['work']);dest=Path(row['destination']);start=time.time();env=os.environ.copy();env.update(CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),PYTHONPATH=paths.pythonpath(),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2');code=Path(__file__).parent
+ row=sources()[scene_id];work=Path(row['work']);
+ mode=os.environ.get('ARENA_TRAJECTORY_SCALE','preserve')
+ from arenalab_workbench.unified_scene import scene_key
+ dest=paths.store/'manipulation4d/unified'/scene_key(scene_id,mode,rid);dest.mkdir(parents=True,exist_ok=True);
+ start=time.time();env=os.environ.copy();env.update(CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),PYTHONPATH=paths.pythonpath(),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2');code=Path(__file__).parent
  from arenalab_workbench.robot_registry import roster
  robot=roster()[rid]
  mobile=robot['kind']=='Wheeled'
- if not mobile:env['ARENA_STREAM_ROBOT_ID']=rid
+ env.pop('ARENA_STREAM_ROBOT_ID',None)
  from arenalab_workbench.gripper_body import body_path
  from arenalab_workbench.height_registry import public_entry
  public=public_entry(scene_id)
@@ -38,7 +42,7 @@ def run(scene_id,rid,hand,status):
  initialize(dest/'scene.json',public,meta['frames'])
  url='/assets/'+(dest/'scene.json').relative_to(str(paths.store)).as_posix()
  initial=json.loads((dest/'scene.json').read_text())
- all_cached=cached(scene_id,rid,initial,require_visual=True)
+ all_cached=False
  progress=Progress(status,url,rid);progress.write('running','Parallel body and scene generation')
  def recover_body():
   with resource_lock('body:'+str(body_path(work))):
@@ -63,7 +67,7 @@ def run(scene_id,rid,hand,status):
  with ThreadPoolExecutor(max_workers=2) as branches:
   body=branches.submit(recover_body);perception=branches.submit(recover_scene)
   body.result()
-  regenerated=not cached(scene_id,rid,json.loads((dest/'scene.json').read_text()),require_visual=False)
+  regenerated=True
   if mobile and not all_cached:
    execute(('wheeled_job.py',[rid,str(body_path(work)),str(dest),hand,'--gripper-work',str(work)],str(paths.scene_python),'Retargeting native mobile body and gripper'))
   elif not mobile and regenerated:

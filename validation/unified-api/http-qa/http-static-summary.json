@@ -1,0 +1,247 @@
+{
+  "health": {
+    "status": 200,
+    "sha256": "ccd0c3e3be1d43a08961cea2bdfe655a6a20d39e3a7cbb20d53f26eea4b9baf8",
+    "response": {
+      "status": "ok",
+      "api_version": "1.2.0",
+      "scheduler": "existing platform workers",
+      "job_registry": "sqlite-wal",
+      "calibration_workflow": "deferred"
+    }
+  },
+  "capabilities": {
+    "status": 200,
+    "sha256": "87c452970924521c6af186035db266513194e0818ad5756a949467478feade30",
+    "response": {
+      "api_version": "1.2.0",
+      "workflows": {
+        "manipulation": {
+          "target": "workbench",
+          "path": "/generate",
+          "status": "/jobs/",
+          "stages": [
+            "provided full body or three-point EgoAllo SMPL-H",
+            "explicit interaction scale",
+            "fullbody retargeting",
+            "GPU hybrid refinement",
+            "scene perception where available",
+            "source FOV / preview",
+            "contact where available"
+          ]
+        },
+        "locomotion": {
+          "target": "viewer",
+          "path": "/api/convert",
+          "status": "/api/jobs/",
+          "stages": [
+            "provided full body or three-point EgoAllo SMPL-H",
+            "explicit interaction scale",
+            "fullbody retargeting",
+            "GPU hybrid refinement",
+            "playback"
+          ]
+        },
+        "export": {
+          "target": "workbench",
+          "path": "/exports",
+          "status": "/exports/",
+          "stages": [
+            "validate generated result",
+            "named-joint motion and models",
+            "modalities and provenance",
+            "archive"
+          ]
+        }
+      },
+      "body_model": "native-smplh",
+      "fps": 30,
+      "foot_objective": "soft guide; reasonable grounding; residual sliding accepted",
+      "source_policy": "auto-provided-fullbody-or-egoallo-three-point",
+      "trajectory_scale": {
+        "choices": [
+          "preserve",
+          "match_robot"
+        ],
+        "omitted": "preserve unless a known large mismatch requires an explicit choice",
+        "match_robot": "normalized interaction, including scene geometry; not original physical object dimensions"
+      },
+      "refinement": "GPU hybrid; fixed common policy; no public hand-tolerance override",
+      "recalibration_ui": false,
+      "live_physics_rollout": false,
+      "independent_stage_execution": false,
+      "stage_access": "Existing numerical stages execute inside the established workflow. Result modalities are separately readable.",
+      "cancellation": "Not available in the current schedulers; API explicitly rejects it.",
+      "resource_scope": "Workspace-owned recordings/jobs/exports; robot and hand registries retain current shared scope.",
+      "recovery": "Persisted API identity. Legacy worker restart may interrupt jobs; no blind resubmission.",
+      "website_api": "v1",
+      "internal_dispatch": "direct application service bindings",
+      "operator_replay": false
+    }
+  },
+  "page": {
+    "status": 200,
+    "sha256": "2bd8c0d69adbf29555c9537063bdc2fcba02400e9a4650b3708894ba30b73ee0"
+  },
+  "bundles": [
+    {
+      "url": "/web/assets/index-BpybcwdK.js",
+      "status": 200,
+      "sha256": "a998b02e195c32af555f54de316925de272c46bae185a6c81bc71f5d68a644d0",
+      "matches_local": true
+    }
+  ],
+  "session": {
+    "status": 200
+  },
+  "recordings": {
+    "status": 200,
+    "total": 94
+  },
+  "hiphi": [
+    {
+      "id": "hiphi-adjusting-adjust-0108",
+      "title": "\u7ad9\u7acb\u8f7b\u63d0\u6905\u5e76\u653e\u7a33",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0097",
+      "title": "\u8f7b\u5f2f\u8170\u503e\u7bb1\u5e76\u653e\u5e73",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0110",
+      "title": "\u540e\u9000\u5c0f\u6b65\u62c9\u811a\u51f3",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0079",
+      "title": "\u7ed5\u684c\u79fb\u52a8\u5e76\u8c03\u6574\u89d2\u5ea6",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0086",
+      "title": "\u539f\u5730\u5c0f\u5e45\u8f6c\u6905",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0082",
+      "title": "\u6447\u6905\u68c0\u67e5\u7a33\u5b9a\u5e76\u5c0f\u79fb",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0102",
+      "title": "\u524d\u540e\u63a8\u62c9\u6905\u5b50\u5b9a\u4f4d",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0095",
+      "title": "\u503e\u659c\u7bb1\u4f53\u5e76\u653e\u5e73",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0085",
+      "title": "\u8f7b\u63d0\u6905\u5b50\u5e76\u653e\u7a33",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    },
+    {
+      "id": "hiphi-adjusting-adjust-0090",
+      "title": "\u5c0f\u89d2\u5ea6\u65cb\u8f6c\u6905\u5b50\u5bf9\u9f50",
+      "dataset": "HiPhi",
+      "end_effector": "none",
+      "video": null,
+      "has_supplied_body": true,
+      "motion_source_policy": "supplied-body22-surface-v1",
+      "source_body_family": "smplx"
+    }
+  ],
+  "robots": {
+    "status": 200,
+    "items": [
+      {
+        "id": "g1",
+        "label": "Unitree G1",
+        "supported": true
+      },
+      {
+        "id": "custom_0fcf5afb28",
+        "label": "A3T3",
+        "supported": true
+      },
+      {
+        "id": "custom_a22ab0fc88",
+        "label": "tiangong2dex_urdf",
+        "supported": true
+      },
+      {
+        "id": "custom_b938b1143b",
+        "label": "Gento Luna_URDF",
+        "supported": true
+      },
+      {
+        "id": "custom_6ad5a0ee7b",
+        "label": "gr3v2_1_1",
+        "supported": true
+      },
+      {
+        "id": "custom_95e90092ed",
+        "label": "X2-Ultra",
+        "supported": true
+      }
+    ]
+  },
+  "browser": {
+    "available": false,
+    "attempts": [
+      "cua.createBrowserTab(iab) -> Browser is not available: iab",
+      "cua.getState -> apps=[], browsers=[]"
+    ],
+    "visual_qa": "not performed",
+    "generation_started": false
+  }
+}

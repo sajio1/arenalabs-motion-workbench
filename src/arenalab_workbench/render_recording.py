@@ -26,6 +26,11 @@ S=np.array([[1,0,0],[0,0,-1],[0,1,0]],float)
 manifest=json.loads((DEST/'scene.json').read_text());input_manifest=json.loads((EXP/'input_manifest.json').read_text());source=input_manifest['source'];video=input_manifest['video'];start=int((input_manifest.get('source_window') or {}).get('start_frame',0));n=input_manifest['frames']
 cap=cv2.VideoCapture(video['path']);intrinsic_scale=np.diag([960/cap.get(cv2.CAP_PROP_FRAME_WIDTH),540/cap.get(cv2.CAP_PROP_FRAME_HEIGHT),1]);cap.release()
 with h5py.File(source) as f:camera=f['transforms/camera'][start:start+n];intrinsic=intrinsic_scale@f['camera/intrinsic'][()]
+# The HDF5 camera is already in this renderer's [x,z,-y] display world.
+# A world similarity moves only its origin; unchanged rotations/intrinsics/RGB
+# preserve projection when the observed source depth is scaled by the same s.
+from arenalab_workbench.source_display import source_camera_similarity
+camera,source_depth_scale=source_camera_similarity(camera,manifest.get('source_transform'),S.T)
 scene_work=Path(os.environ['ARENA_SCENE_WORK']);prompts=json.loads((scene_work/'prompts.json').read_text());human=None;object_mask=None
 for item in prompts:
  key,category=item[:2]
@@ -60,7 +65,7 @@ for robot in [r for r in manifest['robots'] if r['id']==sys.argv[1]]:
         color=np.asarray(data[f'c{i}']).ravel();color=color/255 if color.max()>1 else color
         material=pyrender.MetallicRoughnessMaterial(baseColorFactor=color.tolist(),metallicFactor=.08,roughnessFactor=.65)
         nodes.append((i,scene.add(pyrender.Mesh.from_trimesh(trimesh.Trimesh(data[f'v{i}'],data[f'f{i}'],process=False),material=material))))
-    viewnode=scene.add(pyrender.IntrinsicsCamera(intrinsic[0,0],intrinsic[1,1],intrinsic[0,2],intrinsic[1,2],znear=.015,zfar=8));lightnode=scene.add(pyrender.DirectionalLight(color=np.ones(3),intensity=1.7));renderer=pyrender.OffscreenRenderer(960,540)
+    viewnode=scene.add(pyrender.IntrinsicsCamera(intrinsic[0,0],intrinsic[1,1],intrinsic[0,2],intrinsic[1,2],znear=.015*source_depth_scale,zfar=8*source_depth_scale));lightnode=scene.add(pyrender.DirectionalLight(color=np.ones(3),intensity=1.7));renderer=pyrender.OffscreenRenderer(960,540)
     cap=cv2.VideoCapture(video['path']);filename=f'{identifier}-arm-view-{os.environ.get("ARENA_RENDER_VERSION","v1")}.mp4';temporary=DEST/(filename+'.tmp.mp4');writer=imageio.get_writer(temporary,fps=30,codec='libx264',quality=8,macro_block_size=1);pixels=[]
     for frame in range(len(positions)):
         seconds=video['frame_times'][frame] if video.get('frame_times') else video.get('start_seconds',0)+frame/30
@@ -71,13 +76,13 @@ for robot in [r for r in manifest['robots'] if r['id']==sys.argv[1]]:
         for g,node in nodes:
             matrix=np.eye(4);matrix[:3,:3]=rotations[frame,g];matrix[:3,3]=positions[frame,g];scene.set_pose(node,matrix)
         view=camera[frame]@np.diag([1,-1,-1,1]);scene.set_pose(viewnode,view);scene.set_pose(lightnode,view)
-        rgba,z=renderer.render(scene,flags=pyrender.RenderFlags.RGBA);observed=cv2.warpPerspective(depth['depth'][i],intrinsic@np.linalg.inv(depth['intrinsics'][i]),(960,540))
-        keep=(z>0)&~((observed>.03)&(z>observed+.012)&(human_frame==0))
+        rgba,z=renderer.render(scene,flags=pyrender.RenderFlags.RGBA);observed=cv2.warpPerspective(depth['depth'][i],intrinsic@np.linalg.inv(depth['intrinsics'][i]),(960,540))*source_depth_scale
+        keep=(z>0)&~((observed>.03*source_depth_scale)&(z>observed+.012*source_depth_scale)&(human_frame==0))
         composed=cv2.cvtColor(inpaint(EXP,image,human_frame*255),cv2.COLOR_BGR2RGB);composed[keep]=rgba[keep,:3];writer.append_data(composed);pixels.append(int(keep.sum()))
         if frame in [0,60,120,200]:imageio.imwrite(DEST/f'{identifier}-arm-view-{frame:03d}.jpg',composed)
     writer.close();cap.release();renderer.delete();temporary.replace(DEST/filename)
     patches[identifier]='/assets/'+(DEST/filename).relative_to(str(paths.store)).as_posix()
-    report[identifier]=dict(frames=len(positions),fps=30,native_arm_meshes=sum(i<len(native) for i in selected),hand_meshes=sum(i>=len(native) for i in selected),arm_branches=[model.body(b).name for b in branches],native_mesh_binding_verified=True,robot_pixels_min=min(pixels),robot_pixels_mean=float(np.mean(pixels)),camera='Unchanged source camera poses and intrinsics',human_removal='SAM 3.1 hands plus arms; foreground object masks retained',depth='Shared scene depth estimate',synthetic_inpainting=True,physical_contact_validated=False)
+    report[identifier]=dict(frames=len(positions),fps=30,native_arm_meshes=sum(i<len(native) for i in selected),hand_meshes=sum(i>=len(native) for i in selected),arm_branches=[model.body(b).name for b in branches],native_mesh_binding_verified=True,robot_pixels_min=min(pixels),robot_pixels_mean=float(np.mean(pixels)),camera='Source camera origins follow scene similarity; rotations and intrinsics unchanged',source_transform=manifest.get('source_transform'),source_world_to_display=S.T.tolist(),source_depth_scale=source_depth_scale,human_removal='SAM 3.1 hands plus arms; foreground object masks retained',depth='Shared source depth, multiplied by source_depth_scale without modifying cache',synthetic_inpainting=True,physical_contact_validated=False)
     print('ARM_VIEW_READY',identifier,json.dumps(report[identifier]),flush=True)
 from arenalab_workbench.gpu_scheduler import merge_scene
 merge_scene(DEST/'scene.json',lambda manifest:manifest.setdefault('patch_videos',{}).update(patches))

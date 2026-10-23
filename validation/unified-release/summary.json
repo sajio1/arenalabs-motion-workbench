@@ -1,0 +1,20 @@
+{
+  "python": {
+    "passed": 209,
+    "skipped": 2,
+    "failed": 2,
+    "failures": "test_scene_export[False/True]: missing source fixture; reproduced unchanged on b3eeeee9ebb7266e7cae5a1f93c64844951b987f"
+  },
+  "frontend": {
+    "tests_passed": 35,
+    "typescript_vite_build": "passed"
+  },
+  "numerical_port": {
+    "full_frames": 300,
+    "max_array_difference": 0.0,
+    "native_h_bridge_frames": 16,
+    "hardware": "RTX PRO 6000 Blackwell; separate Lambda smoke below"
+  },
+  "browser_visual_review": "unavailable: computer-use exposed no browser surfaces",
+  "data_storage": "actual HiPhi/GRAIL assets outside Git on isolated Lambda test instance"
+}

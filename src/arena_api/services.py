@@ -68,10 +68,17 @@ class PlatformServices:
         return await {'manipulation': self.generate, 'locomotion': self.convert,
                       'export': self.export}[workflow](request, payload)
 
-    async def input_requirements(self, scene_id, request):
-        operation = getattr(self.workbench.state, 'input_requirements', None)
+    async def input_requirements(self, scene_id, request, robot_id=None, workflow='manipulation'):
+        application = self.viewer if workflow == 'locomotion' else self.workbench
+        name = 'motion_preflight' if workflow == 'locomotion' else 'input_requirements'
+        operation = getattr(application.state, name, None)
         if operation is None: return None
-        return await run_in_threadpool(operation, scene_id, request)
+        parameters = inspect.signature(operation).parameters
+        accepts_kwargs = any(p.kind == p.VAR_KEYWORD for p in parameters.values())
+        kwargs = {k: v for k, v in {'robot_id': robot_id, 'workflow': workflow}.items()
+                  if k in parameters or accepts_kwargs}
+        if inspect.iscoroutinefunction(operation): return await operation(scene_id, request, **kwargs)
+        return await run_in_threadpool(operation, scene_id, request, **kwargs)
 
     async def status(self, workflow, ident, request):
         op = getattr(self, workflow + '_status')

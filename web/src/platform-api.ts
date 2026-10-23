@@ -1,5 +1,7 @@
 /** Shared browser client. UI modules never submit to a worker-specific endpoint. */
-export type RunSpec={workflow:'manipulation'|'locomotion'|'export';recording_id:string;robot_id:string;hand_id?:string};
+export type TrajectoryScale='preserve'|'match_robot';
+export type RunSpec={workflow:'manipulation'|'locomotion'|'export';recording_id:string;robot_id:string;hand_id?:string;trajectory_scale?:TrajectoryScale|null};
+export type RunPlan={executable:boolean;required_choice?:'trajectory_scale'|null;choices:string[];policy:{trajectory_scale?:TrajectoryScale|null;scale_choice_required?:boolean;scale_estimate_unavailable?:boolean;source_policy?:string;source_policy_version?:string|null;morphology?:{available:boolean;source_height_m?:number;target_height_m?:number;scale_factor?:number;large_mismatch?:boolean;reason?:string}}};
 type Job={id:string;status:string;result:Record<string,any>;error?:{detail?:string;code?:string}|null};
 export type UiJob={id:string;status:'queued'|'running'|'completed'|'failed';error?:string;[key:string]:any};
 
@@ -21,10 +23,13 @@ export function normalizeUrls<T>(value:T):T{
  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,normalizeUrls(v)])) as T;
  return value;
 }
+export class ApiError extends Error{
+ constructor(public status:number,public problem:any){super(typeof problem.detail==='string'?problem.detail:problem.detail?.message||problem.field_errors?.map((e:any)=>e.msg).join('; ')||problem.title||'Request failed');}
+}
 export async function apiJson<T=any>(url:string,options:RequestInit={}):Promise<T>{
  const r=await fetch(mediaUrl(url),{credentials:'same-origin',cache:'no-store',...options});
  const data=await r.json().catch(()=>({detail:`${r.status}: ${r.statusText}`}));
- if(!r.ok)throw new Error(typeof data.detail==='string'?data.detail:data.field_errors?.map((e:any)=>e.msg).join('; ')||data.title||'Request failed');
+ if(!r.ok)throw new ApiError(r.status,data);
  return normalizeUrls(data);
 }
 function uiJob(job:Job):UiJob{
@@ -34,6 +39,10 @@ function uiJob(job:Job):UiJob{
 }
 let sessionPromise:Promise<unknown>|undefined;
 const pending=new Map<string,{key:string;promise?:Promise<UiJob>}>();
+function submissionIdentity(spec:RunSpec){
+ // Property order must not change a retry key; scale choices must change it.
+ return JSON.stringify(Object.fromEntries(Object.entries(spec).filter(([,v])=>v!==undefined&&v!==null).sort(([a],[b])=>a.localeCompare(b))));
+}
 export const api={
  session(){return sessionPromise??=(apiJson('/api/v1/sessions',{method:'POST'}).catch(e=>{sessionPromise=undefined;throw e;}));},
  async recordings<T>():Promise<T[]>{
@@ -42,8 +51,9 @@ export const api={
    items.push(...page.items);offset+=page.items.length;if(offset>=page.total||!page.items.length)break;
   }while(true);return items;
  },
+ async plan(spec:RunSpec):Promise<RunPlan>{await this.session();return apiJson('/api/v1/plans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(spec)});},
  async start(spec:RunSpec):Promise<UiJob>{
-  await this.session();const identity=JSON.stringify(spec);
+  await this.session();const identity=submissionIdentity(spec);
   let submission=pending.get(identity);
   if(submission?.promise)return submission.promise;
   // Retain the key after an ambiguous network failure, including a page reload.
@@ -55,6 +65,12 @@ export const api={
   const current=submission;
   current.promise=apiJson<Job>('/api/v1/runs',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':current.key},body:JSON.stringify(spec)})
    .then(job=>{if(job.status!=='outcome_unknown'){pending.delete(identity);try{sessionStorage.removeItem(storageKey);}catch{}}return uiJob(job);})
+   .catch(error=>{
+    // A structured 4xx rejection is known not to have dispatched. Keep keys for
+    // network/5xx ambiguity, but permit corrected preflight inputs to be retried.
+    if(error instanceof ApiError&&error.status>=400&&error.status<500){pending.delete(identity);try{sessionStorage.removeItem(storageKey);}catch{}if(error.status===401)sessionPromise=undefined;}
+    throw error;
+   })
    .finally(()=>{current.promise=undefined;});
   return current.promise;
  },
