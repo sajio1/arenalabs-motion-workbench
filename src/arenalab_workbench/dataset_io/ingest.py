@@ -142,7 +142,7 @@ def prepare_body(record, work):
     BASE = paths.egoallo
     work = Path(work)
     work.mkdir(parents=True, exist_ok=True)
-    if record.get('body_adapter') == 'head-wrists-v1':
+    if record.get('body_adapter') == 'head-wrists-v1' and not record.get('motion_source'):
         # Server-registered measured poses need no fabricated optical camera.
         # These are observations for native-H completion, not a supplied body.
         from arenalab_workbench.motion_sources import validate_three_point_observations
@@ -181,6 +181,15 @@ def prepare_body(record, work):
     source = np.load(record['source_row'].get('observations_source', record['source_row']['source']), allow_pickle=False)
     if supplied is not None and 'wrist_position' not in source:
         return work  # Fully supplied body, no fabricated observation/reconstruction.
+    if supplied is not None and 'head_position' in source:
+        # Older server records already store independent world-space observations.
+        # Keep these alongside the complete body; never reduce that body to them.
+        from arenalab_workbench.motion_sources import validate_three_point_observations
+        np.savez_compressed(work/'observations.npz',**{k:source[k] for k in source.files})
+        validate_three_point_observations(work)
+        (work/'operation-accuracy').mkdir(exist_ok=True)
+        np.savez_compressed(work/'operation-accuracy/source-targets.npz',points=source['wrist_position'][:,:,None],timestamps_s=source['timestamps_s'])
+        return work
     p = source['wrist_position']
     mode = record['public']['end_effector']
     camera = source['camera']

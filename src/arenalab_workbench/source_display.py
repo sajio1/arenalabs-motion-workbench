@@ -50,7 +50,7 @@ without mutating the shared depth cache. Robot geometry is already transformed.
 def source_scene_metadata(preview, numerical, world_to_display):
     result = {'source_world_to_display': display_basis(world_to_display).tolist()}
     if preview:
-        result['source_body'] = preview
+        result['source_robot' if preview.get('source_family') == 'robot' and preview.get('model_url') else 'source_body'] = preview
     if numerical.get('trajectory_scale') == 'match_robot':
         transform = numerical['scale_transform']
         source_similarity(transform, world_to_display)

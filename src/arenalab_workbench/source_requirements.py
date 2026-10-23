@@ -8,29 +8,8 @@ POLICY = 'unified-provided-body-or-three-point-native-h-v1'
 MISMATCH_RATIO = .8
 
 
-def motion_preflight(clip, robot, source_work=None):
-    from arenalab_workbench.settings import paths
-    spec = clip.get('motion_source') or clip.get('manifest', {}).get('motion_source')
-    source_height = clip.get('source_height_m') or (spec or {}).get('height_m')
-    reason = 'Declared source neutral height'
-    if source_work:
-        source_work = Path(source_work)
-        mesh = source_work / 'source_mesh.npz'
-        if mesh.is_file():
-            with np.load(mesh, allow_pickle=False) as d:
-                v = d['vertices_world_m']
-                source_height = float(np.quantile(np.max(v[..., 2], axis=1)-np.min(v[..., 2], axis=1), .95))
-                reason = 'Supplied body mesh vertical extent; posture-dependent estimate'
-    if not source_height:
-        family = (spec or {}).get('family', 'smplh')
-        model = Path(os.environ.get('ARENA_'+family.upper()+'_MODEL', str(paths.egoallo/'model.npz') if family=='smplh' else ''))
-        if model.is_file():
-            with np.load(model, allow_pickle=False) as d:
-                v = np.asarray(d['v_template'], float)
-                source_height = float(np.ptp(v[:, 1]))
-                reason = 'Configured human model neutral-height estimate; actual scale computed from body and robot limbs'
+def _robot_height(row):
     target_height = None
-    row = robot.get('pipeline_row', robot)
     try:
         import mujoco as mj
         from greenwich_pipelines.viewer.export import visible_geoms
@@ -46,7 +25,36 @@ def motion_preflight(clip, robot, source_work=None):
                 half=float(np.abs(rot[2])@m.geom_size[g]);extrema += [pos[2]-half,pos[2]+half]
         if extrema: target_height=float(max(extrema)-min(extrema))
     except (ImportError, ValueError, KeyError, OSError):
-        reason += '; robot neutral geometry is unavailable'
+        return None
+    return target_height
+
+
+def motion_preflight(clip, robot, source_work=None):
+    from arenalab_workbench.settings import paths
+    spec = clip.get('motion_source') or clip.get('manifest', {}).get('motion_source')
+    from .robot_motion_source import is_robot, source_robot
+    robot_source = is_robot(spec)
+    source_height = clip.get('source_height_m') or (spec or {}).get('height_m')
+    if robot_source:
+        source_height = _robot_height(source_robot(spec))
+    reason = 'Local source robot neutral geometry' if robot_source else 'Declared source neutral height'
+    if source_work and not robot_source:
+        source_work = Path(source_work)
+        mesh = source_work / 'source_mesh.npz'
+        if mesh.is_file():
+            with np.load(mesh, allow_pickle=False) as d:
+                v = d['vertices_world_m']
+                source_height = float(np.quantile(np.max(v[..., 2], axis=1)-np.min(v[..., 2], axis=1), .95))
+                reason = 'Supplied body mesh vertical extent; posture-dependent estimate'
+    if not source_height and not robot_source:
+        family = (spec or {}).get('family', 'smplh')
+        model = Path(os.environ.get('ARENA_'+family.upper()+'_MODEL', str(paths.egoallo/'model.npz') if family=='smplh' else ''))
+        if model.is_file():
+            with np.load(model, allow_pickle=False) as d:
+                v = np.asarray(d['v_template'], float)
+                source_height = float(np.ptp(v[:, 1]))
+                reason = 'Configured human model neutral-height estimate; actual scale computed from body and robot limbs'
+    target_height = _robot_height(robot.get('pipeline_row',robot))
     available = bool(source_height and target_height and np.isfinite([source_height,target_height]).all() and min(source_height,target_height)>0)
     ratio = target_height/source_height if available else None
     mismatch = bool(available and (ratio<MISMATCH_RATIO or ratio>1/MISMATCH_RATIO))
@@ -55,7 +63,7 @@ def motion_preflight(clip, robot, source_work=None):
                     estimate=True,reason=reason,
                     scaling_method='8-limb uniform similarity about first pelvis floor projection',
                     scaling_scope='Source body, operation trajectories and source scene together; robot geometry unchanged')
-    return dict(source_policy='supplied-body' if spec else 'three-point-egoallo',source_policy_version=POLICY,
+    return dict(source_policy='supplied-robot' if robot_source else 'supplied-body' if spec else 'three-point-egoallo',source_policy_version=POLICY,
                 morphology=morphology,scale_choice_required=mismatch,
                 generated_human_model=None if spec else 'smplh',pipeline_version='resident-skeleton-surface-wrist-v3')
 
@@ -114,10 +122,13 @@ def input_requirements(scene_id, robot_id=None, config_path=None):
     cfg=json.loads(Path(config_path or paths.viewer_config).read_text())
     custom=variant(resolved)
     row=dict(upload['source_row'] if upload else custom['source_row'] if custom and custom.get('source_row') else next((c for c in cfg['clips'] if c['id']==entry.get('source_catalog_id',resolved)),{}))
-    if upload:row['manifest']=upload.get('manifest',{})
+    if upload:
+        row['manifest']=upload.get('manifest',{})
+        if upload.get('motion_source'):row['motion_source']=upload['motion_source']
     if resolved in gripper_sources:
         source_work=Path(gripper_sources[resolved]['work'])
         metadata=json.loads((source_work/'source.json').read_text())
+        if metadata.get('motion_source'):row['motion_source']=metadata['motion_source']
         camera_path=Path(metadata.get('head_video') or '')
         if not camera_path.is_absolute():camera_path=source_work/camera_path
         row.update(work=str(source_work),source=str(source_work/'source.npz'),video={'path':str(camera_path)} if camera_path.is_file() else None)

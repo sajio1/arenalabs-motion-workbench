@@ -124,12 +124,12 @@ def import_recording(archive, ident, workspace):
         public['video'] = None
     supplied = manifest.get('_resolved_motion_source')
     if supplied is not None:
-        public.update(has_supplied_body=True, source_body_family=supplied['family'], source_evidence=supplied['evidence'], motion_source_policy='supplied-body22-surface-v1')
+        public.update(has_supplied_body=True, source_body_family=supplied['family'], source_evidence=supplied['evidence'], motion_source_policy='supplied-robot-fullbody-v1' if supplied['format']=='robot_joint_state' else 'supplied-body22-surface-v1')
     source_row = dict(id=ident, source=str(work / 'observations-normalized.npz'), frames=n, fps=30, video=dict(path=str(video), start_seconds=public['video']['start_seconds']) if video is not None else None, metadata=dict(upload_schema=manifest['schema']))
     record = dict(public=public, source_row=source_row, manifest=manifest, destination=str(dest), archive_sha256=file_digest(archive))
     if supplied is not None:
         record['motion_source'] = supplied
-        record['body_adapter'] = 'supplied-body'
+        record['body_adapter'] = 'supplied-robot' if supplied['format']=='robot_joint_state' else 'supplied-body'
         source_row['observations_source'] = source_row['source']
     if mode == 'robotiq-2f-140':
         source = dict(camera=arrays['camera'], intrinsic=arrays['intrinsic'], tcp_zup=arrays['wrist_position'], tool_R_zup=arrays['ee_rotation'], width_m=arrays['width_m'], floor_z=arrays['floor_z'], timestamps_s=arrays['timestamps_s'])

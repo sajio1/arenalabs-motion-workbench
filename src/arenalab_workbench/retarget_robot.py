@@ -121,7 +121,7 @@ def export_result(robot_id,robot,row,output,angles,hashes,source_hashes,status_p
     source_manifest=json.loads((SOURCE/'input_manifest.json').read_text())
     ground_provenance=numerical_report.get('ground_provenance') or (
         'Source-derived fixed support plane from observed sole tracks; not a measured scene floor'
-        if source_manifest.get('source_kind')=='direct_six' else 'SMPL reconstructed support; not a measured floor')
+        if source_manifest.get('source_kind')=='direct_six' else source_manifest.get('floor_policy','SMPL reconstructed support; not a measured floor'))
     from arenalab_workbench.source_preview import export_source_preview
     from arenalab_workbench.source_display import source_scene_metadata
     source_metadata=source_scene_metadata(export_source_preview(SOURCE,DEST),numerical_report,S.T)

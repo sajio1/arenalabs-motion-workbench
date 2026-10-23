@@ -65,7 +65,7 @@ def _provided(spec, directory, base=None):
     for key in ('path', 'objects_path'):
         if key in spec and base is not None and not Path(spec[key]).is_absolute():
             spec[key] = str((base / spec[key]).resolve())
-    model = os.environ.get('ARENA_' + spec['family'].upper() + '_MODEL')
+    model = None if spec.get('format')=='robot_joint_state' else os.environ.get('ARENA_' + spec['family'].upper() + '_MODEL')
     return prepare_supplied_source(spec, directory, model_path=model)
 
 

@@ -51,12 +51,14 @@ def fit_scale(row, source):
     All eight segments use the same policy and equal absolute-length weight.
     """
     row = row.get('pipeline_row', row)
-    names = [str(x) for x in source['names']]
+    robot_source = 'semantic_position_world_m' in source
+    names = [str(x) for x in source['semantic_names' if robot_source else 'names']]
     P = source.get('source_body_position_world_m', source.get('inferred_world_pos_zup'))
     if P is None and 'full_body_position_yup_m' in source:
         P = np.asarray(source['full_body_position_yup_m']) @ C
     if P is None:
         raise ValueError('Source must contain the supplied full-body world positions')
+    if robot_source:P = source['semantic_position_world_m']
     P = np.asarray(P, dtype=np.float64)
     if P.ndim != 3 or P.shape[1:] != (len(names), 3) or not np.isfinite(P).all():
         raise ValueError('Expected finite [T,J,3] supplied body positions')
@@ -68,7 +70,7 @@ def fit_scale(row, source):
     semantics = row['semantic_metadata']['semantics']
     lengths = []
     for a, b in SEGMENTS:
-        source_a, source_b = names.index(SOURCE_ROLES[a]), names.index(SOURCE_ROLES[b])
+        source_a, source_b = names.index(a if robot_source else SOURCE_ROLES[a]), names.index(b if robot_source else SOURCE_ROLES[b])
         h = np.linalg.norm(P[:, source_b] - P[:, source_a], axis=-1)
         r = float(np.linalg.norm(d.xpos[m.body(semantics[b]).id] - d.xpos[m.body(semantics[a]).id]))
         human = float(np.median(h))
@@ -83,7 +85,7 @@ def fit_scale(row, source):
     if not np.isfinite(factor) or factor <= 0:
         raise ValueError('Invalid uniform similarity factor')
     floor = float(source.get('floor_z_m', source.get('floor')))
-    root_index = names.index('Hips')
+    root_index = names.index('root' if robot_source else 'Hips')
     anchor = np.r_[P[0, root_index, :2], floor]
     for item in lengths:
         item['scaled_human_length_m'] = factor * item['human_length_m']
@@ -93,7 +95,7 @@ def fit_scale(row, source):
                 formula='p_scaled = anchor + scale * (p_original - anchor); local vectors *= scale',
                 scale_fit='sum(h_i*r_i) / sum(h_i*h_i), eight equally weighted absolute-length residuals',
                 robot_length_basis='Exact local MJCF qpos0 semantic joint centers; two arm and two leg segments per side',
-                human_length_basis='Median original supplied SMPL-X segment lengths across the selected frames, not compressed posed height',
+                human_length_basis='Median original supplied body segment lengths across selected frames, not compressed posed height',
                 world_basis_source_to_native=C.T.tolist(), segments=lengths,
                 length_fit_rms_m=float(np.sqrt(np.mean((factor*h-r)**2))),
                 robot_xml=str(model_path), robot_xml_sha256=sha(model_path),
@@ -124,7 +126,7 @@ def transform_arrays(filename, original, scaling):
     out = {k: np.array(v, copy=True) for k, v in original.items()}
     factor = scaling['scale']
     native_fields = {
-        'native_source.npz': ('source_body_position_world_m', 'six_position_zup_m', 'wrist_position_world_m'),
+        'native_source.npz': ('source_body_position_world_m', 'six_position_zup_m', 'wrist_position_world_m', 'semantic_position_world_m'),
         'source_mesh.npz': ('vertices_world_m', 'wrist_position_world_m', 'pelvis_position_world_m'),
         'observations.npz': ('wrist_position', 'palm_position', 'head_position'),
         'smplx_motion.npz': ('joints',),

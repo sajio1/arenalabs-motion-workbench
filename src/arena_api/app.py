@@ -85,7 +85,7 @@ def preflight_policy(requirements, body):
     unavailable=(body.workflow!='export' and body.trajectory_scale=='match_robot' and not morphology['available'])
     resolved=body.trajectory_scale if body.workflow=='export' else body.trajectory_scale or 'preserve'
     source_policy=requirements.get('source_policy','auto-provided-fullbody-or-egoallo-three-point')
-    provided=source_policy in {'supplied-body','provided-fullbody'}
+    provided=source_policy in {'supplied-body','provided-fullbody','supplied-robot'}
     return {'selection':'unified motion backend','body_model':'provided' if provided else 'native-smplh' if source_policy=='three-point-egoallo' else 'automatic',
             'generated_body_model':None if provided else 'native-smplh',
             'source_body_family':requirements.get('source_body_family'),

@@ -101,7 +101,8 @@ def run(scene_id,status=None):
  if manifest.get('motion_source'):
   from arenalab_workbench.motion_backend import normalized_source
   normalized=normalized_source(work)
-  save(work/'prior-ready.json',dict(scene_id=scene_id,policy='supplied-body-direct-v1',normalized_source=str(normalized),raw_sha256={'input_manifest.json':hashlib.sha256((work/'input_manifest.json').read_bytes()).hexdigest()},source_trajectory_edited=False))
+  robot_source=manifest['motion_source'].get('format')=='robot_joint_state'
+  save(work/'prior-ready.json',dict(scene_id=scene_id,policy='supplied-robot-fullbody-v1' if robot_source else 'supplied-body-direct-v1',body_route='supplied_robot' if robot_source else 'supplied_body',generated_human_model=None,normalized_source=str(normalized),raw_sha256={'input_manifest.json':hashlib.sha256((work/'input_manifest.json').read_bytes()).hexdigest()},source_trajectory_edited=False))
   return work
  from arenalab_workbench.motion_sources import validate_three_point_observations
  validate_three_point_observations(work)

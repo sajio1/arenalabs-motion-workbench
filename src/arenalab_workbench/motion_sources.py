@@ -70,6 +70,10 @@ def source_route(manifest):
     """Route by supplied evidence, never by dataset/robot/action names."""
     if manifest.get('motion_source') is not None:
         spec = manifest['motion_source']
+        from .robot_motion_source import is_robot
+        if is_robot(spec):
+            if not spec.get('robot_id'):raise ValueError('Source robot_id is required')
+            return dict(route='supplied-robot', source_completion=False, family='robot', generated_human_model=None)
         if not isinstance(spec, dict) or spec.get('format') not in {'smpl_parameters', 'smpl_decoded'}:
             raise ValueError('Invalid supplied motion_source; it must not fall back to body inference')
         if spec.get('family') not in FAMILY_JOINTS:
@@ -90,6 +94,9 @@ def validate_body_attachment(package, manifest):
     """
     from .dataset_io.storage import within
     route = source_route(manifest)
+    if route['route'] == 'supplied-robot':
+        from .robot_motion_source import validate_attachment
+        return validate_attachment(package,manifest)
     if route['route'] != 'supplied-body':
         return None
     spec = dict(manifest['motion_source'])
@@ -130,7 +137,10 @@ def _validate_family(raw, family):
 
 
 def _clock(raw, spec):
-    n = len(raw['joints']) if 'joints' in raw and spec['format'] == 'smpl_decoded' else len(raw.get('poses', raw.get('local_axis_angle', [])))
+    if spec.get('format') == 'robot_joint_state':
+        n = len(raw.get('joint_positions', []))
+    else:
+        n = len(raw['joints']) if 'joints' in raw and spec['format'] == 'smpl_decoded' else len(raw.get('poses', raw.get('local_axis_angle', [])))
     if n < 2:
         raise ValueError('At least two complete supplied body frames required')
     if 'timestamps_s' in raw:
@@ -289,7 +299,10 @@ def prepare_supplied_source(spec, output_dir, *, model_path=None, observed_work=
     family is retained; generated native H uses the same decoded input adapter.
     Nothing is downloaded, and no supplied body is routed through EgoAllo.
     """
-    source_route({'motion_source': spec})
+    route = source_route({'motion_source': spec})
+    if route['route']=='supplied-robot':
+        from .robot_motion_source import prepare_robot_source
+        return prepare_robot_source(spec,output_dir,observed_work=observed_work,source_manifest=source_manifest)
     if spec.get('world_up') not in {'y', 'z'} or spec.get('units') != 'm':
         raise ValueError('Explicit source world_up=y/z and units=m required')
     if model_path is None:
@@ -448,6 +461,9 @@ def prepare_body_source(work, output_dir, *, model_paths=None):
         if spec.get('objects_path') and not Path(spec['objects_path']).is_absolute():
             from .dataset_io.storage import within
             spec['objects_path'] = str(within(work, spec['objects_path']))
+        if spec.get('format')=='robot_joint_state':
+            from .robot_motion_source import prepare_robot_source
+            return prepare_robot_source(spec,output_dir,observed_work=work,source_manifest=manifest)
         model = (model_paths or {}).get(spec['family']) or os.environ.get('ARENA_' + spec['family'].upper() + '_MODEL')
     else:
         from .human_reference import family_for_work
@@ -514,7 +530,17 @@ def describe_source(source, *, model_paths=None):
         if not Path(source['path']).is_absolute():
             from .dataset_io.storage import within
             source['path'] = str(within(work, source['path']))
-    source_route({'motion_source': source})
+    route = source_route({'motion_source': source})
+    if route['route']=='supplied-robot':
+        from .robot_motion_source import read_state, source_robot
+        from .source_requirements import _robot_height
+        row=source_robot(source);target,_,times,_=read_state(source,row)
+        return dict(route='supplied-robot',family='robot',source_robot_id=source['robot_id'],
+                    source_sha256=sha256(source['path']),source_model_sha256=target['model_sha256'],
+                    frames=len(times),exact_fps=float(1/np.median(np.diff(times))),source_completion=False,
+                    morphology_available=True,neutral_mesh_height_m=_robot_height(row),units='m',
+                    body_bone_lengths_m=(np.linalg.norm(target['spec'].rest_offsets,axis=-1)/100).tolist(),
+                    evidence=source.get('evidence','unspecified'))
     raw = _npz(source['path']); _validate_family(raw, source['family'])
     times, indices, take = _clock(raw, source)
     model_path = (model_paths or {}).get(source['family']) or os.environ.get('ARENA_' + source['family'].upper() + '_MODEL')

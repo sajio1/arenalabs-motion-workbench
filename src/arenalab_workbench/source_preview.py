@@ -37,6 +37,8 @@ def export_source_preview(normalized_source, destination):
     Source object GLBs preserve their local axes; their animation is separate.
     """
     source = Path(normalized_source)
+    if (source / 'source_robot_playback.npz').is_file():
+        return _export_robot_preview(source, Path(destination))
     mesh_path = source / 'source_mesh.npz'
     with np.load(mesh_path, allow_pickle=False) as data:
         vertices = np.asarray(data['vertices_world_m'], dtype='<f4')
@@ -78,6 +80,35 @@ def export_source_preview(normalized_source, destination):
     if objects_path.is_file():
         result['objects'] = _export_objects(objects_path, target/'objects', times)
     _immutable_bytes(target/'manifest.json', (json.dumps(result,indent=2,allow_nan=False)+'\n').encode())
+    return result
+
+
+def _export_robot_preview(source, destination):
+    """Publish exact rigid-link FK; never expand a robot into per-frame vertices."""
+    from scipy.spatial.transform import Rotation
+    provenance = json.loads((source/'source_provenance.json').read_text())
+    model = source/'source_robot.glb'; motion = source/'source_robot_playback.npz'
+    if sha256(model) != provenance['source_model_glb_sha256'] or sha256(motion) != provenance['source_visual_poses_sha256']:
+        raise ValueError('Immutable robot preview changed')
+    with np.load(motion, allow_pickle=False) as z:
+        P, R, times = z['positions'], z['rotations'], z['timestamps_s']
+    if (P.ndim != 3 or P.shape[-1] != 3 or R.shape != (*P.shape[:2],3,3)
+            or len(times) != len(P) or not np.isfinite(P).all() or not np.isfinite(R).all()
+            or not np.allclose(np.diff(times),1/30,atol=1e-8,rtol=0)):
+        raise ValueError('Invalid source robot preview geometry/clock')
+    target = destination/'source-robot'/sha256(motion)[:24]
+    _asset(target)
+    model_hash = _immutable_bytes(target/'model.glb',model.read_bytes())
+    payload = dict(fps=30.,frames=len(times),positions=P.tolist(),
+        quaternions=Rotation.from_matrix(R.reshape(-1,3,3)).as_quat().reshape(*P.shape[:2],4).tolist())
+    playback_hash = _immutable_bytes(target/'playback.json',(json.dumps(payload,separators=(',',':'),allow_nan=False)+'\n').encode())
+    result = dict(source_family='robot',source_robot_id=provenance['source_robot_id'],world_up='z',
+        frames=len(times),fps=30.,model_url=_asset(target/'model.glb'),playback_url=_asset(target/'playback.json'),
+        model_sha256=model_hash,playback_sha256=playback_hash,source_sha256=provenance['source_sha256'],
+        retargeted=False,source_trajectory_modified=False,video_role='preview-only')
+    if (source/'objects.npz').is_file():
+        result['objects'] = _export_objects(source/'objects.npz',target/'objects',times)
+    _immutable_bytes(target/'manifest.json',(json.dumps(result,indent=2,allow_nan=False)+'\n').encode())
     return result
 
 

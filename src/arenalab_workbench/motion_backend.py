@@ -19,7 +19,7 @@ BACKENDS = {'gpu_hybrid'}
 SOURCE_FILES = ('canonical.npz', 'observations.npz', 'smplx_motion.npz',
                 'smplh_motion.npz', 'human_reference.json', 'native_source.npz', 'source_provenance.json', 'source_hands.npz', 'input_manifest.json',
                 'six-point-reference.npz', 'source-descriptor.npz', 'source_mesh.npz', 'objects.npz',
-                'operation-accuracy/source-targets.npz')
+                'source_robot.glb', 'source_robot_playback.npz', 'operation-accuracy/source-targets.npz')
 
 
 def sha(path):
@@ -73,7 +73,7 @@ def backend_fingerprint(env=None):
     from importlib.util import find_spec
     selected_backend(env)
     files = [Path(__file__), Path(__file__).with_name('retarget_robot.py'),
-             Path(__file__).with_name('end_effectors.py'), Path(__file__).with_name('motion_sources.py')]
+             Path(__file__).with_name('end_effectors.py'), Path(__file__).with_name('motion_sources.py'), Path(__file__).with_name('robot_motion_source.py')]
     files += [Path(__file__).with_name(name+'.py') for name in
               ('body_inference','human_reference','egoallo_runtime','unified_conversion','body_prior','gripper_body')]
     spec = find_spec('arenalab_motion')
@@ -326,7 +326,13 @@ def normalized_source(source_work):
         if spec.get('objects_path'):
             objects=Path(spec['objects_path']);objects=objects if objects.is_absolute() else source/objects
             inputs['supplied_objects']=cached_sha(objects)
-        model=Path(os.environ.get('ARENA_'+spec['family'].upper()+'_MODEL',''))
+        if spec.get('format')=='robot_joint_state':
+            from .robot_motion_source import source_robot
+            inputs['source_robot']=source_robot(spec)
+            inputs['source_robot_assets']=robot_asset_identity(inputs['source_robot']['xml'])
+            inputs['robot_adapter']=sha(Path(__file__).with_name('robot_motion_source.py'))
+            model=Path()
+        else:model=Path(os.environ.get('ARENA_'+spec['family'].upper()+'_MODEL',''))
     else:model=source/'model.npz'
     if model.is_file(): inputs['body_model']=cached_sha(model)
     inputs['adapter']=sha(Path(__file__).with_name('motion_sources.py'))

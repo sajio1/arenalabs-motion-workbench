@@ -75,7 +75,9 @@ def _run(scene_id, robot_id, hand_id, status):
             acquired = time.time()
             cache_hit = (work / 'prior-ready.json').exists()
             with (status.parent / 'body-worker.log').open('w') as log:
-                runner = subprocess.run if cache_hit else gpu_run
+                from arenalab_workbench.dataset_io.storage import entry as uploaded_entry
+                supplied = row.get('motion_source') or (uploaded_entry(scene_id) or {}).get('motion_source')
+                runner = subprocess.run if cache_hit or supplied else gpu_run
                 runner([sys.executable, str(Path(__file__).with_name('body_prior.py')), scene_id,
                         '--status', str(status.with_name('body-stage.json'))], env=env.copy(),
                        stdout=log, stderr=subprocess.STDOUT, check=True)

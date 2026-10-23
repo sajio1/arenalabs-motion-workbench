@@ -29,6 +29,7 @@ def filtered_scene(scene, selection, ready):
     if 'trajectory' not in completed:
         result['robots'] = []
         result.pop('source_body', None)
+        result.pop('source_robot', None)
         result.pop('hand_motion_audit_url', None)
     if 'point_cloud' not in completed:
         for key in ('cloud', 'segmented_instances', 'source_camera'):
