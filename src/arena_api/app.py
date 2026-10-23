@@ -182,6 +182,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
     def capabilities():
         return {'api_version':__version__,'workflows':OPERATIONS,'body_model':'source-provided-or-native-smplh',
                 'generated_body_model':'native-smplh','provided_body_families':['smpl','smplh','smplx'],
+                'provided_robot_formats':['robot_joint_state'],
                 'output_modalities':{'choices':['trajectory','point_cloud','contact','inpaint_fov'],
                                      'omitted':'all applicable source-backed outputs','dependencies':'Plans distinguish deliverables from internal stage dependencies'},
                 'fps':30,'foot_objective':'soft guide; reasonable grounding; residual sliding accepted',
@@ -269,6 +270,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
         stage_labels={'source_observations':'Registered source observations','body':'Provided full body or three-point EgoAllo SMPL-H',
                       'retarget':'Unified GPU motion refinement','scene':'Registered-camera point cloud',
                       'contact':'Source-video contact estimates','render':'Inpainted first-person robot view','proximity':'Optional available-geometry proximity'}
+        if policy['source_policy']=='supplied-robot':stage_labels['body']='Provided complete robot motion; native FK'
         stages=OPERATIONS[body.workflow]['stages'] if body.workflow=='export' else [label for stage,label in stage_labels.items() if policy['outputs']['dependencies'].get(stage)]
         return PlanView(executable=not (required or policy['scale_estimate_unavailable'] or policy['outputs']['error']),request=body,operation=body.workflow,stages=stages,
                         policy=policy,required_choice='trajectory_scale' if required else None,
