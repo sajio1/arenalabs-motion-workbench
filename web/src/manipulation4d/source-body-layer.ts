@@ -7,6 +7,10 @@ export function sourceMotionDisplay(body:SceneAsset['source_body']|SceneAsset['s
   label:'Source robot'+(body.source_robot_id?' · '+body.source_robot_id.toUpperCase():''),
   title:'Show original source robot motion, synchronized with the target robot',
  };
+ if(body&&'source_format' in body&&body.source_format==='recorded_skeleton_surface')return {
+  label:'Recorded skeleton · proxy surface',
+  title:'Show recorded skeleton motion with an approximate skinned surface; not original subject SMPL geometry',
+ };
  if(['smpl','smplh','smplx'].includes(body?.source_family??''))return {
   label:'SMPL motion',title:'Show cached source SMPL / SMPL-H / SMPL-X motion',
  };

@@ -38,7 +38,16 @@ def motion_preflight(clip, robot, source_work=None):
     if robot_source:
         source_height = _robot_height(source_robot(spec))
     reason = 'Local source robot neutral geometry' if robot_source else 'Declared source neutral height'
-    if source_work and not robot_source:
+    supplied_morphology = False
+    if spec and not robot_source:
+        from .motion_sources import describe_source
+        description = describe_source(spec)
+        if description.get('morphology_available') and description.get('neutral_mesh_height_m'):
+            source_height = description['neutral_mesh_height_m']
+            supplied_morphology = True
+            reason = ('Recorded skeleton with approximate neutral surface' if spec.get('format') == 'recorded_skeleton_surface'
+                      else 'Supplied body shape and explicit source-model scale')
+    if source_work and not robot_source and not supplied_morphology:
         source_work = Path(source_work)
         mesh = source_work / 'source_mesh.npz'
         if mesh.is_file():
@@ -46,7 +55,7 @@ def motion_preflight(clip, robot, source_work=None):
                 v = d['vertices_world_m']
                 source_height = float(np.quantile(np.max(v[..., 2], axis=1)-np.min(v[..., 2], axis=1), .95))
                 reason = 'Supplied body mesh vertical extent; posture-dependent estimate'
-    if not source_height and not robot_source:
+    if not source_height and not robot_source and not spec:
         family = (spec or {}).get('family', 'smplh')
         model = Path(os.environ.get('ARENA_'+family.upper()+'_MODEL', str(paths.egoallo/'model.npz') if family=='smplh' else ''))
         if model.is_file():

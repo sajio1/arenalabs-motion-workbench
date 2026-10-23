@@ -57,9 +57,10 @@ def export_source_preview(normalized_source, destination):
     provenance_path = source / 'source_provenance.json'
     provenance = json.loads(provenance_path.read_text()) if provenance_path.exists() else {}
     robot_source = provenance.get('source_format') == 'robot_joint_state'
+    recorded_proxy = provenance.get('source_format') == 'recorded_skeleton_surface'
     digest = sha256(mesh_path)
     # Keep earlier immutable robot previews intact when adding source identity.
-    target = Path(destination) / 'source-body' / (digest[:16] + ('-robot-v1' if robot_source else ''))
+    target = Path(destination) / 'source-body' / (digest[:16] + ('-robot-v1' if robot_source else '-recorded-skeleton-v1' if recorded_proxy else ''))
     _asset(target)  # Check the boundary before writing anything.
     hashes = {
         'vertices': _immutable_bytes(target / 'vertices.bin', vertices.tobytes(order='C')),
@@ -76,6 +77,10 @@ def export_source_preview(normalized_source, destination):
         scope='Decoded source mesh only; no original RGB, body model or weights')
     if result['source_family'] == 'robot' and provenance.get('source_robot_id'):
         result['source_robot_id'] = provenance['source_robot_id']
+    if recorded_proxy:
+        result.update(source_format='recorded_skeleton_surface',
+                      source_surface='skinning_joint_offsets_v1; approximate girth, not fitted subject surface',
+                      scope='Recorded skeleton with approximate skinned surface; not original subject SMPL geometry')
     objects_path = source / 'objects.npz'
     if objects_path.is_file():
         result['objects'] = _export_objects(objects_path, target/'objects', times)

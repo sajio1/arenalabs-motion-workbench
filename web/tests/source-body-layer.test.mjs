@@ -19,6 +19,13 @@ test('source robot provenance never presents a robot mesh as SMPL',()=>{
  assert.equal(sourceMotionDisplay(body).label,'Source motion');
 });
 
+test('recorded skeleton proxy surface is explicitly distinguished from fitted SMPL',()=>{
+ const display=sourceMotionDisplay({...body,source_family:'smplx',source_format:'recorded_skeleton_surface'});
+ assert.equal(display.label,'Recorded skeleton · proxy surface');
+ assert.match(display.title,/approximate skinned surface/);
+ assert.match(display.title,/not original subject SMPL geometry/);
+});
+
 function fixture(t,delay){
  const previous=globalThis.fetch,calls=[];
  globalThis.fetch=async(url,options)=>{calls.push(url);if(delay)await delay();return new Response(url==='/vertices'?vertices.buffer.slice(0):new Uint32Array([0,1,2]).buffer);};

@@ -6,6 +6,7 @@ No model, source payload or derived body is uploaded by these helpers.
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 
 from .settings import paths
@@ -93,6 +94,30 @@ def robot_source_identity(spec, row=None):
     identity['clock'] = {key:row.get(key) for key in ('source_window', 'frames', 'fps')}
     identity['observations'] = {key:sha256(row[key]) for key in ('source', 'observations_source') if row.get(key)}
     return identity
+
+
+def supplied_body_identity(spec, row=None):
+    """Version shared supplied geometry, never sparse reconstruction per target."""
+    if not spec or spec.get('format') == 'robot_joint_state':
+        return None
+    from .motion_sources import sha256, source_route
+    source_route({'motion_source': spec})
+    digest = sha256(spec['path'])
+    if spec.get('sha256') and digest != spec['sha256']:
+        raise ValueError('Original supplied body hash changed')
+    value = os.environ.get('ARENA_' + spec['family'].upper() + '_MODEL')
+    model = Path(value).resolve() if value else None
+    decoders = ['motion_sources.py']
+    if spec['format'] == 'recorded_skeleton_surface':
+        decoders.append('recorded_surface.py')
+    row = row or {}
+    return dict(policy='complete-human-source-identity-v1', spec=spec,
+                state_sha256=digest,
+                model_sha256=sha256(model) if model is not None and model.is_file() else None,
+                decoder_sha256={name:sha256(Path(__file__).with_name(name)) for name in decoders},
+                objects_sha256=sha256(spec['objects_path']) if spec.get('objects_path') else None,
+                clock={key:row.get(key) for key in ('source_window', 'frames', 'fps')},
+                observations={key:sha256(row[key]) for key in ('source', 'observations_source') if row.get(key)})
 
 
 def identity_digest(identity):
