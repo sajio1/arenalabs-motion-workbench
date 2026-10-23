@@ -34,7 +34,7 @@ export class Stage {
   }
   resize(){const w=this.host.clientWidth,h=this.host.clientHeight;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.zoom=w>1300?1:.8;this.camera.setViewOffset(w,h,w>1600?-237:w>760?-218:-95,0,w,h);this.camera.updateProjectionMatrix();}
   async asset(robot:Robot){
-    if(!robot.model_url||!robot.neutral_url)throw new Error('这个模型缺少可预览的网格资源');
+    if(!robot.model_url||!robot.neutral_url)throw new Error('This model is missing the mesh assets required for preview.');
     if(!this.cache.has(robot.id))this.cache.set(robot.id,Promise.all([this.loader.loadAsync(robot.model_url),fetch(robot.neutral_url).then(r=>r.json())]).then(([g,n])=>({model:g.scene,neutral:n})));
     return this.cache.get(robot.id)!;
   }

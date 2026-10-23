@@ -211,8 +211,25 @@ def _beta(raw):
     return beta
 
 
+def _body_scale(raw, spec):
+    """Explicit source-model similarity about SMPL transl, never target scaling."""
+    value = raw.get('body_scale', spec.get('body_scale', 1.))
+    scale = _finite(value, 'body_scale')
+    if scale.shape != () or float(scale) <= 0:
+        raise ValueError('body_scale must be one positive finite scalar')
+    scale = float(scale)
+    if 'body_scale' in raw and 'body_scale' in spec and scale != float(spec['body_scale']):
+        raise ValueError('Payload and declared body_scale disagree')
+    if scale != 1. and spec.get('scale_origin') != 'smpl_translation':
+        raise ValueError('Non-unit body_scale requires scale_origin=smpl_translation')
+    if scale != 1. and spec['format'] != 'smpl_parameters':
+        raise ValueError('body_scale is supported for SMPL parameters only; decoded geometry must already match its model')
+    return scale
+
+
 def _decode(raw, spec, take, model_path):
     family = spec['family']; beta = _beta(raw)
+    scale = _body_scale(raw, spec)
     model, shaped, rest, parents, weights, faces = _model(model_path, family, beta)
     count = len(parents)
     if spec['format'] == 'smpl_decoded':
@@ -263,7 +280,13 @@ def _decode(raw, spec, take, model_path):
         for j in range(count):
             result += weights[None, :, j, None] * (np.einsum('tcd,tvd->tvc', global_r[sl, j], posed) + translation[:, j, None])
         vertices.append(result)
-    result = (joints, global_r, np.concatenate(vertices), shaped, rest, parents, weights, faces, beta, {})
+    vertices = np.concatenate(vertices)
+    # Some official sources apply body scale after LBS about each frame's
+    # translation. Scaling translations or beta coefficients is not equivalent.
+    joints = (joints - trans[:, None]) * scale + trans[:, None]
+    vertices = (vertices - trans[:, None]) * scale + trans[:, None]
+    result = (joints, global_r, vertices, shaped * scale, rest * scale, parents, weights, faces, beta,
+              {'source_body_scale': scale, 'source_scale_origin': 'smpl_translation'})
     if 'fitted_joints' in raw:
         difference = np.linalg.norm(joints[:, :22] - raw['fitted_joints'][take], axis=-1)
         result[-1]['saved_fitted_body_agreement_max_m'] = float(difference.max())
@@ -416,6 +439,7 @@ def prepare_supplied_source(spec, output_dir, *, model_path=None, observed_work=
             neutral_mesh_height_m=float(np.ptp(shaped[:, 1])), body_bone_lengths_m=np.linalg.norm(offset[:22], axis=-1).tolist(),
             source_clock='Preserved original timestamps and integer-selected frame indices; no interpolation',
             source_pose_or_translation_modified=False, source_uniform_similarity_applied=False,
+            source_model_scale=_body_scale(raw, spec),
             source_world_up=spec['world_up'], source_units='m', canonical_world='Y-up cm', native_world='Z-up m',
             floor_world_m=floor, floor_policy=spec.get('floor_policy', 'Explicit source floor; not retargeted or clamped'),
             source_support='Actual shaped foot skinning region, lowest12mm bind, framewise world-Z fifth percentile',
@@ -549,6 +573,8 @@ def describe_source(source, *, model_paths=None):
                   morphology_available=model_path is not None, evidence=source.get('evidence', 'unspecified'))
     if model_path is not None:
         _, shaped, rest, parents, _, _ = _model(model_path, source['family'], _beta(raw))
+        scale = _body_scale(raw, source)
+        shaped, rest = shaped * scale, rest * scale
         offsets = rest - rest[np.maximum(parents, 0)]; offsets[0] = 0
         result.update(neutral_mesh_height_m=float(np.ptp(shaped[:, 1])),
                       body_bone_lengths_m=np.linalg.norm(offsets[:22], axis=-1).tolist(),

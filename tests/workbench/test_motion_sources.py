@@ -50,6 +50,40 @@ def fixture(root, family='smplx'):
 
 
 class MotionSourcesTests(unittest.TestCase):
+    def test_official_source_scale_preserves_translation_and_scales_anatomy(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); spec, _ = fixture(root)
+            raw = m._npz(root / 'motion.npz'); _, _, take = m._clock(raw, spec)
+            original = m._decode(raw, spec, take, root / 'model.npz')
+            raw['body_scale'] = np.array(.7633275)
+            scaled_spec = dict(spec, body_scale=.7633275, scale_origin='smpl_translation')
+            scaled = m._decode(raw, scaled_spec, take, root / 'model.npz')
+            anchor = raw['trans'][take, None]
+            for index in (0, 2):
+                np.testing.assert_allclose(scaled[index] - anchor,
+                                           (original[index] - anchor) * .7633275, atol=1e-12)
+            np.testing.assert_array_equal(scaled[1], original[1])
+            for index in (3, 4):
+                np.testing.assert_allclose(scaled[index], original[index] * .7633275)
+            np.savez(root / 'motion.npz', **raw)
+            description = m.describe_source(scaled_spec, model_paths={'smplx': root / 'model.npz'})
+            self.assertAlmostEqual(description['neutral_mesh_height_m'], np.ptp(original[3][:, 1]) * .7633275)
+            out = m.prepare_supplied_source(scaled_spec, root / 'scaled', model_path=root / 'model.npz')
+            with np.load(out / 'native_source.npz') as native:
+                np.testing.assert_allclose(native['full_body_position_yup_m'], scaled[0][:, :22])
+
+    def test_source_scale_requires_explicit_valid_convention(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); spec, _ = fixture(root)
+            raw = m._npz(root / 'motion.npz'); _, _, take = m._clock(raw, spec)
+            for value in (0., -1., float('nan'), [1., 2.]):
+                with self.assertRaises(ValueError):
+                    m._decode(dict(raw, body_scale=value), dict(spec, scale_origin='smpl_translation'), take, root / 'model.npz')
+            with self.assertRaisesRegex(ValueError, 'scale_origin'):
+                m._decode(dict(raw, body_scale=.7), spec, take, root / 'model.npz')
+            with self.assertRaisesRegex(ValueError, 'disagree'):
+                m._decode(dict(raw, body_scale=.7), dict(spec, body_scale=.8, scale_origin='smpl_translation'), take, root / 'model.npz')
+
     def test_route_is_evidence_based_and_invalid_body_never_falls_back(self):
         self.assertEqual(m.source_route({})['generated_human_model'],'smplh')
         self.assertEqual(m.source_route({'motion_source':{'format':'smpl_parameters','family':'smplx'}})['route'],'supplied-body')

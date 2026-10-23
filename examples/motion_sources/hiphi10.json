@@ -6,7 +6,7 @@
   "samples": [
     {
       "id": "hiphi-adjusting-adjust-0108",
-      "title": "站立轻提椅并放稳",
+      "title": "Lift and settle a chair",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0108",
       "motion_sha256": "bd7bf0e54e3494dea2acabeb161891fa788403bb9725d9b0aaa08ae535da46b6",
@@ -23,7 +23,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0097",
-      "title": "轻弯腰倾箱并放平",
+      "title": "Tilt and lower a box",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0097",
       "motion_sha256": "ca69e300a874aef6e5ad1839272e3a3725aa2597a359743aa771c9c522b9d343",
@@ -40,7 +40,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0110",
-      "title": "后退小步拉脚凳",
+      "title": "Pull a footstool while stepping back",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0110",
       "motion_sha256": "acc540e0ad1bde7d6dabb5339e2fd15c32fcc44039a72fcdc49f7dd22079db3f",
@@ -57,7 +57,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0079",
-      "title": "绕桌移动并调整角度",
+      "title": "Move around and reposition a table",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0079",
       "motion_sha256": "ea37d6b00735b009b893ca56c94ba58b2076ee9344fe55bebfea365428c7286c",
@@ -74,7 +74,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0086",
-      "title": "原地小幅转椅",
+      "title": "Rotate a chair in place",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0086",
       "motion_sha256": "0a1a198b8c78c27c53441e9bdabc1d68c594162dad3fae7e84a7117146733414",
@@ -91,7 +91,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0082",
-      "title": "摇椅检查稳定并小移",
+      "title": "Check and reposition a rocking chair",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0082",
       "motion_sha256": "428eea25cbb5fbdf6939e7c04f20a7b0c63bff19834378700199cc84d9bc47e0",
@@ -108,7 +108,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0102",
-      "title": "前后推拉椅子定位",
+      "title": "Push and pull a chair into place",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0102",
       "motion_sha256": "9cdb5829dcade0233156c6fe1acafa79021d4cd40c008ab7a5ea56b1c1db7ec8",
@@ -125,7 +125,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0095",
-      "title": "倾斜箱体并放平",
+      "title": "Tilt a box and set it flat",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0095",
       "motion_sha256": "63075dfba14e9d2a3b3d1276e759c796f6992c4f195a2336b37969a4ad604a27",
@@ -142,7 +142,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0085",
-      "title": "轻提椅子并放稳",
+      "title": "Lift and set down a chair",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0085",
       "motion_sha256": "8c375ea51043f9ad7f714e6ff9ef410069b654bd00994294e9ff95aeeed3b8d8",
@@ -159,7 +159,7 @@
     },
     {
       "id": "hiphi-adjusting-adjust-0090",
-      "title": "小角度旋转椅子对齐",
+      "title": "Rotate a chair into alignment",
       "dataset": "HiPhi",
       "directory": "Adjusting-adjust_0090",
       "motion_sha256": "d949945f68faeb2d228abf7ff06644bb04f9f19c121ebee8e7e40493529d3ce9",
