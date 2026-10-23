@@ -22,6 +22,15 @@ is solved on one GPU; independent jobs/stages are distributed across the selecte
 GPU pool. This is job parallelism, not distributed single-trajectory training or
 an implemented cross-host tensor transport protocol.
 
+The barrier Newton system is diagonally equilibrated at each IPM step and its
+temporal blocks use pivoted GPU LU. Near an active constraint, floating-point
+Schur elimination can lose positive definiteness even when the original QP is
+convex. LU avoids requiring positive definiteness of those intermediate blocks.
+This changes the linear solver, not the original QP objective, constraints or
+residual thresholds. Failed numerical checks still prevent trajectory export.
+If independent point-cloud generation succeeds after a trajectory failure, its
+artifact is retained and reported complete while the overall request stays failed.
+
 For a customer that cannot share a URDF, run this package and target decoder on
 their own endpoint. Source motion can be supplied to that endpoint without
 returning robot assets. The current API server with robot import is an alternative

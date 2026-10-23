@@ -77,7 +77,7 @@ class FullMotion:
                 rp,rd=self.qp.residuals()
                 mu=(self.qp.s*self.qp.z).sum((1,2))/self.qp.count
                 vals=torch.stack([rp[0],rd[0],mu[0],self.qp.factor_failed[0].to(rp.dtype)]).cpu().numpy()
-                qpstats=dict(iterations=n,primal_max=float(vals[0]),scaled_stationarity=float(vals[1]),complementarity=float(vals[2]),factor_failed=bool(vals[3]))
+                qpstats=dict(iterations=n,factorization=self.qp.factorization,primal_max=float(vals[0]),scaled_stationarity=float(vals[1]),complementarity=float(vals[2]),factor_failed=bool(vals[3]))
                 if np.isfinite(vals).all() and vals[0]<2e-5 and vals[1]<1e-6 and vals[2]<1e-8 and not vals[3]:break
             qp_s=time.perf_counter()-s
             qpokay=np.isfinite(vals).all() and vals[0]<2e-5 and vals[1]<1e-6 and vals[2]<1e-8 and not vals[3]
@@ -96,4 +96,4 @@ class FullMotion:
         final_validation_transfer_s=time.perf_counter()-final_start
         wall=time.perf_counter()-start
         status='QP_FAILED' if logs[-1].get('status')=='QP_FAILED' else ('VALID_STOPPED' if final[0] else 'NONLINEAR_FAILED')
-        return output,dict(status=status,frames=self.T,iterations=logs,wall_s=wall,resource_cooldown_s=cool,active_s=wall-cool,final_validation_transfer_s=final_validation_transfer_s,valid=bool(final[0]),hand_budget_max_violation_m=float(final[1]),floor_min_m=float(final[2]),max_iterations=iters,solve_backend='GPU FP64 IPM + block cyclic reduction; no CPU QP fallback')
+        return output,dict(status=status,frames=self.T,iterations=logs,wall_s=wall,resource_cooldown_s=cool,active_s=wall-cool,final_validation_transfer_s=final_validation_transfer_s,valid=bool(final[0]),hand_budget_max_violation_m=float(final[1]),floor_min_m=float(final[2]),max_iterations=iters,linear_solver=self.qp.factorization,newton_equilibration='exact_diagonal_congruence',solve_backend='GPU FP64 IPM + block cyclic reduction with pivoted LU; no CPU QP fallback')

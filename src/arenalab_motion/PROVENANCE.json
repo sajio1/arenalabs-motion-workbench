@@ -95,5 +95,20 @@
     "native_smplh_bridge_artifacts_valid": true,
     "unified_entry_routing_tests": 6,
     "native_smplh_viewer_mesh_max_abs_error_m": 5.9502623050988745e-08
-  }
+  },
+  "numerical_maintenance": [
+    {
+      "date": "2026-10-23",
+      "reason": "Nymeria A3 barrier Newton Schur blocks can lose positive definiteness at FP64 roundoff after cyclic reduction.",
+      "method": "Diagonal congruence of the current Newton system and pivoted GPU LU block solves.",
+      "unchanged": [
+        "original QP objective and constraints",
+        "original-unit primal, stationarity and complementarity acceptance",
+        "60 soft / 20 polish schedule",
+        "hand objective and budget policy",
+        "nonlinear line search and floor checks"
+      ],
+      "scope": "Numerical robustness; not a new model-quality or physical-feasibility claim"
+    }
+  ]
 }

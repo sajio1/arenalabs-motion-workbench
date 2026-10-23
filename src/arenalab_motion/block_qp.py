@@ -11,6 +11,13 @@ def chol_solve(rhs, L):
     y=torch.linalg.solve_triangular(L,rhs,upper=False)
     return torch.linalg.solve_triangular(L.transpose(-1,-2),y,upper=True)
 
+def lu_factor(A):
+    factor,pivots,info=torch.linalg.lu_factor_ex(A)
+    return (factor,pivots),info
+
+def lu_solve(rhs,factor):
+    return torch.linalg.lu_solve(factor[0],factor[1],rhs)
+
 class BlockCR:
     """Batched SPD block-tridiagonal factor/solve, logarithmic time levels.
 
@@ -18,38 +25,42 @@ class BlockCR:
     parallel, eliminate into even neighbours, recursively solve Schur system.
     Numeric factors are reusable across every ADMM RHS of this SQP step.
     """
-    def __init__(self, A, U):
+    def __init__(self, A, U, factorization='cholesky'):
+        if factorization not in {'cholesky','pivoted_lu'}:
+            raise ValueError('Unknown block factorization')
+        factor=torch.linalg.cholesky_ex if factorization=='cholesky' else lu_factor
+        self.solve_block=chol_solve if factorization=='cholesky' else lu_solve
         self.levels=[]; self.info=[]
         while A.shape[1]>1:
             n=A.shape[1];odd=A[:,1::2];ne=A[:,::2].shape[1]
-            L,info=torch.linalg.cholesky_ex(odd);self.info.append(info)
+            L,info=factor(odd);self.info.append(info)
             left=U[:,::2]
             right=torch.zeros_like(left)
             right[:,:U[:,1::2].shape[1]]=U[:,1::2]
-            invleft=chol_solve(left.transpose(-1,-2),L)
-            invright=chol_solve(right,L)
+            invleft=self.solve_block(left.transpose(-1,-2),L)
+            invright=self.solve_block(right,L)
             S=A[:,::2].clone();no=odd.shape[1]
             S[:,:no]-=left@invleft
             S[:,1:]-=(right.transpose(-1,-2)@invright)[:,:ne-1]
             upper=-(left@invright)[:,:ne-1]
             self.levels.append((n,L,left,right))
             A=(S+S.transpose(-1,-2))*.5;U=upper
-        self.last,info=torch.linalg.cholesky_ex(A);self.info.append(info)
+        self.last,info=factor(A);self.info.append(info)
 
     def solve(self,b):
         stack=[]
         for n,L,left,right in self.levels:
-            odd=b[:,1::2];y=chol_solve(odd[...,None],L)[...,0]
+            odd=b[:,1::2];y=self.solve_block(odd[...,None],L)[...,0]
             even=b[:,::2].clone();no=odd.shape[1]
             even[:,:no]-=(left@y[...,None])[...,0]
             even[:,1:]-=(right.transpose(-1,-2)@y[...,None])[:,:even.shape[1]-1,:,0]
             stack.append(odd);b=even
-        x=chol_solve(b[...,None],self.last)[...,0]
+        x=self.solve_block(b[...,None],self.last)[...,0]
         for (n,L,left,right),odd in zip(reversed(self.levels),reversed(stack)):
             no=odd.shape[1]
             rhs=odd-(left.transpose(-1,-2)@x[:,:no,:,None])[...,0]
             rhs[:,:x.shape[1]-1]-=(right[:,:x.shape[1]-1]@x[:,1:,:,None])[...,0]
-            xo=chol_solve(rhs[...,None],L)[...,0]
+            xo=self.solve_block(rhs[...,None],L)[...,0]
             full=x.new_empty(x.shape[0],n,x.shape[-1]);full[:,::2]=x;full[:,1::2]=xo;x=full
         return x
 

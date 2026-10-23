@@ -159,6 +159,82 @@ def test_source_stage_failure_is_explicit_and_not_completed(monkeypatch,tmp_path
     assert state['completed_outputs']==[]
 
 
+@pytest.mark.parametrize('failed_script', ['body_prior.py', 'retarget_robot.py'])
+@pytest.mark.parametrize('scale', ['preserve', 'match_robot'])
+def test_late_point_cloud_survives_motion_failure(monkeypatch,tmp_path,failed_script,scale):
+    from threading import Event
+    run,calls,module=_harness(monkeypatch,tmp_path,['trajectory','point_cloud'],scale)
+    original_worker=module.gpu_run; original_scene=module.scene_run
+    motion_failed=Event(); cloud_finished=Event()
+    failure=RuntimeError('Numerical motion worker failed')
+    def worker(command,**kwargs):
+        if Path(command[1]).name==failed_script:
+            motion_failed.set()
+            raise failure
+        return original_worker(command,**kwargs)
+    def late_scene(*args):
+        assert motion_failed.wait(timeout=5), 'Cloud must finish after the motion failure'
+        result=original_scene(*args)
+        cloud_finished.set()
+        return result
+    monkeypatch.setattr(module,'gpu_run',worker)
+    monkeypatch.setattr(module,'scene_run',late_scene)
+    with pytest.raises(RuntimeError) as raised:run()
+    assert raised.value is failure and cloud_finished.is_set()
+    state=json.loads((tmp_path/'job/state.json').read_text())
+    scene=json.loads((module.STORE/state['scene_url'].removeprefix('/assets/')).read_text())
+    cloud_usable=scale=='preserve' or failed_script=='retarget_robot.py'
+    expected={'trajectory':'failed','point_cloud':'completed' if cloud_usable else 'failed'}
+    assert state['status']=='failed' and scene['generation_status']['status']=='failed'
+    assert state['output_status']==scene['output_status']==expected
+    assert state['completed_outputs']==scene['completed_outputs']==(['point_cloud'] if cloud_usable else [])
+    assert state['scene_ready']==cloud_usable and not state['robot_ready']
+    assert bool(scene.get('cloud'))==cloud_usable and scene['robots']==[]
+    assert scene['generation_status']['reason']==str(failure)
+    assert ('fit_scale' in calls)==(scale=='match_robot' and cloud_usable)
+    assert 'render_recording.py' not in calls
+
+
+def test_late_point_cloud_failure_does_not_replace_original_motion_error(monkeypatch,tmp_path):
+    from threading import Event
+    run,calls,module=_harness(monkeypatch,tmp_path,['trajectory','point_cloud'])
+    original_worker=module.gpu_run; motion_failed=Event()
+    failure=RuntimeError('Original QP failure')
+    def worker(command,**kwargs):
+        if Path(command[1]).name=='retarget_robot.py':
+            motion_failed.set()
+            raise failure
+        return original_worker(command,**kwargs)
+    def late_scene(*args):
+        assert motion_failed.wait(timeout=5)
+        raise ValueError('Depth inference also failed')
+    monkeypatch.setattr(module,'gpu_run',worker)
+    monkeypatch.setattr(module,'scene_run',late_scene)
+    with pytest.raises(RuntimeError) as raised:run()
+    assert raised.value is failure
+    state=json.loads((tmp_path/'job/state.json').read_text())
+    assert state['status']=='failed' and state['completed_outputs']==[]
+    assert state['output_status']=={'trajectory':'failed','point_cloud':'failed'}
+    secondary=json.loads((tmp_path/'job/independent-stage-errors.json').read_text())
+    assert secondary['scene']==dict(error_type='ValueError',message='Depth inference also failed')
+
+
+def test_motion_failure_does_not_publish_fov_internal_point_cloud(monkeypatch,tmp_path):
+    run,calls,module=_harness(monkeypatch,tmp_path,['inpaint_fov'])
+    original_worker=module.gpu_run
+    def worker(command,**kwargs):
+        if Path(command[1]).name=='retarget_robot.py':raise RuntimeError('Motion failed')
+        return original_worker(command,**kwargs)
+    monkeypatch.setattr(module,'gpu_run',worker)
+    with pytest.raises(RuntimeError,match='Motion failed'):run()
+    state=json.loads((tmp_path/'job/state.json').read_text())
+    scene=json.loads((module.STORE/state['scene_url'].removeprefix('/assets/')).read_text())
+    assert state['status']=='failed' and state['output_status']=={'inpaint_fov':'failed'}
+    assert state['completed_outputs']==[] and not state['scene_ready'] and not state['robot_ready']
+    assert not scene.get('cloud') and scene['robots']==[] and 'patch_videos' not in scene
+    assert 'scene' in calls and 'render_recording.py' not in calls
+
+
 def test_selection_unavailable_does_not_start_workers(monkeypatch,tmp_path):
     run,calls,_=_harness(monkeypatch,tmp_path,['contact'])
     from arenalab_workbench import source_requirements

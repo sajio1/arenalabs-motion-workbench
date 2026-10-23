@@ -132,6 +132,23 @@ def _run(scene_id, robot_id, hand_id, status):
             write(shared, data)
             return data, contact_work
 
+    body_complete = False
+    scene_attempted = False
+    body_future = scene_future = contact_future = None
+
+    def finish_scene():
+        nonlocal scene_attempted
+        scene_attempted = True
+        scene = scene_future.result()
+        env['ARENA_SCENE_WORK'] = str(ROOT / 'scene-jobs' / scene.get('geometry', {}).get('scene_work', version))
+        if plan['source_body_for_scene_scale'] and not progress.ready.get('motion'):
+            if not body_complete:
+                raise RuntimeError('Matched point cloud requires a completed source body')
+            # A failed trajectory has not exported its source/scene transform.
+            # Fit that same transform independently before publishing the cloud.
+            apply_scene_scale(work, robot, destination / 'scene.json')
+        publish('scene', 'Point cloud ready')
+
     branches = ThreadPoolExecutor(max_workers=3)
     try:
         body_future = branches.submit(recover_body) if plan['body'] else None
@@ -139,6 +156,7 @@ def _run(scene_id, robot_id, hand_id, status):
         contact_future = branches.submit(visual_contact) if plan['contact'] else None
         if body_future:
             body_future.result()
+            body_complete = True
         if plan['retarget']:
             validation = destination / ('robot-' + robot_id) / 'validation.json'
             if validation.exists():
@@ -155,11 +173,7 @@ def _run(scene_id, robot_id, hand_id, status):
                 env = select_native_work_env(env, json.loads(validation.read_text()), work, robot_id)
             publish('motion', 'Trajectory ready')
         if scene_future:
-            scene = scene_future.result()
-            env['ARENA_SCENE_WORK'] = str(ROOT / 'scene-jobs' / scene.get('geometry', {}).get('scene_work', version))
-            if plan['source_body_for_scene_scale'] and not plan['retarget']:
-                apply_scene_scale(work, robot, destination / 'scene.json')
-            publish('scene', 'Point cloud ready')
+            finish_scene()
         if plan['render']:
             from arenalab_workbench.depth_store import fov_current
             receipt = destination / ('robot-' + robot_id) / 'render-cache.json'
@@ -190,6 +204,16 @@ def _run(scene_id, robot_id, hand_id, status):
         progress.complete('Selected outputs ready')
         return scene_url
     except Exception as error:
+        # Perception runs independently and may finish after trajectory failure.
+        # Drain and publish it before the terminal failed snapshot, without
+        # converting the failed trajectory (or the overall job) into success.
+        if scene_future is not None and not scene_attempted:
+            progress.write('running', 'A generation stage failed; collecting independent point cloud')
+            try:
+                finish_scene()
+            except Exception as scene_error:
+                save(status.with_name('independent-stage-errors.json'),
+                     dict(scene=dict(error_type=type(scene_error).__name__, message=str(scene_error))))
         publish_failure(public_dir / 'scene.json', selection, progress.ready, error)
         progress.write('failed', 'Generation stage failed: ' + str(error))
         raise

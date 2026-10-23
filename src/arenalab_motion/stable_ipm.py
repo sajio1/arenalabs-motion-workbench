@@ -6,9 +6,26 @@ algebraically, not relaxed. No convergence/feasibility implied by step count.
 import torch
 from .block_qp import BlockCR,pair_blocks,temporal_coeff,temporal_mv
 
+
+def equilibrate_newton(diagonal,off1,off2):
+    """Exact diagonal congruence for the current barrier Newton system.
+
+    Objective equilibration is fixed for a QP, while z/s can change by many
+    orders of magnitude during IPM. Rebalance the *linear solve*, including
+    temporal couplings; recover its original variable after solving. No ridge,
+    constraint, objective or convergence tolerance is changed here.
+    """
+    scale=diagonal.diagonal(dim1=-2,dim2=-1).rsqrt()
+    balanced=diagonal*scale[...,None]*scale[...,None,:]
+    first=off1*scale[:,:-1]*scale[:,1:]
+    second=off2*scale[:,:-2]*scale[:,2:]
+    return balanced,first,second,scale
+
+
 class StableWindowIPM:
-    def __init__(self,H,g,C,l,u,lo,hi,w):
+    def __init__(self,H,g,C,l,u,lo,hi,w,factorization='pivoted_lu'):
         self.H,self.g,self.originalC=H,g,C;self.l,self.u,self.lo,self.hi=l,u,lo,hi
+        self.factorization=factorization
         B,T,d=g.shape;self.shape=B,T,d;self.w2=w*w;self.a,self.b,self.c=temporal_coeff(T,g.device,g.dtype)
         self.fixed=torch.isfinite(lo)&torch.isfinite(hi)&(lo==hi)
         self.fix=torch.where(self.fixed,lo,torch.zeros_like(lo));free=(~self.fixed).to(g.dtype)
@@ -71,14 +88,16 @@ class StableWindowIPM:
         D=torch.where(done[:,None,None,None],self.eye,D)
         off1=torch.where(done[:,None,None],torch.zeros_like(self.off1),self.off1)
         off2=torch.where(done[:,None,None],torch.zeros_like(self.off2),self.off2)
-        diag,upper=pair_blocks(D,off1,off2);factor=BlockCR(diag,upper)
+        D,off1,off2,newton_scale=equilibrate_newton(D,off1,off2)
+        diag,upper=pair_blocks(D,off1,off2);factor=BlockCR(diag,upper,factorization=self.factorization)
         for info in factor.info:self.factor_failed.logical_or_((info!=0).any(-1))
         B,T,d=self.shape
         def direction(rc):
             rhs=-rd+(self.G.transpose(-1,-2)@((rc-self.z*rp)/self.s)[...,None])[...,0]
             rhs=torch.where(done[:,None,None],torch.zeros_like(rhs),rhs)
+            rhs=rhs*newton_scale
             padded=torch.cat([rhs,rhs.new_zeros(B,1,d)],1) if T%2 else rhs
-            dy=factor.solve(padded.reshape(B,(T+1)//2,2*d)).reshape(B,-1,d)[:,:T]
+            dy=factor.solve(padded.reshape(B,(T+1)//2,2*d)).reshape(B,-1,d)[:,:T]*newton_scale
             ds=(-rp-(self.G@dy[...,None])[...,0])*self.livef
             dz=((-rc-self.z*ds)/self.s)*self.livef
             return dy,ds,dz
