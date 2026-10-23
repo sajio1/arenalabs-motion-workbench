@@ -33,3 +33,8 @@ test('a source robot with the wrong clock fails instead of showing unrelated mot
  const {layer,counts}=fixture(t);globalThis.fetch=async()=>Response.json({...motion,frames:3});
  await assert.rejects(layer.setVisible(true,0),/clock or geometry mismatch/);assert.equal(counts()[1],0);
 });
+test('source STL geometry without exported normals receives lighting normals',async t=>{
+ const {node,layer}=fixture(t);node.geometry.deleteAttribute('normal');
+ await layer.setVisible(true,0);const normal=node.geometry.getAttribute('normal');
+ assert.ok(normal);assert.ok([...normal.array].every(Number.isFinite));assert.equal(node.material.vertexColors,false);
+});
