@@ -28,6 +28,16 @@ def alive(pid):
     try: os.kill(pid, 0); return True
     except ProcessLookupError: return False
 
+def resident_only(gpu, record):
+    """Recognize our idle worker, while retaining protection for external jobs."""
+    if not record or record.get('state')!='idle':return False
+    try:
+        uuid_result=subprocess.run(['nvidia-smi','-i',str(gpu),'--query-gpu=uuid','--format=csv,noheader'],capture_output=True,text=True,check=True)
+        result=subprocess.run(['nvidia-smi','--query-compute-apps=gpu_uuid,pid','--format=csv,noheader,nounits'],capture_output=True,text=True,check=True)
+        uuid=uuid_result.stdout.strip();pids={int(b.strip()) for a,b in (line.split(',') for line in result.stdout.splitlines()) if a.strip()==uuid}
+        return bool(pids) and pids=={record['pid']}
+    except (ValueError,OSError,subprocess.CalledProcessError):return False
+
 @contextmanager
 def lease(label, env=None, minimum_mb=40000):
     import fcntl
@@ -52,7 +62,14 @@ def lease(label, env=None, minimum_mb=40000):
                     for gpu in map(int, env.get('ARENA_GPU_POOL', '0,1,2,3').split(',')):
                         free, used = available.get(gpu, (0, 999999))
                         # External workloads are not part of our leases. Leave them alone.
-                        if free < minimum_mb or used > 1024: continue
+                        from .motion_worker import resident_record,stop_idle
+                        resident=resident_record(ROOT,gpu)
+                        ours=used>1024 and resident_only(gpu,resident)
+                        if used>1024 and not ours:continue
+                        if free<minimum_mb:
+                            if not ours or not stop_idle(ROOT,gpu):continue
+                            free,used=memory().get(gpu,(0,999999))
+                            if free<minimum_mb or used>1024:continue
                         # FIFO among jobs eligible for this card; a pinned job must not idle other cards.
                         older=[json.loads(p.read_text()) for p in queue[:queue.index(ticket)]]
                         if any(gpu in item.get('gpu_pool',[0,1,2,3]) and free>=item.get('minimum_mb',40000) for item in older):continue

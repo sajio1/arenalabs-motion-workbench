@@ -89,7 +89,8 @@ def export_result(robot_id,robot,row,output,angles,hashes,source_hashes,status_p
     folder=DEST/('robot-'+robot_id);folder.mkdir(exist_ok=True);scene=trimesh.Scene();count=visual['positions'].shape[1]
     for i in range(count):
         mesh=trimesh.Trimesh(visual[f'v{i}'],visual[f'f{i}'],process=False);color=np.asarray(visual[f'c{i}']).ravel();color=color*255 if color.max()<=1 else color;mesh.visual.vertex_colors=np.tile(color.astype(np.uint8),(len(mesh.vertices),1));scene.add_geometry(mesh,node_name=f'geom_{i}',geom_name=f'geom_{i}')
-    scene.export(folder/'model.glb')
+    from arenalab_workbench.model_assets import export_model
+    shared_model_url=export_model(scene,folder/'model.glb',paths.store)
     _,_,_,bindings,_=build_from_mjcf(row['xml'],row['body'])
     from arenalab_workbench.native_export_parity import native_task_points
     all_actual=native_task_points(motion,local)@S
@@ -113,7 +114,7 @@ def export_result(robot_id,robot,row,output,angles,hashes,source_hashes,status_p
         from arenalab_workbench.native_export_parity import audit_native_export
         native_parity=audit_native_export(row,native_qpos,folder/'playback.json',output/'robot-render.npz',local)
         write(folder/'native-export-parity.json',native_parity)
-    result=dict(trajectory_scale=numerical_report.get('trajectory_scale','preserve'),pipeline_version='resident-skeleton-surface-wrist-v3',motion_policy_version='resident-skeleton-surface-wrist-v3',source_policy=numerical_report.get('source_policy'),source_policy_version='unified-provided-body-or-three-point-native-h-v1',solver=numerical_report.get('solver',{}),routing=numerical_report.get('source_policy'),encoder_policy=encoder_policy,motion_backend=backend,id=robot_id,label=robot['label'],hand='none' if angles is None else 'wuji',model_url=f'{PUBLIC}/robot-{robot_id}/model.glb',playback_url=f'{PUBLIC}/robot-{robot_id}/playback.json',reference='wrist' if angles is None else 'palm',quality=dict(mean_mm=float(error.mean()),p95_mm=float(np.quantile(error,.95)),p99_mm=float(np.quantile(error,.99)),max_mm=float(error.max()),orientation_max_deg=float(motion['wrist_error_deg'].max()),minimum_sole_height_mm=float(motion['sole_surface_height_cm'].min()*10)),mounting=json.loads((output/'hand-mounts.json').read_text()))
+    result=dict(trajectory_scale=numerical_report.get('trajectory_scale','preserve'),pipeline_version='resident-skeleton-surface-wrist-v3',motion_policy_version='resident-skeleton-surface-wrist-v3',source_policy=numerical_report.get('source_policy'),source_policy_version='unified-provided-body-or-three-point-native-h-v1',solver=numerical_report.get('solver',{}),routing=numerical_report.get('source_policy'),encoder_policy=encoder_policy,motion_backend=backend,id=robot_id,label=robot['label'],hand='none' if angles is None else 'wuji',model_url=shared_model_url,playback_url=f'{PUBLIC}/robot-{robot_id}/playback.json',reference='wrist' if angles is None else 'palm',quality=dict(mean_mm=float(error.mean()),p95_mm=float(np.quantile(error,.95)),p99_mm=float(np.quantile(error,.99)),max_mm=float(error.max()),orientation_max_deg=float(motion['wrist_error_deg'].max()),minimum_sole_height_mm=float(motion['sole_surface_height_cm'].min()*10)),mounting=json.loads((output/'hand-mounts.json').read_text()))
     from arenalab_workbench.gpu_scheduler import merge_scene
     source_manifest=json.loads((SOURCE/'input_manifest.json').read_text())
     ground_provenance=numerical_report.get('ground_provenance') or (

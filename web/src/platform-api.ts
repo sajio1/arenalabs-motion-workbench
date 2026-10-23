@@ -5,6 +5,7 @@ export type OutputPlan={requested:OutputModality[]|null;effective:OutputModality
 export type RunSpec={workflow:'manipulation'|'locomotion'|'export';recording_id:string;robot_id:string;hand_id?:string;trajectory_scale?:TrajectoryScale|null;output_modalities?:OutputModality[]|null};
 export type RunPlan={executable:boolean;required_choice?:'trajectory_scale'|null;choices:string[];outputs:OutputPlan;policy:{trajectory_scale?:TrajectoryScale|null;scale_choice_required?:boolean;scale_estimate_unavailable?:boolean;source_policy?:string;source_policy_version?:string|null;morphology?:{available:boolean;source_height_m?:number;target_height_m?:number;scale_factor?:number;large_mismatch?:boolean;reason?:string}}};
 type Job={id:string;status:string;result:Record<string,any>;error?:{detail?:string;code?:string}|null};
+export type RecordingPage<T>={items:T[];total:number;offset:number;limit:number;datasets:Record<string,number>};
 export type UiJob={id:string;status:'queued'|'running'|'completed'|'failed';error?:string;robot_ready?:boolean;scene_ready?:boolean;contact_ready?:boolean;fov_ready?:boolean;completed_outputs?:string[];[key:string]:any};
 /** getRandomValues is available on HTTP origins where randomUUID is absent. */
 export function createSubmissionKey(source:Pick<Crypto,'getRandomValues'> & Partial<Pick<Crypto,'randomUUID'>>=globalThis.crypto):string{
@@ -58,6 +59,12 @@ function submissionIdentity(spec:RunSpec){
 }
 export const api={
  session(){return sessionPromise??=(apiJson('/api/v1/sessions',{method:'POST'}).catch(e=>{sessionPromise=undefined;throw e;}));},
+ async recording<T>(id:string):Promise<T>{await this.session();return apiJson('/api/v1/recordings/'+encodeURIComponent(id));},
+ async recordingsPage<T>(options:{dataset?:string;q?:string;offset?:number;limit?:number}={},signal?:AbortSignal):Promise<RecordingPage<T>>{
+  await this.session();const query=new URLSearchParams({limit:'50'});
+  for(const [key,value] of Object.entries(options))if(value!==undefined)query.set(key,String(value));
+  return apiJson('/api/v1/recordings?'+query,{signal});
+ },
  async recordings<T>():Promise<T[]>{
   await this.session();const items:T[]=[];let offset=0;
   do{const page=await apiJson<{items:T[];total:number}>(`/api/v1/recordings?limit=500&offset=${offset}`);

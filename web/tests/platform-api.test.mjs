@@ -127,3 +127,12 @@ test('missing secure randomness fails clearly instead of using weak randomness',
  const {createSubmissionKey}=await client(t,async()=>response({}));
  assert.throws(()=>createSubmissionKey({}),/Secure browser randomness is unavailable/);
 });
+
+test('recording pages fetch only the requested window and encode server-side filters',async t=>{
+ const calls=[];
+ const {api}=await client(t,async(url)=>{calls.push(url);return response(url.endsWith('/sessions')?{ready:true}:{items:[{id:'r1'}],total:4000,offset:50,limit:50,datasets:{HiPhi:4000}});});
+ const page=await api.recordingsPage({dataset:'HiPhi',q:'pick & place',offset:50});
+ assert.equal(page.total,4000);assert.equal(calls.length,2);
+ const query=new URL(calls[1],'http://local').searchParams;
+ assert.equal(query.get('q'),'pick & place');assert.equal(query.get('offset'),'50');assert.equal(query.get('limit'),'50');
+});

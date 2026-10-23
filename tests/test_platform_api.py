@@ -64,7 +64,7 @@ def fixtures(tmp_path, database=None):
                          ('/api/robots/{robot_id}/metadata',['PATCH']),('/api/robots/{robot_id}',['DELETE'])]:
         viewer.add_api_route(path,stub,methods=methods)
     app=create_api(viewer,workbench,storage=storage,database=database or tmp_path/'api.sqlite')
-    client=TestClient(app);client.post('/sessions')
+    client=TestClient(app);client.cookies.set('arena_workspace','test-owner');client.post('/sessions')
     return client,calls,states,storage,app
 
 def spec(**changes):return {'workflow':'manipulation','recording_id':'clip','robot_id':'x2','hand_id':'none',**changes}
@@ -453,3 +453,31 @@ def test_artifacts_follow_public_urls_and_hide_internal_trajectory(tmp_path):
             assert kinds=={'playback_manifest','robot_motion','quality_report'}
             motion=next(a for a in artifacts if a['kind']=='robot_motion')
             assert c.get(motion['download_url'].removeprefix('/api/v1')).content==b'{}'
+
+
+def test_session_is_lightweight_and_preserves_workspace(tmp_path):
+    c,_,_,_,app=fixtures(tmp_path)
+    c.cookies.clear()
+    async def no_catalog(*args):raise AssertionError('Session must not read the catalogue')
+    app.state.services.recordings=no_catalog
+    response=c.post('/sessions')
+    assert response.json()=={'ready':True}
+    token=c.cookies.get('arena_workspace');assert token and len(token)>30
+    assert c.post('/sessions').json()=={'ready':True}
+    assert c.cookies.get('arena_workspace')==token
+
+
+def test_recording_pagination_search_and_individual_lookup(tmp_path):
+    c,_,_,_,app=fixtures(tmp_path)
+    from types import SimpleNamespace
+    async def rows(request,workflow):
+        private=request.cookies.get('arena_workspace')=='test-owner'
+        return [dict(id=f'r{i}',title=f'Task {i}',family='pick' if i%2 else 'place',dataset='HiPhi' if i%2 else 'GRAIL') for i in range(1100 if private else 1)]
+    app.state.services.recordings=rows
+    page=c.get('/recordings',params={'dataset':'HiPhi','q':'pick','limit':50,'offset':500}).json()
+    assert page['total']==550 and len(page['items'])==50 and page['items'][0]['id']=='r1001'
+    assert page['datasets']=={'HiPhi':550,'GRAIL':550}
+    assert c.get('/recordings/r1099').json()['id']=='r1099'
+    c.cookies.clear()
+    assert c.get('/recordings/r1099').status_code==404
+    assert c.get('/recordings',params={'dataset':'HiPhi'}).json()['total']==0

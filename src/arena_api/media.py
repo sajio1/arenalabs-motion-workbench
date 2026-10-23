@@ -4,7 +4,7 @@ import json
 import secrets
 from pathlib import Path
 from fastapi import HTTPException, Request, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 
 def attach_media(app, storage):
@@ -36,8 +36,26 @@ def attach_media(app, storage):
                 if not who or not secrets.compare_digest(expected, who):
                     raise HTTPException(404, 'Asset unavailable')
             if parent == root: break
-        response = FileResponse(path, headers={'Cache-Control': 'private, no-store' if private
-                                 else 'private, max-age=0, must-revalidate', 'Vary': 'Cookie'})
+        if path.name=='scene.json':
+            from arenalab_workbench.model_assets import rewrite_scene_models
+            return JSONResponse(rewrite_scene_models(json.loads(path.read_text()),root),
+                                headers={'Cache-Control':'private, no-store','Vary':'Cookie'})
+        immutable='robot-models' in parts and path.suffix=='.glb'
+        encoding=None
+        accepted=[]
+        for part in request.headers.get('accept-encoding','').split(','):
+            fields=[value.strip() for value in part.split(';')]
+            try:quality=next((float(value[2:]) for value in fields[1:] if value.startswith('q=')),1.)
+            except ValueError:quality=0.
+            if quality>0:accepted.append(fields[0])
+        if path.suffix=='.glb' and 'gzip' in accepted and not request.headers.get('range'):
+            compressed=path.with_suffix('.glb.gz')
+            if compressed.is_file():path=compressed;encoding='gzip'
+        response = FileResponse(path,media_type='model/gltf-binary' if encoding else None,
+                    headers={'Cache-Control': 'private, no-store' if private else
+                             'private, max-age=31536000, immutable' if immutable else 'private, max-age=0, must-revalidate',
+                             'Vary':'Cookie, Accept-Encoding'})
+        if encoding:response.headers['Content-Encoding']=encoding
         response.set_stat_headers(path.stat())
         if request.headers.get('if-none-match') == response.headers['etag']:
             return Response(status_code=304, headers={key: response.headers[key] for key in ('etag', 'cache-control', 'vary')})

@@ -9,10 +9,13 @@ import {DepthStream} from './depth-stream.mjs';
 import {sourceDisplayBasis,sourceDisplayTransform,transformSourcePoint} from './source-transform.mjs';
 import {SourceBodyLayer} from './source-body-layer';
 import {SourceRobotLayer} from './source-robot-layer';
+import {RobotAssets} from './robot-assets';
 
 export class Workspace {
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(43,1,.01,50);
  renderer=new THREE.WebGLRenderer({antialias:true});controls:OrbitControls;loader=new GLTFLoader();
+ robotAssets=new RobotAssets(this.loader);releaseRobot?:()=>void;
+ prefetchRobot(row:SceneAsset['robots'][number]){this.robotAssets.prefetch(row);}
  grid=new THREE.GridHelper(12,48,0x395745,0x20382b);root=new THREE.Group();robot?:THREE.Group;geoms=new Map<number,THREE.Object3D>();motion?:Motion;asset?:SceneAsset;
  cloud?:THREE.Points;cloudBuffer?:ArrayBuffer;cloudGeometry?:THREE.BufferGeometry;cloudMaterial?:THREE.ShaderMaterial;cloudFrame=-1;
  humanCloud?:THREE.Points;humanGeometry?:THREE.BufferGeometry;showHuman=true;
@@ -35,6 +38,7 @@ export class Workspace {
   new ResizeObserver(()=>{const w=host.clientWidth,h=host.clientHeight;if(w<1||h<1)return;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();}).observe(host);
  }
  async load(asset:SceneAsset,sceneUrl='',initialTime=0){
+  if(this.robot)this.root.remove(this.robot);this.releaseRobot?.();this.releaseRobot=undefined;++this.robotSerial;
   this.currentTime=initialTime;
   this.sourceBodyLayer?.dispose();this.sourceBodyLayer=undefined;
   this.loaded=false;this.depthStream?.dispose();this.depthStream=undefined;this.depthDecoder?.dispose();this.depthDecoder=undefined;
@@ -108,8 +112,8 @@ export class Workspace {
   this.sourceObjectFrame=frame;
  }
  async loadRobot(row:SceneAsset['robots'][number]){
-  const token=this.serial,request=++this.robotSerial;const [gltf,motion]=await Promise.all([this.loader.loadAsync(row.model_url),fetch(row.playback_url).then(r=>r.json())]);if(token!==this.serial||request!==this.robotSerial)return;
-  if(this.robot)this.root.remove(this.robot);this.geoms.clear();this.robot=gltf.scene;this.motion=motion;
+  const token=this.serial,request=++this.robotSerial;const loaded=await this.robotAssets.acquire(row);if(token!==this.serial||request!==this.robotSerial){loaded.release();return;}
+  if(this.robot)this.root.remove(this.robot);this.releaseRobot?.();this.releaseRobot=loaded.release;this.geoms.clear();this.robot=loaded.node;this.motion=loaded.motion;
   this.robot.traverse(o=>{if(o.name.startsWith('geom_'))this.geoms.set(Number(o.name.slice(5)),o);if(o instanceof THREE.Mesh){const m=o.material as THREE.MeshStandardMaterial;m.metalness=.08;m.roughness=.65;}});this.root.add(this.robot);
   this.paths.forEach(o=>{this.root.remove(o);o.dispose();});this.errors.forEach(o=>{this.root.remove(o);o.geometry.dispose();});this.paths=[];this.errors=[];
   for(const color of [0xffbb68,0x76d7df]){

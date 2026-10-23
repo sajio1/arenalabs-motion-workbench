@@ -306,7 +306,11 @@ def run_gpu_motion(request, *, env=None, cwd=None, stdout=None, stderr=None):
     request_path.write_text(json.dumps(request, indent=2, allow_nan=False) + '\n')
     command = [env.get('ARENA_GPU_MOTION_PYTHON', sys.executable), '-m', 'arenalab_motion.runner',
                '--request', str(request_path)]
-    subprocess.run(command, env=env, cwd=cwd, stdout=stdout, stderr=stderr, check=True)
+    if env.get('ARENA_GPU_LOCK_FD') and env.get('ARENA_RESIDENT_MOTION','1')=='1':
+        from .motion_worker import run
+        run(request_path,env=env,stdout=stdout)
+    else:
+        subprocess.run(command, env=env, cwd=cwd, stdout=stdout, stderr=stderr, check=True)
     report, hashes = validate_result(request)
     report.update(motion_backend='gpu_hybrid', trajectory_scale=request.get('scale_mode','preserve'),
                   motion_backend_fingerprint=request['motion_backend_fingerprint'])

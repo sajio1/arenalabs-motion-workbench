@@ -60,6 +60,11 @@ def _sync(codec):
 
 
 def load_target(row):
+    from .asset_cache import target
+    return target(row,lambda:_load_target(row))
+
+
+def _load_target(row):
     """Exact Grid native descriptor/angle-slot binding; CPU only."""
     configure_imports()
     import mujoco

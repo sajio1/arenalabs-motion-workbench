@@ -25,7 +25,7 @@ from .robot_metadata import ensure_robot_metadata
 
 C=np.array([[0.,1.,0.],[0.,0.,1.],[1.,0.,0.]])
 POLICY=dict(version='private-fullbody-hybrid-v3',soft_iterations=60,
-            polish_iterations=20,max_qp_iterations=96,cooldown=.6,
+            polish_iterations=20,max_qp_iterations=96,cooldown=0.,
             hand_budget_floor_m=.003,hand_budget_margin_m=.0005,
             hand_position_weight=600.,root_orientation='measured source pelvis; immutable neural raw retained',
             surface='local semantic mesh shape prior; no learned UMR correspondence',
@@ -92,7 +92,7 @@ def normalize_request(request):
     return request
 
 
-def solve_one(request):
+def solve_one(request, resident=None):
     request=normalize_request(request)
     assert_inputs(request)
     runtime=Runtime.read(request.get('runtime_config'));runtime.configure()
@@ -115,12 +115,14 @@ def solve_one(request):
         materialize_source(request['source_work'],request['row'],effective_source)
     src=load_source(effective_source)
     if src.get('morphology_scale'):saved_json(out/'morphology_scale.json',src['morphology_scale'])
-    codec=runtime.load_codec()
+    codec,model_cache_hit=resident.codec(runtime) if resident is not None else (runtime.load_codec(),False)
     prior=infer_prior(request['row'],src,out,codec=codec)
     qworld=np.asarray(prior['qpos_world'],np.float64)
     T=len(qworld)
     if T!=request['frames']:raise ValueError('Source/output frame clock mismatch')
-    setup=time.perf_counter();oracle=UniversalOracle(request['row'])
+    setup=time.perf_counter()
+    from .asset_cache import geometry
+    oracle,geometry_cache_hit=geometry(request['row'])
     origin=np.asarray([qworld[0,0],qworld[0,1],src['floor_z_m']],float)
     q=qworld.copy();q[:,:3]-=origin
     # A measured pelvis orientation must not be replaced by quantized model
@@ -230,7 +232,8 @@ def solve_one(request):
         support_policy='full local robot visual hull; conservative curved-primitive guard; fixed source floor plane',
         local_geometry=oracle.metadata,
         floor_z_m=src['floor_z_m'],objective_parity_max=parity,
-        timing=dict(total_wall_s=wall,neural=prior.get('receipt',{}),
+        timing=dict(total_wall_s=wall,neural=prior.get('receipt',{}),model_cache_hit=model_cache_hit,
+            geometry_cache_hit=geometry_cache_hit,resident_worker=resident is not None,
             geometry_setup_s=setup_s,soft_capture_s=soft_capture,polish_capture_s=polish_capture,
             soft=soft_record,polish=polish_record,native_export_s=export_s,
             refinement_active_s=soft_record['active_s']+polish_record['active_s'],

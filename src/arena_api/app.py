@@ -3,12 +3,13 @@ import asyncio
 import hashlib
 import json
 import os
+import secrets
 from pathlib import Path
 import time
 import uuid
 from urllib.parse import quote, urlsplit
 
-from fastapi import FastAPI, Request, HTTPException, Header, Query
+from fastapi import FastAPI, Request, Response, HTTPException, Header, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse, RedirectResponse
 from starlette.concurrency import run_in_threadpool
@@ -200,9 +201,17 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
                 'internal_dispatch':'direct application service bindings',
                 'operator_replay':bool(operator_root and (Path(operator_root)/'library/catalog.json').is_file())}
 
+    @app.post('/sessions', tags=['workspace'])
+    def session(request:Request, response:Response):
+        # Creating a cookie must not serialize the entire recording catalogue.
+        if not request.cookies.get(COOKIE):
+            response.set_cookie(COOKIE, secrets.token_urlsafe(32), httponly=True,
+                secure=request.url.scheme=='https' or request.headers.get('x-forwarded-proto')=='https',
+                samesite='strict', max_age=60*60*24*180, path='/')
+        return {'ready':True}
+
     # Direct aliases keep existing streaming and typed validation. No new calibration flow.
     for old,new,method,tag in [
-        ('/library','/sessions','POST','workspace'),
         ('/uploads/template','/recordings/template','GET','recordings'),
         ('/uploads','/recordings/import','POST','recordings'),
         ('/robots','/robots','GET','robots'),
@@ -212,9 +221,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
         ('/trajectory-height','/height-adjustments','POST','existing-height'),
         ('/geometry/frame','/geometry/frame','GET','scene'),
     ]:
-        # Session creation reuses the read-library handler that issues the cookie.
-        alias(app,workbench,old,new,'GET' if new=='/sessions' else method,tag)
-        if new=='/sessions':app.routes[-1].methods={'POST'}
+        alias(app,workbench,old,new,method,tag)
     for old,new,method,tag in [
         ('/api/catalog/{page}','/catalogs/{page}','GET','catalogs'),
         ('/api/source-video/{clip_id}','/recordings/{clip_id}/source-video','GET','recordings'),
@@ -228,10 +235,21 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
 
     @app.get('/recordings',tags=['recordings'])
     async def recordings(request:Request,workflow:str=Query('manipulation',pattern='^(manipulation|locomotion)$'),
-                         limit:int=Query(50,ge=1,le=500),offset:int=Query(0,ge=0),q:str=''):
+                         limit:int=Query(50,ge=1,le=500),offset:int=Query(0,ge=0),q:str='',dataset:str=''):
         rows=await recording_rows(request,workflow)
-        if q:rows=[r for r in rows if q.casefold() in (r.get('title','')+' '+r['id']).casefold()]
-        return {'items':rows[offset:offset+limit],'total':len(rows),'offset':offset,'limit':limit}
+        counts={}
+        for row in rows:
+            name=row.get('dataset','');counts[name]=counts.get(name,0)+1
+        if dataset:rows=[r for r in rows if r.get('dataset')==dataset]
+        if q:rows=[r for r in rows if q.casefold() in ' '.join(str(r.get(k,'')) for k in ('title','id','family')).casefold()]
+        return {'items':rows[offset:offset+limit],'total':len(rows),'offset':offset,'limit':limit,'datasets':counts}
+
+    @app.get('/recordings/{recording_id}',tags=['recordings'])
+    async def recording(recording_id:str,request:Request):
+        rows=await recording_rows(request,'manipulation')
+        row=next((r for r in rows if r['id']==recording_id),None)
+        if row is None:raise HTTPException(404,'Recording unavailable in this workspace')
+        return row
 
     async def check(body,request):
         owner(request)
