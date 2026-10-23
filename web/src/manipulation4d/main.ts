@@ -2,6 +2,7 @@ import {api,apiJson,normalizeUrls,hasPublishedOutputs,type RunSpec} from '../pla
 import {prepareRun} from '../trajectory-scale';
 import {showRecordingUpload,downloadEpisode} from './dataset-io';
 import {showTrajectoryHeight} from './trajectory-height';
+import {uniqueRecordings} from './library-recordings';
 import './feedback-dismiss.mjs';
 import {demoNavigation,demoBrand} from '../demo-nav';
 import {robotChoices,motionGroup} from '../state.js';
@@ -277,7 +278,7 @@ function draw(now:number){requestAnimationFrame(draw);const dt=Math.min(.1,(now-
  if(frame!==previousChart){chart($<HTMLCanvasElement>('error-chart'),motion.tracking.error_mm,frame,['#eeb669','#7ad3dc'],10);chart($<HTMLCanvasElement>('joint-chart'),motion.joints.values.map(v=>[v[joint]]),frame,['#b0d69c']);previousChart=frame;}
 }
 requestAnimationFrame(draw);
-void (async()=>{try{await api.session();library=await api.recordings<LibraryClip>();const unique=new Map<string,LibraryClip>();for(const clip of library){const key=JSON.stringify([clip.dataset,clip.title,clip.duration,clip.video?.start_seconds||0]);if(!unique.has(key)||clip.scene_url)unique.set(key,clip);}library=[...unique.values()];$('library-count').textContent=String(library.length);renderLibrary();void refreshLibraryCache();const selected=new URLSearchParams(location.search).get('clip');const clip=library.find(c=>c.id===selected);if(clip){await selectClip(clip);return;}const candidate=new URLSearchParams(location.search).get('scene');const initial=candidate&&/^\/(?:assets|api\/v1\/media)\/manipulation4d\/[A-Za-z0-9/_-]+\/scene\.json$/.test(candidate)?candidate:library.find(c=>c.scene_url)?.scene_url;if(initial)await load(initial);else if(library.length)await selectClip(library[0]);else throw new Error('No recordings available');}catch(e){$('wb-loading').textContent='Workspace initialization failed';console.error(e);}})();
+void (async()=>{try{await api.session();library=uniqueRecordings(await api.recordings<LibraryClip>());$('library-count').textContent=String(library.length);renderLibrary();void refreshLibraryCache();const selected=new URLSearchParams(location.search).get('clip');const clip=library.find(c=>c.id===selected);if(clip){await selectClip(clip);return;}const candidate=new URLSearchParams(location.search).get('scene');const initial=candidate&&/^\/(?:assets|api\/v1\/media)\/manipulation4d\/[A-Za-z0-9/_-]+\/scene\.json$/.test(candidate)?candidate:library.find(c=>c.scene_url)?.scene_url;if(initial)await load(initial);else if(library.length)await selectClip(library[0]);else throw new Error('No recordings available');}catch(e){$('wb-loading').textContent='Workspace initialization failed';console.error(e);}})();
 
 function heightApplied(clip:LibraryClip){
  const custom=clip as LibraryClip&{temporary?:boolean};

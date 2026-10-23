@@ -23,4 +23,4 @@ export interface Motion {
  tracking:{actual:number[][][];target:number[][][];error_mm:number[][];orientation_deg:number[][];reference:string;fingertip_error_mm?:number[][][]};
  joints:{names:string[];values:number[][];velocity?:number[][];effort?:number[][];unit:string;units?:string[];representation:string};
 }
-export interface LibraryClip {id:string;title:string;dataset:string;end_effector?:string;uploaded?:boolean;family:string;duration:number;frames?:number;fps?:number;scene_url?:string;video?:{url:string;start_seconds:number};source_motion?:SceneAsset['source_robot'];metadata?:Record<string,unknown>;}
+export interface LibraryClip {id:string;source_catalog_id?:string;title:string;dataset:string;end_effector?:string;uploaded?:boolean;family:string;duration:number;frames?:number;fps?:number;scene_url?:string;video?:{url:string;start_seconds:number};source_motion?:SceneAsset['source_robot'];metadata?:Record<string,unknown>;}
