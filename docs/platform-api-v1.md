@@ -220,6 +220,43 @@ semantics, robot descriptors or the exported coordinate convention. Inspect the
 backend's manifest and quality reports before consuming a motion. Kinematic
 playback is not a validated physics controller.
 
+New exports use `arenalabs-lerobot-v3.0-4-native-reference` for every input
+source. EgoDex, HiPhi, GRAIL, Nymeria and recorded gripper inputs do not select
+different downstream motion schemas. `extensions/arenalabs/native_reference/`
+contains a versioned manifest, exact 30 Hz relative clock, original source
+timestamps, named body and attachment coordinates, floating-base pose, derived
+velocities and named world link poses. Native references use right-handed Z-up,
+metres, wxyz quaternions, radians for hinges and metres for slides. Body and
+attachment arrays always exist, including empty attachment arrays. Body-model
+source family remains provenance; clients do not decode SMPL to play a robot.
+
+`extensions/arenalabs/manifest.json.modalities` always contains `trajectory`,
+`point_cloud`, `contact` and `inpaint_fov`, with `ready` or `not_selected` status
+and package-relative paths. Missing requested outputs fail export. The exported
+`validate_dataset.py` checks all hashes, clocks, full named joint coverage,
+LeRobot state/action parity, native validation receipts and modality references
+without cloud access or a robot model. It runs before finalization; ZIP CRC and
+file inventory are checked before the `.partial` archive is atomically renamed.
+Only a completed archive returns `ready: true`. Old archives remain immutable;
+new exports with missing native provenance fail instead of silently returning a
+visual-only package. The same receipt is exposed by `/api/v1/jobs/{id}` as
+`result.ready` and `result.readiness`.
+
+The included MuJoCo and Isaac adapters require the customer's matching local
+MJCF or URDF/USD. They map joints by name, validate topology/FK and reject
+missing, duplicated or incompatible coordinates. Replay defaults to body-only
+and succeeds without hand models. Attachment
+channels remain in the same package as optional data. Explicit `--with-hands`
+requires the matching local assembly; its absence then produces a clear error.
+Reports distinguish body replay from full-assembly validation. Physical robot
+descriptions are not added to the cloud or download
+by these adapters. Existing visual GLB/USD assets remain part of the visual
+replay, so this is not a claim that an existing visual export hides geometry.
+
+`ready` covers complete kinematic reference data. It does not certify actuator
+commands, contact stability or controller tracking, and does not change
+`physics_status: not_run`. See [native reference usage](native-reference.md).
+
 ## Deployment
 
 `python -m arena_api.server` attaches `/api/v1` to the existing workbench app.

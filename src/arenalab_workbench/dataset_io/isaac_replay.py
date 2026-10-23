@@ -66,6 +66,8 @@ try:
         source = json.loads((dataset/scene['robots'][0]['playback_url']).read_text(encoding='utf-8'))
         positions = np.asarray(source['positions'])
         quaternions = np.asarray(source['quaternions'])
+        if positions.shape != (n, contract['meshes'], 3) or quaternions.shape != (n, contract['meshes'], 4) or not np.isfinite(positions).all() or not np.isfinite(quaternions).all():
+            raise RuntimeError('Original playback has invalid or non-finite mesh poses')
         basis = np.asarray(contract['source_to_isaac_rotation'])
         max_position = max_rotation = 0.
         start = time.monotonic()
@@ -78,6 +80,8 @@ try:
                 if not prim: raise RuntimeError('Missing mesh prim')
                 matrix = cache.GetLocalToWorldTransform(prim)
                 actual = np.asarray(matrix).T
+                if not np.isfinite(actual).all():
+                    raise RuntimeError('Isaac returned a non-finite mesh transform')
                 max_position = max(max_position, float(np.max(np.abs(actual[:3,3] - basis@positions[frame,index]))))
                 x,y,z,w = quaternions[frame,index]
                 rotation = np.array([[1-2*(y*y+z*z),2*(x*y-z*w),2*(x*z+y*w)],
@@ -97,7 +101,7 @@ try:
             for _ in range(4): app.update()
             rep.orchestrator.step(rt_subframes=4, delta_time=0., pause_timeline=True)
             image = np.asarray(rgb.get_data())
-            if image.shape != (720,960,4) or float(image[...,:3].std()) < 1:
+            if image.shape != (720,960,4) or float(image[...,:3].std(axis=(0,1)).max()) < 1:
                 raise RuntimeError('Empty Isaac rendered frame')
             target = args.output/('frame-%02d-%04d.png' % (sample,frame))
             Image.fromarray(image).save(target)
@@ -116,9 +120,12 @@ try:
                 timeline.set_current_time(0)
 except BaseException:
     import traceback
+    import omni.kit.app
     traceback.print_exc()
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output/'failure.txt').write_text(traceback.format_exc(), encoding='utf-8')
+    # Kit fast shutdown exits from app.close(); preserve a failing process code.
+    omni.kit.app.get_app().post_quit(1)
     raise
 finally:
     app.close()

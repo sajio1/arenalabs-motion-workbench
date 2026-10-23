@@ -268,6 +268,22 @@ def test_locomotion_and_export_use_same_job_envelope(tmp_path):
     assert result.status_code==200 and result.content==b'PK\x03\x04'
 
 
+def test_export_readiness_receipt_reaches_public_api(tmp_path):
+    c,_,states,_,_=fixtures(tmp_path)
+    job=post(c,dict(workflow='export',recording_id='clip',robot_id='x2')).json()
+    receipt=dict(schema='arenalabs-dataset-readiness-v1',ready=True,
+                 scope='complete_kinematic_reference_data',frames=3,
+                 dynamics_validated=False,controller_validated=False)
+    states[job['backend_job_id']]=dict(status='completed',ready=True,readiness=receipt,
+                                     path='/private/dataset.zip',format='native-reference')
+    public=c.get('/jobs/'+job['id']).json()
+    assert public['status']=='succeeded'
+    assert public['result']['ready'] is True
+    assert public['result']['readiness']==receipt
+    assert 'path' not in public['result']
+    assert public['physics_status']=='not_run'
+
+
 def install_preflight(app, *, available=True, mismatch=True):
     seen=[]
     def preflight(scene_id,request,robot_id=None,workflow='manipulation'):

@@ -60,7 +60,8 @@ def sanitize(value):
              'trajectory_scale','source_policy','source_policy_version','motion_policy_version',
              'scale_factor','solver_status','solver_converged','quality_status',
              'output_modalities','requested_outputs','effective_outputs','output_status',
-             'completed_outputs','dependency_plan','outputs_ready','partial_result'}
+             'completed_outputs','dependency_plan','outputs_ready','partial_result',
+             'ready','readiness'}
     return {k:v for k,v in value.items() if k in allowed}
 
 def request_spec(body):
