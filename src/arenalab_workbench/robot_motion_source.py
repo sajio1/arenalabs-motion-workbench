@@ -100,6 +100,8 @@ def validate_attachment(package, manifest):
         if objects.suffix != '.npz' or not objects.is_file():
             raise ValueError('Robot objects_path must be a local package NPZ')
         spec['objects_path'] = str(objects)
+        from .source_objects import load_source_objects
+        load_source_objects(objects, times)
     spec['sha256'] = sha256(path)
     return spec
 
@@ -211,8 +213,8 @@ def prepare_robot_source(spec, output_dir, *, row=None, observed_work=None, sour
         np.savez_compressed(temp/'operation-accuracy/source-targets.npz',points=wrists[:,:,None],timestamps_s=times)
         for name in observation_hashes:shutil.copyfile(observed/name,temp/name)
         if spec.get('objects_path'):
-            obj=_npz(spec['objects_path'])
-            if not np.array_equal(obj['timestamps_s'],times):raise ValueError('Robot/object clocks disagree')
+            from .source_objects import load_source_objects
+            load_source_objects(spec['objects_path'], times)
             shutil.copyfile(spec['objects_path'],temp/'objects.npz')
         provenance=dict(source_manifest or {},schema='arenalab.motion-source.v1',policy=POLICY,sourcekind='supplied_robot',
             source_body='Supplied complete robot joint states; no human reconstruction',human_model=None,source_robot_id=spec['robot_id'],

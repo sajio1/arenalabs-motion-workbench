@@ -126,6 +126,9 @@ def validate_body_attachment(package, manifest):
         raise ValueError('Supplied body frame count differs from recording')
     if 'timestamps_s' in values and len(indices) != len(values['timestamps_s']):
         raise ValueError('Upload body must already match the recording window; pre-slice locally')
+    if spec.get('objects_path'):
+        from .source_objects import load_source_objects
+        load_source_objects(spec['objects_path'], times)
     spec.update(path=str(path), sha256=sha256(path))
     return spec
 
@@ -410,20 +413,10 @@ def prepare_supplied_source(spec, output_dir, *, model_path=None, observed_work=
         save('operation-accuracy/source-targets.npz', points=p_z[:, [20, 21], None])
         objects_provenance = None
         if spec.get('objects_path'):
+            from .source_objects import load_source_objects
             objects_path = Path(spec['objects_path'])
-            obj = _npz(objects_path)
-            if not np.array_equal(obj['timestamps_s'], times):
-                raise ValueError('Object trajectories must already use the same source window and clock')
-            positions = _finite(obj['positions_world_m'], 'object positions')
-            rotations = _rotation(obj['rotations_world'], 'object rotations')
+            obj = load_source_objects(objects_path, times)
             number = len(obj['object_ids'])
-            if positions.shape != (len(times), number, 3) or rotations.shape != (len(times), number, 3, 3):
-                raise ValueError('Object trajectories have invalid synchronized dimensions')
-            for i in range(number):
-                v = _finite(obj[f'object_{i}_vertices_local_m'], 'object vertices')
-                f = np.asarray(obj[f'object_{i}_faces'])
-                if v.ndim != 2 or v.shape[1] != 3 or f.ndim != 2 or f.shape[1] != 3 or not np.issubdtype(f.dtype, np.integer) or f.min() < 0 or f.max() >= len(v):
-                    raise ValueError('Invalid embedded object mesh')
             shutil.copyfile(objects_path, temporary / 'objects.npz')
             objects_provenance = dict(sha256=sha256(objects_path), objects=number, world='Z-up m; local mesh axes unchanged')
         if observed is not None:

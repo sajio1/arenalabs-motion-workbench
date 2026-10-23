@@ -26,15 +26,21 @@ def records(manifest_path, data_root):
         if sample['motion_sha256'] != supplied['sha256']:
             raise ValueError('Staged sample changed: ' + sample['id'])
         times, _, _ = _clock(_npz(supplied['path']), supplied)
+        robot_source = supplied['format'] == 'robot_joint_state'
+        stage = supplied.get('source_stage', recording.get('source_stage', sample.get('source_stage')))
+        if stage is not None and (not isinstance(stage, str) or not stage.strip()):
+            raise ValueError('source_stage must be a nonempty declared string')
         public = dict(id=sample['id'], title=sample['title'], dataset=sample['dataset'],
-            end_effector='none', family='Authorized motion examples', duration=float(len(times)/30),
+            end_effector='none', family=sample.get('family', 'Authorized motion examples'), duration=float(times[-1]-times[0]),
             uploaded=False, owner=None, video=None, has_supplied_body=True,
-            source_body_family=supplied['family'], source_evidence=supplied['evidence'],
-            motion_source_policy='supplied-body22-surface-v1')
+            source_family=supplied['family'], source_body_family=supplied['family'], source_evidence=supplied['evidence'],
+            motion_source_policy='supplied-robot-fullbody-v1' if robot_source else 'supplied-body22-surface-v1')
+        if stage is not None:public['source_stage'] = stage
+        if robot_source:public['source_robot_id'] = supplied['robot_id']
         source_row = dict(id=sample['id'],source=supplied['path'],frames=len(times),fps=30.,video=None,
             motion_source=supplied,source_metadata=str(folder/'provenance.json'))
         result[sample['id']] = dict(public=public,source_row=source_row,motion_source=supplied,
-            manifest=dict(recording,motion_source=supplied),body_adapter='supplied-body')
+            manifest=dict(recording,motion_source=supplied),body_adapter='supplied-robot' if robot_source else 'supplied-body')
     return result
 
 
