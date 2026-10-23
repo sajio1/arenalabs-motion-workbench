@@ -122,3 +122,26 @@ def supplied_body_identity(spec, row=None):
 
 def identity_digest(identity):
     return hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
+def source_revision(scene_id, *, config_path=None):
+    """Bind queued work to registered source bytes without decoding any model.
+
+    This is a source-only concurrency token, not the solver/cache signature.
+    Hashing uses the existing local file cache; target robot and scale choices
+    remain separate queue fields. Only the digest leaves this helper.
+    """
+    from .motion_backend import cached_sha
+    row, spec = registered_source(scene_id, config_path=config_path)
+    if not row.get('source'):
+        raise ValueError('Registered recording has no source data')
+    files = {key: cached_sha(row[key]) for key in ('source', 'observations_source') if row.get(key)}
+    if spec:
+        files.update({key: cached_sha(spec[key]) for key in ('path', 'objects_path') if spec.get(key)})
+        if spec.get('sha256') and files['path'] != spec['sha256']:
+            raise ValueError('Original supplied source hash changed')
+    video = row.get('video') or {}
+    if video.get('path'):
+        # A missing optional camera disables CV outputs, not motion-only work.
+        files['video'] = cached_sha(video['path']) if Path(video['path']).is_file() else None
+    return identity_digest(dict(policy='queued-source-revision-v1', row=row, spec=spec, files=files))

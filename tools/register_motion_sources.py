@@ -33,7 +33,7 @@ def records(manifest_path, data_root):
         public = dict(id=sample['id'], title=sample['title'], dataset=sample['dataset'],
             end_effector='none', family=sample.get('family', 'Authorized motion examples'), duration=float(times[-1]-times[0]),
             uploaded=False, owner=None, video=None, has_supplied_body=True,
-            source_family=supplied['family'], source_body_family=supplied['family'], source_evidence=supplied['evidence'],
+            source_family=supplied['family'], source_body_family=supplied['family'], source_format=supplied['format'], source_evidence=supplied['evidence'],
             motion_source_policy='supplied-robot-fullbody-v1' if robot_source else 'supplied-body22-surface-v1')
         if stage is not None:public['source_stage'] = stage
         if robot_source:public['source_robot_id'] = supplied['robot_id']

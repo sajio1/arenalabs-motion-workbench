@@ -145,6 +145,7 @@ def test_registration_uses_timestamp_span_and_actual_source_metadata(tmp_path, m
     assert row['public']['duration'] == pytest.approx(298 / 30)
     assert row['public']['duration'] != pytest.approx(299 / 30)
     assert row['public']['source_family'] == row['public']['source_body_family'] == family
+    assert row['public']['source_format'] == manifest['motion_source']['format']
     assert row['public']['source_stage'] == manifest['motion_source']['source_stage']
     assert row['public']['source_evidence'] == 'synthetic'
     assert row['public']['family'] == 'A real task group'

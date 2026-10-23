@@ -43,21 +43,38 @@ def create_api(config_path=None):
     from arenalab_workbench.dataset_io.routes import attach_dataset_routes, require_scene
     attach_dataset_routes(app,lock)
     from arenalab_workbench.source_requirements import input_requirements
+    from arenalab_workbench.source_identity import source_revision
     from arenalab_workbench.scene_geometry import attach_routes
     attach_routes(app)
     for path in folder.glob('*/job.json'):
         job=json.loads(path.read_text());state=path.with_name('state.json')
         if state.exists():
-            status=json.loads(state.read_text()).get('status')
-            if status in {'queued','running'}:save(state,dict(status='interrupted',phase='Service restarted; retry the conversion'))
+            saved=json.loads(state.read_text());status=saved.get('status')
+            unchecked=(status=='completed' and job.get('source_revision') and saved.get('source_revision_validated')!=job['source_revision'])
+            if status in {'queued','running'} or unchecked:
+                save(state,{**saved,**dict(status='interrupted',phase='Service restarted before completion was confirmed; retry the conversion')})
         jobs[job['id']]=job
-    def view(job):return job_view(job,jobs,folder)
+    def view(job):
+        result=job_view(job,jobs,folder)
+        # The child writes completion before the parent can recheck the source.
+        # Do not let the facade freeze that provisional result as succeeded.
+        if job.get('source_revision') and result['status']=='completed' and result.get('source_revision_validated')!=job['source_revision']:
+            result.update(status='running',phase='Checking source revision before publication')
+        return result
+    class SourceChangedError(ValueError):pass
+    def require_current_source(job):
+        try:current=source_revision(job['scene_id'],config_path=config_path)
+        except (OSError,ValueError) as error:
+            raise SourceChangedError('source_changed: Registered input changed or became unavailable; submit a new run') from error
+        if not job.get('source_revision') or job['source_revision']!=current:
+            raise SourceChangedError('source_changed: Registered input changed after submission; submit a new run')
     def execute(job):
         destination=folder/job['id'];state=destination/'state.json'
         save(state,dict(status='running',phase='Starting retargeting'))
         env=os.environ.copy();env.update(ARENA_JOB_ID=job['id'],ARENA_TRAJECTORY_SCALE=job.get('trajectory_scale','preserve'),ARENA_VIEWER_CONFIG=str(config_path),ARENA_GPU_POOL=os.environ.get('ARENA_GPU_POOL','0,1,2,3'),CUDA_VISIBLE_DEVICES=os.environ.get('CUDA_VISIBLE_DEVICES','3'),EGL_DEVICE_ID=os.environ.get('EGL_DEVICE_ID','3'),OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='2',PYTHONPATH=paths.pythonpath())
         if job.get('output_modalities') is not None:env['ARENA_OUTPUT_MODALITIES']=json.dumps(job['output_modalities'])
         try:
+            require_current_source(job)
             with (destination/'worker.log').open('w') as log:
                 result=subprocess.run([sys.executable,str(Path(__file__).with_name('full_job.py')),job['scene_id'],job['robot_id'],job['hand_id'],'--status',str(state)],env=env,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
             if result.returncode:
@@ -68,17 +85,23 @@ def create_api(config_path=None):
             with lock:
                 completed=json.loads(state.read_text())
                 from arenalab_workbench.trajectory_height import complete as complete_height
-                if complete_height(job['scene_id'],completed['scene_url']):return
                 from arenalab_workbench.dataset_io import storage as user_storage
-                if user_storage.entry(job['scene_id']):
-                    from arenalab_workbench.gpu_scheduler import resource_lock
-                    with resource_lock('user-recording-registry'):
-                        registry=user_storage.uploads();registry[job['scene_id']]['public']['scene_url']=completed['scene_url'];user_storage.write(user_storage.ROOT/'user-data/registry.json',registry)
-                    return
-                catalog_path=paths.store / 'manipulation4d/catalog.json';catalog=json.loads(catalog_path.read_text())
-                for entry in catalog:
-                    if entry['id']==job['scene_id']:entry.update(scene_url=completed['scene_url'])
-                save(catalog_path,catalog)
+                from arenalab_workbench.gpu_scheduler import resource_lock
+                with resource_lock('user-recording-registry'):
+                    # Registry migration uses this same lock. A finished old
+                    # revision may retain artifacts but cannot become default.
+                    require_current_source(job)
+                    if not complete_height(job['scene_id'],completed['scene_url']):
+                        if user_storage.entry(job['scene_id']):
+                            registry=user_storage.uploads();registry[job['scene_id']]['public']['scene_url']=completed['scene_url'];user_storage.write(user_storage.ROOT/'user-data/registry.json',registry)
+                        else:
+                            catalog_path=paths.store / 'manipulation4d/catalog.json';catalog=json.loads(catalog_path.read_text())
+                            for entry in catalog:
+                                if entry['id']==job['scene_id']:entry.update(scene_url=completed['scene_url'])
+                            save(catalog_path,catalog)
+                    save(state,{**completed,'source_revision_validated':job['source_revision']})
+        except SourceChangedError as error:
+            save(state,{**(json.loads(state.read_text()) if state.exists() else {}),**dict(status='failed',phase='Source changed',error=str(error),source_changed=True)})
         except Exception as error:save(state,{**(json.loads(state.read_text()) if state.exists() else {}),**dict(status='failed',phase='Conversion failed',error=str(error)[:240])})
     @app.get('/robots')
     def robots():
@@ -101,12 +124,14 @@ def create_api(config_path=None):
         except ValueError as error:raise HTTPException(409,str(error)) from error
         expected_hand=preflight['hand_id']
         if hand_id!=expected_hand:raise HTTPException(409,'This source requires '+expected_hand)
+        try:revision=source_revision(scene_id,config_path=config_path)
+        except (OSError,ValueError) as error:raise HTTPException(409,'Registered source is unavailable or changed; refresh the recording') from error
         with lock:
             for job in jobs.values():
-                if job.get('kind')=='full' and job['scene_id']==scene_id and job.get('robot_id')==robot_id and job.get('hand_id')==hand_id and job.get('trajectory_scale','preserve')==trajectory_scale and job.get('output_modalities')==outputs:
+                if job.get('kind')=='full' and job['scene_id']==scene_id and job.get('robot_id')==robot_id and job.get('hand_id')==hand_id and job.get('trajectory_scale','preserve')==trajectory_scale and job.get('output_modalities')==outputs and job.get('source_revision')==revision:
                     current=view(job)
                     if current['status'] in {'queued','running'}:return current
-            job=dict(id=uuid.uuid4().hex[:16],kind='full',scene_id=scene_id,robot_id=robot_id,hand_id=hand_id,trajectory_scale=trajectory_scale,output_modalities=outputs,created_at=time.time());jobs[job['id']]=job
+            job=dict(id=uuid.uuid4().hex[:16],kind='full',scene_id=scene_id,robot_id=robot_id,hand_id=hand_id,trajectory_scale=trajectory_scale,output_modalities=outputs,source_revision=revision,created_at=time.time());jobs[job['id']]=job
             save(folder/job['id']/'job.json',job);save(folder/job['id']/'state.json',dict(status='queued',phase='Waiting for GPU'))
             pool.submit(execute,job);return view(job)
     @app.post('/reconstruct')

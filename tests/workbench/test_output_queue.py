@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 def queue(tmp_path, monkeypatch):
     from arenalab_workbench import workbench_api as api
     from arenalab_workbench import robot_registry, trajectory_height, scene_geometry
-    from arenalab_workbench import source_requirements, height_registry
+    from arenalab_workbench import source_requirements, height_registry, source_identity, gpu_scheduler
     from arenalab_workbench.dataset_io import routes
     from arenalab_workbench.output_modalities import source_capabilities
     submissions = []
@@ -19,6 +19,9 @@ def queue(tmp_path, monkeypatch):
         def submit(self, fn, *args): submissions.append((fn, args))
     monkeypatch.setattr(api.concurrent.futures, 'ThreadPoolExecutor', Pool)
     monkeypatch.setattr(api, 'ROOT', tmp_path)
+    monkeypatch.setattr(gpu_scheduler, 'ROOT', tmp_path/'scheduler')
+    revision = {'value': 'source-before'}
+    monkeypatch.setattr(source_identity, 'source_revision', lambda *args, **kwargs: revision['value'])
     monkeypatch.setattr(api, 'attach_hand_routes', lambda *args: None)
     monkeypatch.setattr(trajectory_height, 'attach_height_routes', lambda *args: None)
     monkeypatch.setattr(scene_geometry, 'attach_routes', lambda *args: None)
@@ -35,7 +38,9 @@ def queue(tmp_path, monkeypatch):
     monkeypatch.setattr(source_requirements, 'resolve_scale', lambda value, req: value or 'preserve')
     monkeypatch.setattr(api, 'job_view', lambda job, jobs, folder: {
         **job, **json.loads((folder/job['id']/'state.json').read_text())})
-    return TestClient(api.create_api(tmp_path/'viewer.json')), submissions, api, tmp_path
+    app = api.create_api(tmp_path/'viewer.json')
+    app.state.test_source_revision = revision
+    return TestClient(app), submissions, api, tmp_path
 
 
 def test_selected_outputs_deduplicate_canonically_and_reach_worker(queue, monkeypatch):
