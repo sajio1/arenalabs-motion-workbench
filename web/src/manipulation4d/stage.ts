@@ -56,6 +56,7 @@ export class Workspace {
     const [gltf,animation]=await Promise.all([this.loader.loadAsync(object.mesh_url),fetch(object.poses_url).then(async response=>{if(!response.ok)throw new Error('Source-object motion unavailable');return response.json();})]);
     if(token!==this.serial)return;
     if(object.world_up!=='z'||animation.world_up!=='z'||object.frames!==body.frames||animation.position?.length!==body.frames||animation.quaternion_xyzw?.length!==body.frames)throw new Error('Source-object clock mismatch');
+    if(asset.source_robot)gltf.scene.traverse(o=>{if(o instanceof THREE.Mesh){if(!o.geometry.hasAttribute('normal'))o.geometry.computeVertexNormals();for(const m of Array.isArray(o.material)?o.material:[o.material])if(m instanceof THREE.MeshStandardMaterial){m.metalness=0;m.roughness=.8;m.needsUpdate=true;}}});
     const node=new THREE.Group();node.add(gltf.scene);this.sourceObjectsRoot.add(node);this.sourceObjects.push({node,position:animation.position,quaternion_xyzw:animation.quaternion_xyzw});
    }
    this.updateSourceObjects(initialTime);
