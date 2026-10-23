@@ -41,6 +41,14 @@ test('valid user selection is preserved and an unavailable selection is not repl
  assert.equal(cachedRobotSelection(scene,'x2',''),undefined);
 });
 
+test('active registry ID is not replaced by a variant ID used only for fresh-scene restoration',()=>{
+ const row={...robot('a3-variant'),registry_robot_id:'a3'};
+ const scene={robots:[row],generation_status:{robot_id:'a3',hand_id:'wuji'}};
+ assert.equal(cachedRobotSelection(scene,'a3','wuji'),undefined);
+ assert.equal(cachedRobotSelection(scene,'a3-variant','wuji'),row);
+ assert.equal(cachedRobotSelection(scene),row);
+});
+
 test('ambiguous legacy scenes and missing trajectory assets stay unselected',()=>{
  assert.equal(cachedRobotSelection({robots:[robot(),robot('x2','none')]}),undefined);
  assert.equal(cachedRobotSelection({robots:[{...robot(),playback_url:''}]}),undefined);
