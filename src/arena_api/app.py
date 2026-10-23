@@ -456,7 +456,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
     @app.get('/jobs/{ident}/artifacts',tags=['results'])
     async def artifacts(ident:str,request:Request):
         row,path,manifest=await result_manifest(ident,request)
-        spec=json.loads(row['request']);files=[(path,'playback_manifest')]
+        spec=json.loads(row['request']);files=[(path,'playback_manifest')];bundle_metadata={}
         selected=spec.get('output_modalities')
         if selected is None:selected=json.loads(row['result']).get('effective_outputs')
         if selected is None:selected=['trajectory','point_cloud','contact','inpaint_fov']
@@ -477,7 +477,20 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
             elif isinstance(value,dict):
                 for nested in value.values():add_references(nested,kind)
         if 'point_cloud' in selected:
-            add_references(manifest.get('cloud'),'point_cloud')
+            cloud=manifest.get('cloud') or {}
+            if cloud.get('format')=='depth-rgb-v1':
+                from .geometry_bundle import bundle_files
+                url=cloud.get('geometry_url')
+                if not isinstance(url,str):raise HTTPException(409,'Canonical point-cloud bundle is unavailable')
+                geometry=safe_asset(storage,url)
+                try:members=await run_in_threadpool(bundle_files,geometry)
+                except (OSError,ValueError,KeyError) as error:
+                    raise HTTPException(409,'Canonical point-cloud bundle is incomplete') from error
+                bundle_id=hashlib.sha256(url.encode()).hexdigest()
+                for candidate,relative in members:
+                    files.append((candidate,'point_cloud'))
+                    bundle_metadata[candidate]=dict(bundle_id=bundle_id,bundle_format='rgbd-geometry-v1',bundle_relative_path=relative)
+            else:add_references(cloud,'point_cloud')
             add_references((manifest.get('segmented_instances') or {}).get('audit_url'),'point_cloud_audit')
         if 'contact' in selected:add_references(manifest.get('tactile'),'contact')
         if 'inpaint_fov' in selected:add_references((manifest.get('patch_videos') or {}).get(spec['robot_id']),'inpaint_fov')
@@ -486,7 +499,7 @@ def create_api(viewer, workbench, *, storage, database, operator_root=None, brid
             if candidate in seen:continue
             seen.add(candidate)
             record=await run_in_threadpool(registry.artifact,row['owner'],candidate,kind)
-            items.append(public_artifact(record))
+            items.append({**public_artifact(record),**bundle_metadata.get(candidate,{})})
         return {'items':items,'semantics':'Immutable content revisions preserve registered bytes. Unmigrated legacy references return 409 if their original bytes were overwritten.'}
 
     @app.get('/artifacts/{ident}',tags=['results'])

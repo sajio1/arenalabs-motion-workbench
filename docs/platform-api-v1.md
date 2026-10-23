@@ -202,10 +202,23 @@ robot solver and quality fields. Physics status remains `not_run` for generated
 motion. Operator responses retain recorded evidence without rerunning physics.
 
 Playback manifests currently reference progressive legacy assets. They are not
-fully immutable run snapshots. Artifact indexing records a hash and ownership;
-if the underlying legacy file changes, downloading the old reference returns
-409 rather than silently returning different content. Large files support
-Range; ETag enables conditional download.
+fully immutable run snapshots. Artifact indexing creates an owned, immutable
+content revision with a SHA256 and byte size. Later source-file changes preserve
+existing downloads. Unmigrated legacy references whose original bytes were
+already lost return 409. Large files support Range; ETag enables conditional
+download.
+
+For `depth-rgb-v1`, `GET /jobs/{id}/artifacts` returns every canonical RGB-D
+dependency as `kind=point_cloud`, including `index.json`, RGB video, camera
+Parquet, masks, and Zarr metadata/chunks. These files share a `bundle_id` and
+`bundle_format=rgbd-geometry-v1`; `bundle_relative_path` is each file's path
+within that bundle. Group by `bundle_id`, download each `download_url`, verify
+its `sha256` and `size`, and write the bytes at `bundle_relative_path` under a
+fresh local directory. This reconstructs the original geometry directory;
+it does not fuse frames, change precision, or regenerate point coordinates.
+Private server paths and artifact revision caches are omitted. The same
+workspace authorization, immutable bytes, Range, and ETag rules apply to every
+bundle member. `/geometry/frame` remains available for compact browser streaming.
 
 `GET /jobs/{id}/playback` also returns `selected_robot_id` and `assessment`.
 The assessment separates operation completion, convergence, final tracked-point

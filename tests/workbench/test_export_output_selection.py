@@ -81,7 +81,8 @@ def test_direct_export_endpoint_rejects_empty_duplicate_selectors(outputs):
     with pytest.raises(ValidationError):routes.ExportRequest(scene_id='clip',robot_id='g1',output_modalities=outputs)
 
 
-def test_motion_only_export_builds_real_archive_without_video_or_unselected_dependencies(isolated_store,tmp_path):
+@pytest.mark.parametrize('include_cloud', [False, True])
+def test_export_builds_real_archive_without_video_or_artifact_revision_copies(isolated_store,tmp_path,include_cloud):
     pytest.importorskip('pyarrow');trimesh=pytest.importorskip('trimesh');mj=pytest.importorskip('mujoco')
     folder=isolated_store/'robot';folder.mkdir()
     mesh=trimesh.Scene()
@@ -112,14 +113,26 @@ def test_motion_only_export_builds_real_archive_without_video_or_unselected_depe
         'output_status':{'trajectory':'completed'},'generation_status':{'status':'completed'},
         'cloud':{'url':'/assets/unselected-missing-cloud.bin'},'patch_videos':{'g1':'/assets/unselected-missing-fov.mp4'},'tactile':{'url':'/assets/unselected-missing-contact.json'},'objects':[]}
     scene['source_world_to_display']=basis.tolist()
+    if include_cloud:
+        cloud=isolated_store/'geometry';cloud.mkdir();(cloud/'index.json').write_text('{}')
+        revisions=cloud/'.artifact-revisions/previous';revisions.mkdir(parents=True)
+        (revisions/'index.json').write_text('historical download revision')
+        scene.update(output_modalities=['trajectory','point_cloud'],completed_outputs=['trajectory','point_cloud'],
+                     output_status={'trajectory':'completed','point_cloud':'completed'},
+                     cloud={'format':'depth-rgb-v1','geometry_url':'/assets/geometry','frames':[{'source_frame':0},{'source_frame':2}]})
     source=isolated_store/'scene.json';source.write_text(json.dumps(scene))
     perception=tmp_path/'perception';perception.mkdir();np.savez(perception/'depth.npz',depth=np.ones((2,2)))
     result=exporter.export_dataset(source,'g1',tmp_path/'dataset',raw_sources=[('perception',perception)],video_sources={})
     assert Path(result['path']).is_file()
     info=json.loads((tmp_path/'dataset/meta/info.json').read_text());assert info['total_videos']==0
     extension=tmp_path/'dataset/extensions/arenalabs';saved=json.loads((extension/'scene.json').read_text())
-    assert saved['video'] is None and 'cloud' not in saved and not saved.get('patch_videos')
-    assert not (extension/'raw/perception').exists()
+    assert saved['video'] is None and not saved.get('patch_videos')
+    if include_cloud:
+        cloud=tmp_path/'dataset'/saved['cloud']['geometry_url']
+        assert (cloud/'index.json').read_text()=='{}'
+        assert not list(cloud.rglob('.artifact-revisions'))
+    else:
+        assert 'cloud' not in saved and not (extension/'raw/perception').exists()
     assert (extension/'replay/robot.usda').is_file()
 
 

@@ -219,7 +219,7 @@ def export_dataset(scene_path, robot_id, output, raw_sources=(), video_sources=N
             if original not in copied:
                 target = extension / 'assets' / (hashlib.sha256(str(original).encode()).hexdigest()[:12] + '-' + original.name)
                 target.parent.mkdir(exist_ok=True)
-                if original.is_dir():shutil.copytree(original,target)
+                if original.is_dir():shutil.copytree(original,target,ignore=shutil.ignore_patterns('.artifact-revisions'))
                 else:shutil.copyfile(original, target)
                 copied[original] = target.relative_to(output).as_posix()
             return copied[original]
